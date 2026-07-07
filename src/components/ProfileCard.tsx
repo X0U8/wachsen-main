@@ -1,4 +1,4 @@
-import { Clipboard, Check, X } from 'lucide-react';
+import { Clipboard, Check } from 'lucide-react';
 import { useUserProfile } from '../lib/UserContext.tsx';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -20,11 +20,11 @@ export default function ProfileCard({ onClose }: { onClose: () => void }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const faceRef = useRef<HTMLDivElement>(null);
 
-  const cur   = useRef({ rx: 0, ry: 0 });
-  const tgt   = useRef({ rx: 0, ry: 0 });
-  const drag  = useRef({ rx: 0, ry: 0 });
-  const vel   = useRef({ x: 0, y: 0 });
-  const last  = useRef({ x: 0, y: 0 });
+  const cur = useRef({ rx: 0, ry: 0 });
+  const tgt = useRef({ rx: 0, ry: 0 });
+  const drag = useRef({ rx: 0, ry: 0 });
+  const vel = useRef({ x: 0, y: 0 });
+  const last = useRef({ x: 0, y: 0 });
   const dragging = useRef(false);
   const rafId = useRef(0);
 
@@ -184,7 +184,7 @@ export default function ProfileCard({ onClose }: { onClose: () => void }) {
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="flex justify-between items-center px-6 pt-6 pb-2">
-        <h1 className="font-medium tracking-tight text-white" style={{ fontSize: fontSize.xl }}>Glix UP</h1>
+        <h1 className="font-medium tracking-tight text-white" style={{ fontSize: fontSize.xl }}>Wachsen</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={copyId}
@@ -193,9 +193,7 @@ export default function ProfileCard({ onClose }: { onClose: () => void }) {
           >
             {copied ? <Check className="w-5 h-5 text-green-400" /> : <Clipboard className="w-5 h-5" />}
           </button>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-zinc-400 hover:text-white">
-            <X className="w-5 h-5" />
-          </button>
+
         </div>
       </div>
 
@@ -240,7 +238,7 @@ export default function ProfileCard({ onClose }: { onClose: () => void }) {
                   zIndex: 10,
                 }}
               >
-                GLIX TEST
+                Wachsen
               </div>
 
               <div
@@ -287,11 +285,11 @@ export default function ProfileCard({ onClose }: { onClose: () => void }) {
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '30px', flex: 1 }}>
                   {([
-                    { l: 'Name',   v: userProfile.name?.toUpperCase() },
+                    { l: 'Name', v: userProfile.name?.toUpperCase() },
                     { l: 'USER ID', v: `@${userProfile.username || ''}` },
-                    { l: 'Email',  v: maskEmail(userProfile.email || '') },
-                    userProfile.DOB     && { l: 'DOB',    v: userProfile.DOB },
-                    userProfile.gender  && { l: 'Gender', v: userProfile.gender },
+                    { l: 'Email', v: maskEmail(userProfile.email || '') },
+                    userProfile.DOB && { l: 'DOB', v: userProfile.DOB },
+                    userProfile.gender && { l: 'Gender', v: userProfile.gender },
                     userProfile.country && { l: 'Nation', v: userProfile.country },
                   ] as any[]).filter(Boolean).map((f: any) => (
                     <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>

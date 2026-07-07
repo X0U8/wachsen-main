@@ -384,7 +384,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: Math.round(tier.price * 100),
           currency: selectedCountry?.currency || 'USD',
-          name: 'Glix Up',
+          name: 'Wachsen',
           description: `${tier.name} - ${tier.creditsPerDay} credits/day (${isYearly ? 'Yearly' : 'Monthly'})`,
           order_id: '',
           handler: async function (response: any) {
@@ -516,9 +516,8 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                     <button
                       key={country.code}
                       onClick={() => handleCountryChange(country)}
-                      className={`w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-all ${
-                        selectedCountry.code === country.code ? 'bg-black/10 dark:bg-white/10' : ''
-                      }`}
+                      className={`w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-all ${selectedCountry.code === country.code ? 'bg-black/10 dark:bg-white/10' : ''
+                        }`}
                     >
                       <span className="text-gray-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{country.name}</span>
                       <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>({country.currency})</span>
@@ -533,18 +532,16 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
             <div className="flex items-center bg-gray-200/40 dark:bg-black/40 rounded-2xl p-1.5 border border-black/5 dark:border-white/5">
               <button
                 onClick={() => setIsYearly(false)}
-                className={`px-8 py-2.5 rounded-xl bold transition-all ${
-                  !isYearly ? 'bg-white text-black shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                className={`px-8 py-2.5 rounded-xl bold transition-all ${!isYearly ? 'bg-white text-black shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
                 style={{ fontSize: fontSize.sm }}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setIsYearly(true)}
-                className={`px-8 py-2.5 rounded-xl bold transition-all ${
-                  isYearly ? 'bg-white text-black shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                className={`px-8 py-2.5 rounded-xl bold transition-all ${isYearly ? 'bg-white text-black shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
                 style={{ fontSize: fontSize.sm }}
               >
                 Yearly
@@ -697,7 +694,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
           <div className="bg-gray-100 dark:bg-gray-900 border border-black/10 dark:border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3" style={{ fontSize: fontSize.xl }}>Upgrade Warning</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4" style={{ fontSize: fontSize.sm }}>
-              Your current plan is already running and will end on {new Date(premiumEnds || '').toLocaleDateString()}. 
+              Your current plan is already running and will end on {new Date(premiumEnds || '').toLocaleDateString()}.
               Upgrading to a new plan will take effect immediately.
             </p>
             <p className="text-yellow-600 dark:text-yellow-500 mb-6" style={{ fontSize: fontSize.xs }}>

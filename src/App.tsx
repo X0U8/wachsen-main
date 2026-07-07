@@ -4,6 +4,7 @@ import { supabase } from './services/supabase';
 import Login from './components/Login';
 import Onboarding from './components/Onboarding';
 import Exam from './components/Exam';
+import Settings from './components/Settings';
 
 import { UserProvider, useUserProfile } from './lib/UserContext.tsx';
 import { ThemeProvider } from './lib/ThemeContext.tsx';
@@ -65,6 +66,7 @@ function MainApp() {
       <Route path="/" element={<Navigate to="/exam" />} />
       <Route path="/exam" element={<Exam />} />
 
+      <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/exam" />} />
     </Routes>
   );

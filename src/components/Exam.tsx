@@ -279,7 +279,7 @@ export default function Exam() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-5 pb-28">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-5 pb-28 overflow-y-auto min-h-0">
         {tab === 'exams' && (
           <>
             {examTypes.length === 0 ? (

@@ -143,7 +143,7 @@ export default function Login() {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-950/20 to-purple-950/20 blur-[120px] z-0" />
 
       <div className="w-full max-w-sm relative z-10 flex flex-col items-center">
-        <h1 className="mb-16 font-light text-black dark:text-white tracking-tight" style={{ fontSize: fontSize['3xl'] }}>Welcome to Wachsen</h1>
+        <h1 className="mb-16 font-light text-black dark:text-white tracking-tight" style={{ fontSize: fontSize['2xl'] }}>Welcome  to  Wachsen</h1>
 
         {error && (
           <p className="mb-4 text-blue-800 dark:text-blue-200 p-3 bg-blue-100/60 dark:bg-blue-950/40 border border-blue-200/30 dark:border-blue-900/35 rounded-xl w-full text-center animate-fade-in" style={{ fontSize: fontSize.sm }}>

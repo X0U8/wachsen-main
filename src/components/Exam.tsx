@@ -12,9 +12,9 @@ import { useUserProfile } from '../lib/UserContext.tsx';
 import localStorageCache from '../lib/localStorage';
 import { fontSize } from '../lib/utils';
 import InfoComponent from '../ui/InfoComponent';
-import NewExamForm from './exam/NewExamForm';
+import NewExamTypeForm from './exam/NewExamTypeForm';
 import UpcomingTable from './exam/UpcomingTable';
-import UpgradeModal from './exam/UpgradeModal';
+import SubscriptionModal from './exam/SubscriptionModal';
 
 type Tab = 'exams' | 'upcoming';
 
@@ -344,7 +344,7 @@ export default function Exam() {
 
       {/* New Exam Form Modal */}
       {showForm && (
-        <NewExamForm
+        <NewExamTypeForm
           onSave={handleSaveForm}
           onClose={() => setShowForm(false)}
           maxSubjects={getMaxSubjects()}
@@ -352,9 +352,9 @@ export default function Exam() {
         />
       )}
 
-      {/* Upgrade Modal */}
+      {/* Subscription Modal */}
       {showUpgradeModal && (
-        <UpgradeModal name={disabledItemName} onClose={() => setShowUpgradeModal(false)} />
+        <SubscriptionModal name={disabledItemName} onClose={() => setShowUpgradeModal(false)} />
       )}
 
       {/* Buy Credits Modal */}

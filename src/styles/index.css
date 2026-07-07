@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --animate-loading-line: loading-line 1.5s ease-in-out infinite;
+  @keyframes loading-line {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-50 text-zinc-950 dark:bg-black dark:text-zinc-50 font-sans text-lg transition-colors duration-300;
+    font-variant-numeric: lining-nums;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+
+  * {
+    scrollbar-width: none;
+    scrollbar-color: transparent transparent;
+  }
+
+  input, textarea, [contenteditable] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+}
+
+@utility heading-page {
+  @apply text-3xl font-light text-zinc-900 dark:text-white tracking-tight;
+}
+
+@utility heading-gradient {
+  @apply text-2xl font-bold tracking-wider bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400 bg-clip-text text-transparent;
+}
+
+@utility text-sub {
+  @apply text-sm text-zinc-600 dark:text-zinc-400 mt-1;
+}
+
+@utility heading-card {
+  @apply text-lg font-semibold text-zinc-800 dark:text-zinc-300;
+}
+
+@utility text-mono-sub {
+  @apply text-xs text-zinc-500 dark:text-zinc-400 font-mono mt-0.5;
+}
+
+@utility btn-primary {
+  @apply flex w-full items-center justify-center gap-3 rounded-2xl bg-zinc-900/5 dark:bg-white/5 border border-zinc-900/10 dark:border-white/10 hover:bg-zinc-900/10 dark:hover:bg-white/10 px-4 py-4 text-zinc-900 dark:text-white font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50;
+}
+
+@utility exam-card {
+  animation: card-in 0.3s ease both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

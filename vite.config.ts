@@ -24,7 +24,6 @@ export default defineConfig(({mode}) => {
     },
     build: {
       rollupOptions: {
-        external: ['/api/**'],
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],

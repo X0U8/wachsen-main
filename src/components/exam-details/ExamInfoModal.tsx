@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { X, ChevronLeft, AlertCircle, GraduationCap } from 'lucide-react';
+import { X, ChevronLeft, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fontSize } from '../../lib/utils';
 
@@ -8,7 +8,7 @@ interface Exam {
   name: string;
   startDateTime: string;
   endDateTime: string;
-  status: 'Completed' | 'Pending' | 'Ongoing' | 'Expired';
+  status: 'Completed' | 'Pending' | 'Ongoing' | 'Expired' | 'active';
   difficulty: 'easy' | 'medium' | 'hard' | 'advance';
   examType: string;
   totalQuestions: number;
@@ -20,13 +20,10 @@ interface Exam {
 interface ExamInfoModalProps {
   exam: Exam | null;
   onClose: () => void;
-  onOpenTemplate: () => void;
   formatSimpleDate: (date: string) => string;
-  templateCount?: number;
-  maxTemplates?: number;
 }
 
-export default function ExamInfoModal({ exam, onClose, onOpenTemplate, formatSimpleDate, templateCount = 0, maxTemplates = 5 }: ExamInfoModalProps) {
+export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamInfoModalProps) {
   const navigate = useNavigate();
   if (!exam) return null;
 
@@ -105,33 +102,9 @@ export default function ExamInfoModal({ exam, onClose, onOpenTemplate, formatSim
             </div>
 
             <div className="pt-4 space-y-3">
-              {!exam.isTemplate && (
-                <div className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-black/30 border border-zinc-200 dark:border-gray-800 rounded-xl">
-                  <GraduationCap className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>
-                    {maxTemplates - templateCount} template{maxTemplates - templateCount !== 1 ? 's' : ''} left
-                  </span>
-                </div>
-              )}
-              {(!exam.isTemplate && templateCount >= maxTemplates) ? (
-                <div className="w-full py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center justify-center gap-2" style={{ fontSize: fontSize.sm }}>
-                  <AlertCircle className="w-4 h-4" />
-                  Template limit reached
-                </div>
-              ) : (
-                <button
-                  onClick={onOpenTemplate}
-                  className="w-full py-3 bg-zinc-100 dark:bg-gray-800 hover:bg-zinc-200 dark:hover:bg-gray-700 text-zinc-600 dark:text-gray-300 rounded-2xl transition-all flex items-center justify-center gap-2"
-                  style={{ fontSize: fontSize.sm }}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  {exam.isTemplate ? 'Edit Template' : 'Mark as Template'}
-                </button>
-              )}
-
               {(() => {
                 const isExpired = exam.status === 'Expired';
-                const canStart = exam.status === 'Pending';
+                const canStart = exam.status === 'Pending' || exam.status === 'active';
 
                 if (!canStart) {
                   let message = "This exam cannot be started.";

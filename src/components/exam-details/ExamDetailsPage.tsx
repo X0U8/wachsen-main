@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, ChevronLeft, Loader2, RefreshCw } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { SettingsIcon } from '../../icons/SettingsIcon';
 import MakeAIForm from '../make-exam/MakeAIPage';
 import Notification from '../../ui/Notification';
 import { fontSize } from '../../lib/utils';
@@ -13,13 +12,14 @@ import localStorageCache from '../../lib/localStorage';
 import ExamInfoModal from './ExamInfoModal';
 import TemplateModal from './TemplateModal';
 import EditCategoryModal from './EditCategoryModal';
+import { useTemplateSaving } from '../../hooks/useTemplateSaving';
 
 interface Exam {
   id: string;
   name: string;
   startDateTime: string;
   endDateTime: string;
-  status: 'Completed' | 'Pending' | 'Ongoing' | 'Expired';
+  status: 'Completed' | 'Pending' | 'Ongoing' | 'Expired' | 'active';
   difficulty: 'easy' | 'medium' | 'hard' | 'advance';
   examType: string;
   totalQuestions: number;
@@ -34,27 +34,23 @@ export default function ExamDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { userProfile, refreshCredits } = useUserProfile();
-  const settingsRef = useRef<any>(null);
 
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   const [showMakeAI, setShowMakeAI] = useState(false);
-  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
   };
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
-  const [templateNameInput, setTemplateNameInput] = useState('');
-  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
-  const [templateMessage, setTemplateMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [isEditingTemplate, setIsEditingTemplate] = useState(false);
-  const [templateCount, setTemplateCount] = useState(0);
-  const [loadingTemplateCount, setLoadingTemplateCount] = useState(true);
-  const [examType, setExamType] = useState<any>(null);
 
-  // Edit category form state
+  const {
+    showTemplateModal, templateNameInput, isSavingTemplate, templateMessage, isEditingTemplate,
+    templateCount, maxTemplates, setTemplateNameInput,
+    openTemplateModal, saveTemplate, closeTemplateModal,
+  } = useTemplateSaving(userProfile?.id, userProfile?.PremiumType);
+
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [examType, setExamType] = useState<any>(null);
   const [editCategoryForm, setEditCategoryForm] = useState({
     examName: '',
     subjectInput: '',
@@ -70,31 +66,9 @@ export default function ExamDetails() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [selectedExamForInfo, setSelectedExamForInfo] = useState<Exam | null>(null);
   const [loadingExams, setLoadingExams] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const EXAMS_PER_PAGE = 10;
-
-  const getMaxTemplates = () => {
-    const premiumType = userProfile?.PremiumType || '';
-    if (premiumType.toLowerCase().includes('peak')) return 30;
-    if (premiumType.toLowerCase().includes('rise')) return 20;
-    if (premiumType.toLowerCase().includes('lite')) return 10;
-    return 5;
-  };
-
-  const fetchTemplateCount = async () => {
-    if (!userProfile?.id) return;
-    try {
-      const { count, error } = await supabase
-        .from('exams')
-        .select('*', { count: 'exact', head: true })
-        .eq('createdBy', userProfile.id)
-        .eq('isTemplate', true);
-      if (!error && count !== null) setTemplateCount(count);
-    } catch { } finally {
-      setLoadingTemplateCount(false);
-    }
-  };
-
-  useEffect(() => { fetchTemplateCount(); }, [userProfile?.id]);
 
   const formatSimpleDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -104,16 +78,6 @@ export default function ExamDetails() {
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${day} ${month} (${hours}:${minutes})`;
   };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      settingsRef.current?.startAnimation?.();
-      setTimeout(() => {
-        settingsRef.current?.stopAnimation?.();
-      }, 1000);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
 
   const queryClient = useQueryClient();
 
@@ -151,15 +115,21 @@ export default function ExamDetails() {
 
   // Fetch initial exams with React Query
   const { data: initialExams = [], isLoading: loadingExamsInitial } = useQuery({
-    queryKey: ['examInstances', id, userProfile?.id],
+    queryKey: ['examInstances', id, userProfile?.id, statusFilter, sortOrder],
     queryFn: async () => {
       if (!userProfile?.id) return [];
-      const { data, error } = await supabase
+      let query = supabase
         .from('exams')
         .select('*')
         .eq('categoryId', id!)
-        .contains('accessIds', [userProfile.id])
-        .order('created_at', { ascending: false })
+        .contains('accessIds', [userProfile.id]);
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: sortOrder === 'asc' })
         .range(0, EXAMS_PER_PAGE - 1);
 
       if (error) throw error;
@@ -208,12 +178,18 @@ export default function ExamDetails() {
     setLoadingExams(true);
     try {
       const offset = exams.length;
-      const { data, error } = await supabase
+      let query = supabase
         .from('exams')
         .select('*')
         .eq('categoryId', id)
-        .contains('accessIds', [userProfile.id])
-        .order('created_at', { ascending: false })
+        .contains('accessIds', [userProfile.id]);
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: sortOrder === 'asc' })
         .range(offset, offset + EXAMS_PER_PAGE - 1);
 
       if (error) throw error;
@@ -278,82 +254,6 @@ export default function ExamDetails() {
 
 
 
-
-  // Handle opening template modal
-  const handleOpenTemplateModal = () => {
-    if (!selectedExamForInfo) return;
-    const isTemplate = selectedExamForInfo.isTemplate || false;
-    setIsEditingTemplate(isTemplate);
-    setTemplateNameInput(isTemplate ? (selectedExamForInfo.templateName || '') : '');
-    setTemplateMessage(null);
-    fetchTemplateCount();
-    setShowTemplateModal(true);
-  };
-
-  // Handle saving exam as template
-  const handleSaveTemplate = async () => {
-    if (!userProfile?.id || !selectedExamForInfo) return;
-
-    setIsSavingTemplate(true);
-    setTemplateMessage(null);
-    try {
-      // Only check template limit when creating new template, not editing
-      if (!isEditingTemplate) {
-        const { count, error: countError } = await supabase
-          .from('exams')
-          .select('*', { count: 'exact', head: true })
-          .eq('createdBy', userProfile.id)
-          .eq('isTemplate', true);
-
-        if (countError) throw countError;
-
-        if (count !== null && count >= getMaxTemplates()) {
-          setTemplateMessage({ type: 'error', text: `Template limit reached (${getMaxTemplates()}). Please delete an existing template first.` });
-          return;
-        }
-      }
-
-      // Update exam document with isTemplate and templateName
-      const { error: updateError } = await supabase
-        .from('exams')
-        .update({
-          isTemplate: true,
-          templateName: templateNameInput.trim()
-        })
-        .eq('id', selectedExamForInfo.id);
-
-      if (updateError) throw updateError;
-
-      setTemplateMessage({ type: 'success', text: 'Template saved successfully!' });
-
-      // Close modals and reset state after delay
-      setTimeout(() => {
-        setShowTemplateModal(false);
-        setSelectedExamForInfo(null);
-        setTemplateNameInput('');
-        setTemplateMessage(null);
-        fetchExams(true);
-      }, 1500);
-    } catch (error) {
-      console.error('Error saving template:', error);
-      setTemplateMessage({ type: 'error', text: 'Failed to save template. Please try again.' });
-    } finally {
-      setIsSavingTemplate(false);
-    }
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
-        setShowSettingsDropdown(false);
-      }
-    };
-    if (showSettingsDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showSettingsDropdown]);
 
   const handleOpenEditCategoryModal = () => {
     if (!examType) return;
@@ -444,43 +344,33 @@ export default function ExamDetails() {
           >
             <RefreshCw className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
           </button>
-          <div className="relative">
-            <button
-              onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-              className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors"
-            >
-              <SettingsIcon ref={settingsRef} size={18} />
-            </button>
-            <AnimatePresence>
-              {showSettingsDropdown && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute right-0 top-12 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-2 min-w-[200px] shadow-xl z-50"
-                >
-                  <div className="border-t border-zinc-200 dark:border-gray-800 my-1" />
-                  <button
-                    onClick={() => {
-                      setShowSettingsDropdown(false);
-                      handleOpenEditCategoryModal();
-                    }}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-zinc-100 dark:hover:bg-gray-800 rounded-xl text-zinc-600 dark:text-gray-400 font-medium transition-colors"
-                    style={{ fontSize: fontSize.sm }}
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Update Category
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <button onClick={handleOpenEditCategoryModal}
+            className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors"
+            title="Update Category">
+            <Wrench className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
+          </button>
         </div>
       </header>
 
       {/* Table Section */}
       <main className="flex-1 p-4 pb-32">
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-zinc-200 dark:border-gray-800 overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-zinc-200 dark:border-gray-800 overflow-hidden">
+          {/* Filters */}
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-950/30">
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+              <option value="all">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="Completed">Completed</option>
+              <option value="Expired">Expired</option>
+            </select>
+            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
+              className="bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+              <option value="desc">Newest</option>
+              <option value="asc">Oldest</option>
+            </select>
+          </div>
           {loadingExamsInitial ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -585,10 +475,7 @@ export default function ExamDetails() {
       <ExamInfoModal
         exam={selectedExamForInfo}
         onClose={() => setSelectedExamForInfo(null)}
-        onOpenTemplate={handleOpenTemplateModal}
         formatSimpleDate={formatSimpleDate}
-        templateCount={templateCount}
-        maxTemplates={getMaxTemplates()}
       />
 
       <TemplateModal
@@ -597,11 +484,11 @@ export default function ExamDetails() {
         templateName={templateNameInput}
         message={templateMessage}
         isSaving={isSavingTemplate}
-        onNameChange={(v) => { setTemplateNameInput(v); setTemplateMessage(null); }}
-        onSave={handleSaveTemplate}
-        onClose={() => { setShowTemplateModal(false); setTemplateNameInput(''); setTemplateMessage(null); setIsEditingTemplate(false); }}
+        onNameChange={setTemplateNameInput}
+        onSave={() => selectedExamForInfo && saveTemplate(selectedExamForInfo.id, () => { setSelectedExamForInfo(null); })}
+        onClose={closeTemplateModal}
         templateCount={templateCount}
-        maxTemplates={getMaxTemplates()}
+        maxTemplates={maxTemplates}
       />
 
       {/* Make AI Form Component */}
@@ -614,7 +501,6 @@ export default function ExamDetails() {
             userProfile={userProfile}
             categoryId={id || ''}
             availableSubjects={availableSubjects}
-            refreshCredits={refreshCredits}
           />
         )}
       </AnimatePresence>

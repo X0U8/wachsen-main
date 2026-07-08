@@ -5,7 +5,7 @@ import SpotlightCard from '../../ui/SpotlightCard';
 import TextType from '../../ui/TextType';
 import PlanIcon from '../../ui/PlanIcon';
 import BuyCreditsModal from '../../ui/BuyCreditsModal';
-import { Plus, X, Loader2, Lock } from 'lucide-react';
+import { Plus, Lock } from 'lucide-react';
 import { SettingsIcon } from '../../icons/SettingsIcon';
 import { supabase } from '../../services/supabase';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ import InfoComponent from '../../ui/InfoComponent';
 import NewExamTypeForm from './NewExamTypeForm';
 import UpcomingTable from './UpcomingTable';
 import SubscriptionModal from './SubscriptionModal';
+import ClaimCreditsModal from './ClaimCreditsModal';
 
 type Tab = 'exams' | 'upcoming';
 
@@ -38,13 +39,15 @@ export default function Exam() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [disabledItemName, setDisabledItemName] = useState('');
   const [showBuyCredits, setShowBuyCredits] = useState(false);
+  const [showClaim, setShowClaim] = useState(false);
   const [showIcon, setShowIcon] = useState(false);
   const [upcomingExams, setUpcomingExams] = useState<any[]>([]);
   const [loadingUpcoming, setLoadingUpcoming] = useState(false);
-  const hasInitializedUpcoming = useRef(false);
+
   const EXAMS_PER_PAGE = 10;
   const MAX_EXAM_NAME_LENGTH = 60;
   const lastSaveTime = useRef(0);
+  const lastSaveData = useRef<string>('');
   const [localProfile, setLocalProfile] = useState<any | null>(() => {
     return localStorageCache.get<any>(localStorageCache.keys.USER_PROFILE);
   });
@@ -118,7 +121,7 @@ export default function Exam() {
   });
 
   useEffect(() => {
-    if (fetchedExamTypes.length > 0 && !hasInitializedExamTypes.current) {
+    if (fetchedExamTypes.length > 0) {
       hasInitializedExamTypes.current = true;
       setExamTypes(fetchedExamTypes);
     }
@@ -144,19 +147,17 @@ export default function Exam() {
           startDateTime: doc.startDateTime || '', status: doc.status || 'active',
           difficulty: doc.difficulty || 'medium', categoryId: doc.categoryId
         }))
-        .filter((exam: any) => exam.status === 'active');
+        .filter((exam: any) => exam.status === 'active' || exam.status === 'Pending');
     },
     enabled: !!userId,
-    staleTime: Infinity, refetchOnMount: false, gcTime: Infinity,
+    staleTime: 0, refetchOnMount: true, gcTime: 0,
   });
 
   useEffect(() => {
-    if ((initialUpcoming.length > 0 || !loadingUpcomingInitial) && !hasInitializedUpcoming.current) {
-      hasInitializedUpcoming.current = true;
+    if (initialUpcoming.length > 0 && upcomingExams.length === 0) {
       setUpcomingExams(initialUpcoming);
-      setLoadingUpcoming(loadingUpcomingInitial);
     }
-  }, [initialUpcoming, loadingUpcomingInitial]);
+  }, [initialUpcoming]);
 
   const hasMoreUpcoming = upcomingExams.length >= EXAMS_PER_PAGE && upcomingExams.length % EXAMS_PER_PAGE === 0;
   const upcomingOffset = upcomingExams.length;
@@ -182,7 +183,7 @@ export default function Exam() {
           startDateTime: doc.startDateTime || '', status: doc.status || 'active',
           difficulty: doc.difficulty || 'medium', categoryId: doc.categoryId
         }))
-        .filter((exam: any) => exam.status === 'active');
+        .filter((exam: any) => exam.status === 'active' || exam.status === 'Pending');
       setUpcomingExams(prev => [...prev, ...fetched]);
     } catch (err) {
       console.error('Error fetching upcoming exams:', err);
@@ -200,10 +201,16 @@ export default function Exam() {
   const handleSaveForm = async (data: { name: string; subjects: string[]; academicLevel: string }) => {
     if (!userId) return;
     const now = Date.now();
-    if (now - lastSaveTime.current < 2000) {
+    const dataKey = JSON.stringify(data);
+    if (lastSaveData.current === dataKey && now - lastSaveTime.current < 120000) {
+      setNotification({ message: 'Duplicate exam type detected. Please wait 2 minutes.', type: 'error' });
+      return;
+    }
+    if (now - lastSaveTime.current < 5000) {
       setNotification({ message: 'Please wait before creating another exam type', type: 'error' });
       return;
     }
+    lastSaveData.current = dataKey;
 
     setSaving(true);
     try {
@@ -249,16 +256,31 @@ export default function Exam() {
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2 bg-zinc-150/50 dark:bg-gray-900/50 border border-zinc-250 dark:border-gray-800 rounded-xl px-2.5 sm:px-3 py-1.5 text-zinc-600 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
             <strong className="text-zinc-850 dark:text-gray-100 font-semibold">{userProfile?.credits || 0}</strong>
             <span className="hidden sm:inline">credits</span>
-            <button onClick={() => setShowBuyCredits(true)} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Add credits">+</button>
+            <button onClick={() => {
+              const lastClaimed = localStorage.getItem('last_claimed_date');
+              const today = new Date().toDateString();
+              if (lastClaimed === today) return;
+              setShowClaim(true);
+            }} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Daily credits">+</button>
           </div>
           <button onClick={() => navigate('/settings')} className="p-1.5 rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Settings">
             <SettingsIcon size={14} />
           </button>
         </div>
       </header>
+
+      {localStorage.getItem('use_own_key') === 'true' && (() => {
+        const prov = localStorage.getItem('provider') || 'mesh';
+        const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key');
+        if (!key) return null;
+        return (
+          <div className="w-full px-3 py-1 bg-[#007AFF]/8 border-b border-[#007AFF]/20 text-[#007AFF] text-center font-medium" style={{ fontSize: '0.625rem' }}>
+            Using your own key with {prov === 'mistral' ? 'Mistral' : 'Mesh API'}
+          </div>
+        );
+      })()}
 
       {/* Tabs */}
       <div className="flex shrink-0 px-3 sm:px-4 pt-3 pb-2 bg-white dark:bg-black">
@@ -268,8 +290,8 @@ export default function Exam() {
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${tab === t
-                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
+                ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
                 }`}
               style={{ fontSize: fontSize.xs }}
             >
@@ -292,6 +314,10 @@ export default function Exam() {
               <>
                 <div className="flex justify-between items-center mb-4 px-1">
                   <p className="font-medium text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>{slotsLeft} slot{slotsLeft !== 1 ? 's' : ''} remaining</p>
+                  <button onClick={handleDoubleClick} disabled={slotsLeft <= 0}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-all text-xs ${slotsLeft <= 0 ? 'bg-zinc-200 dark:bg-gray-800 text-zinc-400 dark:text-gray-600 cursor-not-allowed' : 'bg-[#007AFF] hover:bg-[#0062CC] text-white cursor-pointer'}`}>
+                    <Plus className="w-3.5 h-3.5" /> New
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {examTypes.map((exam, i) => {
@@ -371,17 +397,6 @@ export default function Exam() {
         />
       )}
 
-      {/* Add Button */}
-      {tab === 'exams' && !showForm && examTypes.length < getMaxExamTypes() && (
-        <button
-          onClick={handleDoubleClick}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
-          aria-label="Add exam type"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      )}
-
       {/* Notification */}
       {notification && (
         <InfoComponent
@@ -390,6 +405,13 @@ export default function Exam() {
           onClose={() => setNotification(null)}
         />
       )}
+
+      <ClaimCreditsModal
+        show={showClaim}
+        onClose={() => setShowClaim(false)}
+        userProfile={userProfile}
+        refreshCredits={refreshCredits}
+      />
 
       <Footer />
     </div>

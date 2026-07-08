@@ -6,6 +6,7 @@ import Onboarding from './components/onboarding/OnboardingPage';
 import Exam from './components/exam/ExamPage';
 import ExamDetails from './components/exam-details/ExamDetailsPage';
 import Settings from './components/Settings';
+import TakeExam from './components/TakeExam';
 
 import { UserProvider, useUserProfile } from './lib/UserContext.tsx';
 import { ThemeProvider } from './lib/ThemeContext.tsx';
@@ -68,6 +69,7 @@ function MainApp() {
       <Route path="/exam" element={<Exam />} />
 
       <Route path="/exam-details/:id" element={<ExamDetails />} />
+      <Route path="/exam/:instanceId" element={<TakeExam />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/exam" />} />
     </Routes>

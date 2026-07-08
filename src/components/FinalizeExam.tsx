@@ -3,6 +3,8 @@ import { ChevronLeft, RefreshCw, AlertCircle, CheckCircle2, CircleStop } from 'l
 import { motion } from 'framer-motion';
 import Notification from '../ui/Notification';
 import { useUserProfile } from '../lib/UserContext';
+import { fontSize } from '../lib/utils';
+import { supabase } from '../services/supabase';
 
 interface FinalizeExamProps {
   show: boolean;
@@ -20,13 +22,12 @@ interface FinalizeExamProps {
     categoryId?: string;
   };
   userId: string;
-  initialPlan?: any;
 }
 
-export default function FinalizeExam({ show, onClose, examData, userId, initialPlan }: FinalizeExamProps) {
+export default function FinalizeExam({ show, onClose, examData, userId }: FinalizeExamProps) {
   const { refreshCredits, userProfile } = useUserProfile();
-  const [isGenerating, setIsGenerating] = useState(!!initialPlan ? false : true);
-  const [examBlueprint, setExamBlueprint] = useState<any>(initialPlan ? initialPlan.subjects : null);
+  const [isGenerating, setIsGenerating] = useState(true);
+  const [examBlueprint, setExamBlueprint] = useState<any>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
   const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
@@ -39,37 +40,28 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
   const [allSegmentsAttempted, setAllSegmentsAttempted] = useState(false);
   const [segmentJsonData, setSegmentJsonData] = useState<Record<string, any>>({});
 
-  // Prevent going back and show reload warning
-  useEffect(() => {
-    if (!show) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = 'Exam generation is in progress. Are you sure you want to leave?';
-    };
-
-    const handlePopState = (e: PopStateEvent) => {
-      e.preventDefault();
-      window.history.pushState(null, '', window.location.href);
-      showNotification('info', 'Cannot go back during exam generation');
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [show]);
+  // Allow user to reload freely
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
   };
 
+  const getAuthToken = async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || '';
+  };
+
+  const getProvider = () => localStorage.getItem('provider') || 'mesh';
+  const getApiKey = () => localStorage.getItem(getProvider() === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
+  const getActiveModel = () => localStorage.getItem('mesh_active_model') || '';
+  const getUseOwnKey = () => localStorage.getItem('use_own_key') === 'true';
+
   const generateBlueprint = async () => {
     try {
+      const authToken = await getAuthToken();
+      const apiKey = getUseOwnKey() ? getApiKey() : '';
+      const provider = getProvider();
+      const model = provider === 'mistral' ? 'mistral-small-latest' : getActiveModel();
       const response = await fetch(`/api/generate-exam-plan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -77,10 +69,22 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
           subjects: examData.subjects,
           examName: examData.examName,
           difficulty: examData.difficulty,
-          userId
+          userId,
+          authToken,
+          apiKey: apiKey || undefined,
+          provider,
+          model: model || undefined
         }),
       });
 
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        let msg = `API error: ${response.status}`;
+        try { const e = JSON.parse(text); msg = e.error || msg; } catch {}
+        showNotification('error', msg);
+        setIsGenerating(false);
+        return;
+      }
       const data = await response.json();
       if (data.success) {
         setExamBlueprint(data.plan.subjects);
@@ -107,6 +111,10 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
     const segmentKey = `${subjectIndex}-${segmentIndex}`;
 
     try {
+      const authToken = await getAuthToken();
+      const apiKey = getUseOwnKey() ? getApiKey() : '';
+      const provider = getProvider();
+      const model = provider === 'mistral' ? 'mistral-small-latest' : getActiveModel();
       const response = await fetch(`/api/generate-segment-questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,10 +124,22 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
           subjectIndex,
           questionTypes: examData.subjects[subjectIndex]?.questionTypes || [],
           difficulty: examData.difficulty,
-          userId
+          userId,
+          authToken,
+          apiKey: apiKey || undefined,
+          provider,
+          model: model || undefined
         }),
       });
 
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        let msg = `API error: ${response.status}`;
+        try { const e = JSON.parse(text); msg = e.error || msg; } catch {}
+        showNotification('error', msg);
+        setFailedSegments(prev => new Set(prev).add(segmentKey));
+        return;
+      }
       const data = await response.json();
       if (data.success) {
         const questionsWithIndex = data.questions.map((q: any) => ({ ...q, subjectIndex }));
@@ -148,7 +168,6 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
           setIsGeneratingQuestions(false);
           setAllSegmentsAttempted(true);
           if (failedSegments.size === 0) {
-            setAllQuestionsGenerated(true);
             showNotification('success', 'All questions generated successfully!');
           } else {
             showNotification('info', 'Some segments failed. You can regenerate them.');
@@ -264,7 +283,7 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
       subjects: JSON.stringify(examData.subjects),
       isTemplate: false,
       categoryId: examData.categoryId || null,
-      status: 'active',
+      status: examData.accessType === 'specific' && examData.startDateTime && examData.startDateTime !== 'anytime' ? 'Pending' : 'active',
       generatedExam: JSON.stringify(generatedQuestions),
       ExamPlan: JSON.stringify(examBlueprint)
     };
@@ -314,40 +333,40 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed inset-0 z-[60] bg-gray-950 flex flex-col"
+        className="fixed inset-0 z-[60] bg-zinc-50 dark:bg-gray-950 text-zinc-900 dark:text-gray-100 flex flex-col"
       >
-        <header className="p-4 flex items-center justify-between border-b border-gray-900 bg-gray-950/80 backdrop-blur-md sticky top-0 z-10">
+        <header className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-gray-900 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <button onClick={onClose} className="p-2 hover:bg-gray-900 rounded-full transition-colors">
+            <button onClick={onClose} className="p-2 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-full transition-colors">
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h2 className="text-base font-base">Finalize Exam</h2>
+            <h2 className="font-base" style={{ fontSize: fontSize.base }}>Finalize Exam</h2>
           </div>
-          <div className="flex items-center gap-1.5 bg-gray-800/80 backdrop-blur-sm border border-gray-700 rounded-lg px-2 py-1">
-            <CircleStop className="w-4 h-4 text-white fill-yellow-500" />
-            <span className="text-white font-medium text-xs">{userProfile?.credits || 0}</span>
+          <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-gray-800/80 backdrop-blur-sm border border-zinc-300 dark:border-gray-700 rounded-lg px-2 py-1">
+            <CircleStop className="w-4 h-4 text-zinc-900 dark:text-white fill-yellow-500" />
+            <span className="font-medium text-zinc-900 dark:text-white" style={{ fontSize: fontSize.xs }}>{userProfile?.credits || 0}</span>
           </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 pb-32">
           {isGenerating ? (
             <div className="flex flex-col items-center justify-center h-full">
-              <RefreshCw className="w-10 h-10 text-blue-500 animate-spin mb-4" />
-              <p className="text-white font-medium">Generating exam plan</p>
+              <RefreshCw className="w-10 h-10 text-blue-500 dark:text-blue-400 animate-spin mb-4" />
+              <p className="text-zinc-900 dark:text-gray-100 font-medium">Generating exam plan</p>
             </div>
           ) : examBlueprint ? (
             <div className="space-y-4">
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+              <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-blue-500 font-medium text-sm">Exam Plan</h3>
+                  <h3 className="text-blue-500 dark:text-blue-400 font-medium" style={{ fontSize: fontSize.sm }}>Exam Plan</h3>
                   {cooldownRemaining > 0 && (
-                    <span className="text-amber-500 text-xs">Thinking about questions, Writting in: {cooldownRemaining}s</span>
+                    <span className="text-amber-500 dark:text-amber-400" style={{ fontSize: fontSize.xs }}>Thinking about questions, Writting in: {cooldownRemaining}s</span>
                   )}
                 </div>
                 <div className="space-y-4">
                   {examBlueprint.map((item: any, idx: number) => (
-                    <div key={idx} className="bg-gray-950 rounded-lg p-4 border border-gray-800 space-y-3">
-                      <h4 className="text-white font-medium text-sm">{item.name}</h4>
+                    <div key={idx} className="bg-zinc-50 dark:bg-gray-950 rounded-lg p-4 border border-zinc-200 dark:border-gray-800 space-y-3">
+                      <h4 className="text-zinc-900 dark:text-gray-100 font-medium" style={{ fontSize: fontSize.sm }}>{item.name}</h4>
                       <div className="space-y-2">
                         {item.segments.map((seg: any, sIdx: number) => {
                           const isCurrentSegment = isGeneratingQuestions && idx === currentSubjectIndex && sIdx === currentSegmentIndex;
@@ -356,14 +375,14 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
                           const isFailed = failedSegments.has(segmentKey);
                           const canRegenerate = allSegmentsAttempted && isFailed && !isGeneratingQuestions;
                           return (
-                            <div key={sIdx} className="bg-gray-900 rounded-lg p-3 border border-gray-700">
+                            <div key={sIdx} className="bg-white dark:bg-gray-900 rounded-lg p-3 border border-zinc-200 dark:border-gray-700">
                               <div className="flex items-center justify-between mb-2">
-                                <div className="text-xs text-amber-500 font-medium">Questions {seg.range}</div>
+                                <div className="text-amber-500 dark:text-amber-400 font-medium" style={{ fontSize: fontSize.xs }}>Questions {seg.range}</div>
                                 <div className="flex items-center gap-1">
-                                  {isCompleted && <CheckCircle2 className="w-3 h-3 text-green-500" />}
-                                  {isCurrentSegment && <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />}
-                                  {isFailed && !isGeneratingQuestions && <AlertCircle className="w-3 h-3 text-red-500" />}
-                                  {!isCompleted && !isCurrentSegment && !isFailed && <div className="w-3 h-3 rounded-full border border-gray-600" />}
+                                  {isCompleted && <CheckCircle2 className="w-3 h-3 text-green-500 dark:text-green-400" />}
+                                  {isCurrentSegment && <RefreshCw className="w-3 h-3 text-blue-500 dark:text-blue-400 animate-spin" />}
+                                  {isFailed && !isGeneratingQuestions && <AlertCircle className="w-3 h-3 text-red-500 dark:text-red-400" />}
+                                  {!isCompleted && !isCurrentSegment && !isFailed && <div className="w-3 h-3 rounded-full border border-zinc-400 dark:border-gray-600" />}
                                   <span className="text-[10px]">
                                     {isCompleted ? 'Generated' : isCurrentSegment ? 'Generating...' : isFailed ? 'Failed' : 'active'}
                                   </span>
@@ -371,13 +390,13 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
                               </div>
                               <div className="space-y-1">
                                 {seg.topics.map((topic: string, tIdx: number) => (
-                                  <div key={tIdx} className="text-xs text-gray-400">• {topic}</div>
+                                  <div key={tIdx} className="text-gray-400 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>• {topic}</div>
                                 ))}
                               </div>
                               {segmentJsonData[segmentKey] && (
-                                <div className="mt-2 bg-gray-950 rounded-lg p-2 border border-gray-700">
-                                  <div className="text-[10px] text-gray-500 mb-1">Generated JSON:</div>
-                                  <pre className="text-[9px] text-gray-300 font-mono overflow-x-auto whitespace-pre-wrap break-all">
+                                <div className="mt-2 bg-zinc-50 dark:bg-gray-950 rounded-lg p-2 border border-zinc-200 dark:border-gray-700">
+                                  <div className="text-[10px] text-gray-500 dark:text-gray-500 mb-1">Generated JSON:</div>
+                                  <pre className="text-[9px] text-zinc-700 dark:text-gray-300 font-mono overflow-x-auto whitespace-pre-wrap break-all">
                                     {segmentJsonData[segmentKey]}
                                   </pre>
                                 </div>
@@ -385,7 +404,7 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
                               {canRegenerate && (
                                 <button
                                   onClick={() => regenerateSegment(idx, sIdx)}
-                                  className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white py-1.5 rounded-lg text-xs font-medium transition-all"
+                                  className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white py-1.5 rounded-lg font-medium transition-all" style={{ fontSize: fontSize.xs }}
                                 >
                                   Regenerate
                                 </button>
@@ -401,19 +420,19 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full">
-              <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-              <p className="text-white font-medium">Failed to generate plan</p>
+              <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400 mb-4" />
+              <p className="text-zinc-900 dark:text-gray-100 font-medium">Failed to generate plan</p>
             </div>
           )}
         </main>
 
         {/* Fixed Footer */}
         {examBlueprint && (
-          <footer className="p-4 border-t border-gray-900 bg-gray-950/80 backdrop-blur-md fixed bottom-0 left-0 right-0 z-10">
+          <footer className="p-4 border-t border-zinc-200 dark:border-gray-900 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md fixed bottom-0 left-0 right-0 z-10">
             {!isGeneratingQuestions && !allSegmentsAttempted && (
               <button
                 onClick={() => setIsGeneratingQuestions(true)}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-sm transition-all"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-all" style={{ fontSize: fontSize.sm }}
               >
                 Generate Questions
               </button>
@@ -422,13 +441,13 @@ export default function FinalizeExam({ show, onClose, examData, userId, initialP
               <button
                 onClick={() => handleSaveExam()}
                 disabled={isSaving}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium text-sm transition-all"
+                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-all" style={{ fontSize: fontSize.sm }}
               >
                 {isSaving ? 'Saving...' : 'Save Exam'}
               </button>
             )}
             {allSegmentsAttempted && !isGeneratingQuestions && failedSegments.size > 0 && (
-              <div className="text-center text-amber-500 text-xs">
+              <div className="text-center text-amber-500 dark:text-amber-400" style={{ fontSize: fontSize.xs }}>
                 Regenerate failed segments to save exam
               </div>
             )}

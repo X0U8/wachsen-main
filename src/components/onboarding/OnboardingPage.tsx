@@ -1,16 +1,16 @@
 import { useState } from 'react';
-import Stepper from '../ui/Stepper';
-import { supabase } from '../services/supabase';
+import Stepper from '../../ui/Stepper';
+import { supabase } from '../../services/supabase';
 import { Session } from '@supabase/supabase-js';
-import InfoComponent, { InfoType } from '../ui/InfoComponent';
-import { fontSize } from '../lib/utils';
-import StepName from './onboarding/StepName';
-import StepUsername from './onboarding/StepUsername';
-import StepFrequency from './onboarding/StepFrequency';
-import StepDOB from './onboarding/StepDOB';
-import StepGender from './onboarding/StepGender';
-import StepCountry from './onboarding/StepCountry';
-import StepSource from './onboarding/StepSource';
+import InfoComponent, { InfoType } from '../../ui/InfoComponent';
+import { fontSize } from '../../lib/utils';
+import StepName from './StepName';
+import StepUsername from './StepUsername';
+import StepFrequency from './StepFrequency';
+import StepDOB from './StepDOB';
+import StepGender from './StepGender';
+import StepCountry from './StepCountry';
+import StepSource from './StepSource';
 
 const inputCls =
   "w-full bg-zinc-50/60 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500/40 rounded-xl px-4 py-3 text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none transition-colors font-sans";

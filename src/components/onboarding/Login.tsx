@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react';
-import { supabase } from '../services/supabase';
-import SpotlightCard from '../ui/SpotlightCard';
+import { supabase } from '../../services/supabase';
+import SpotlightCard from '../../ui/SpotlightCard';
 import { Loader2 } from 'lucide-react';
-import Aurora from '../effects/Aurora';
-import { useTheme } from '../lib/ThemeContext.tsx';
-import { fontSize } from '../lib/utils';
+import Aurora from '../../effects/Aurora';
+import { useTheme } from '../../lib/ThemeContext.tsx';
+import { fontSize } from '../../lib/utils';
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">

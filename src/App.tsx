@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './services/supabase';
-import Login from './components/Login';
-import Onboarding from './components/Onboarding';
-import Exam from './components/Exam';
+import Login from './components/onboarding/Login';
+import Onboarding from './components/onboarding/OnboardingPage';
+import Exam from './components/exam/ExamPage';
+import ExamDetails from './components/exam-details/ExamDetailsPage';
 import Settings from './components/Settings';
 
 import { UserProvider, useUserProfile } from './lib/UserContext.tsx';
@@ -66,6 +67,7 @@ function MainApp() {
       <Route path="/" element={<Navigate to="/exam" />} />
       <Route path="/exam" element={<Exam />} />
 
+      <Route path="/exam-details/:id" element={<ExamDetails />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/exam" />} />
     </Routes>

@@ -1,20 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Footer from './Footer.tsx';
-import SpotlightCard from '../ui/SpotlightCard';
-import TextType from '../ui/TextType';
-import PlanIcon from '../ui/PlanIcon';
-import BuyCreditsModal from '../ui/BuyCreditsModal';
-import { Plus, X, Loader2, Lock, Settings } from 'lucide-react';
-import { supabase } from '../services/supabase';
+import Footer from '../Footer';
+import SpotlightCard from '../../ui/SpotlightCard';
+import TextType from '../../ui/TextType';
+import PlanIcon from '../../ui/PlanIcon';
+import BuyCreditsModal from '../../ui/BuyCreditsModal';
+import { Plus, X, Loader2, Lock } from 'lucide-react';
+import { SettingsIcon } from '../../icons/SettingsIcon';
+import { supabase } from '../../services/supabase';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useUserProfile } from '../lib/UserContext.tsx';
-import localStorageCache from '../lib/localStorage';
-import { fontSize } from '../lib/utils';
-import InfoComponent from '../ui/InfoComponent';
-import NewExamTypeForm from './exam/NewExamTypeForm';
-import UpcomingTable from './exam/UpcomingTable';
-import SubscriptionModal from './exam/SubscriptionModal';
+import { useUserProfile } from '../../lib/UserContext.tsx';
+import localStorageCache from '../../lib/localStorage';
+import { fontSize } from '../../lib/utils';
+import InfoComponent from '../../ui/InfoComponent';
+import NewExamTypeForm from './NewExamTypeForm';
+import UpcomingTable from './UpcomingTable';
+import SubscriptionModal from './SubscriptionModal';
 
 type Tab = 'exams' | 'upcoming';
 
@@ -254,7 +255,7 @@ export default function Exam() {
             <button onClick={() => setShowBuyCredits(true)} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Add credits">+</button>
           </div>
           <button onClick={() => navigate('/settings')} className="p-1.5 rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Settings">
-            <Settings size={14} />
+            <SettingsIcon size={14} />
           </button>
         </div>
       </header>

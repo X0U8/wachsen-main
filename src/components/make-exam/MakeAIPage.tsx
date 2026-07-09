@@ -43,6 +43,9 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
   const [templates, setTemplates] = useState<any[]>([]);
   const [showTemplateList, setShowTemplateList] = useState(false);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [templateToApply, setTemplateToApply] = useState<any>(null);
+  const [applyingTemplate, setApplyingTemplate] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   // Add no-scrollbar style
   useEffect(() => {
@@ -244,7 +247,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     try {
       const { data, error } = await supabase
         .from('templates')
-        .select('*')
+        .select('name, id')
         .eq('userId', userProfile.$id)
         .order('created_at', { ascending: false });
       if (!error && data) setTemplates(data);
@@ -253,19 +256,33 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     }
   };
 
-  const applyTemplate = (tmpl: any) => {
-    setDifficulty(tmpl.difficulty || 'medium');
-    setTotalTime(tmpl.totalTime || 60);
-    setIsPublic(tmpl.visibility !== false);
-    setDefaultCorrectMarks(tmpl.defaultCorrectMarks ?? 4);
-    setDefaultNegativeMarks(tmpl.defaultNegativeMarks ?? 0);
-    setSelectedTypes(tmpl.selectedTypes || ['mcq']);
-    setDefaultCounts(tmpl.defaultCounts || {});
+  const confirmApplyTemplate = async () => {
+    if (!templateToApply) return;
+    setApplyingTemplate(true);
     setShowTemplateList(false);
+    try {
+      const { data, error } = await supabase
+        .from('templates')
+        .select('*')
+        .eq('id', templateToApply.id)
+        .single();
+      if (error || !data) { showNotification('error', 'Failed to load template'); setTemplateToApply(null); setApplyingTemplate(false); return; }
+      setDifficulty(data.difficulty || 'medium');
+      setTotalTime(data.totalTime || 60);
+      setIsPublic(data.visibility !== false);
+      setDefaultCorrectMarks(data.defaultCorrectMarks ?? 4);
+      setDefaultNegativeMarks(data.defaultNegativeMarks ?? 0);
+      setSelectedTypes(data.selectedTypes || ['mcq']);
+      setDefaultCounts(data.defaultCounts || {});
+      setTemplateToApply(null);
+      setApplyingTemplate(false);
+    } catch { showNotification('error', 'Failed to load template'); setTemplateToApply(null); setApplyingTemplate(false); }
   };
 
   const handleGenerate = () => {
-    if (!validateSubjects()) return;
+    if (generating) return;
+    setGenerating(true);
+    if (!validateSubjects()) { setGenerating(false); return; }
     const useOwn = localStorage.getItem('use_own_key') === 'true';
     const prov = localStorage.getItem('provider') || 'mesh';
     const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key');
@@ -280,6 +297,11 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
       }
     }
     setShowFinalizeExam(true);
+  };
+
+  const onFinalizeClose = () => {
+    setShowFinalizeExam(false);
+    setGenerating(false);
   };
 
   const addSubject = (sub?: any) => {
@@ -321,6 +343,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             <button onClick={onClose} className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors">
               <ChevronLeft className="w-6 h-6" />
             </button>
+            <h2 style={{ fontSize: fontSize.base }}>Make Exam</h2>
           </div>
           <div className="flex items-center gap-2">
             <button data-template-btn onClick={() => { fetchTemplates(); setShowTemplateList(!showTemplateList); }}
@@ -343,9 +366,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             style={{ maxHeight: '300px' }}>
             <div className="p-2 border-b border-zinc-200 dark:border-gray-800 flex items-center justify-between">
               <h4 className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Your Templates</h4>
-              <button onClick={() => setShowTemplateList(false)} className="p-1 hover:bg-zinc-100 dark:hover:bg-gray-800 rounded">
-                <X className="w-3.5 h-3.5 text-zinc-400" />
-              </button>
+              <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: '0.625rem' }}>{templates.length}/{getMaxTemplates()}</span>
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: '250px' }}>
               {loadingTemplates ? (
@@ -355,13 +376,15 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
               ) : templates.length === 0 ? (
                 <p className="text-zinc-400 dark:text-gray-500 text-center py-6" style={{ fontSize: fontSize.xs }}>No templates saved yet</p>
               ) : (
-                templates.map(tmpl => (
-                  <button key={tmpl.id} onClick={() => applyTemplate(tmpl)}
-                    className="w-full text-left px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-gray-800 transition-colors border-b border-zinc-100 dark:border-gray-800/50 last:border-0">
-                    <p className="font-medium text-zinc-900 dark:text-white truncate" style={{ fontSize: fontSize.sm }}>{tmpl.name}</p>
-                    <p className="text-zinc-400 dark:text-gray-500 truncate" style={{ fontSize: fontSize.xs }}>{tmpl.examName}</p>
-                  </button>
-                ))
+                templates.map((tmpl, idx) => {
+                  const overLimit = idx >= getMaxTemplates();
+                  return (
+                    <button key={tmpl.id} onClick={() => overLimit ? (setDisabledItemName(tmpl.name), setShowUpgradeModal(true)) : setTemplateToApply(tmpl)}
+                      className={`w-full text-left px-3 py-2.5 transition-colors border-b border-zinc-100 dark:border-gray-800/50 last:border-0 ${overLimit ? 'opacity-40 cursor-not-allowed' : 'hover:bg-zinc-100 dark:hover:bg-gray-800'}`}>
+                      <p className="font-medium text-zinc-900 dark:text-white truncate" style={{ fontSize: fontSize.sm }}>{tmpl.name}</p>
+                    </button>
+                  );
+                })
               )}
             </div>
           </div>
@@ -583,7 +606,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                               }}
                               className="w-14 bg-white dark:bg-gray-900 border border-zinc-300 dark:border-gray-700 rounded-lg px-2 py-1 text-center font-medium text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
                               style={{ fontSize: fontSize.sm }} />
-                            <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>q</span>
+                            <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Qs</span>
                           </div>
                         )}
                       </div>
@@ -669,7 +692,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                     <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Questions</span><span className={`font-mono font-medium ${totalQuestions > maxQuestions ? 'text-red-500' : 'text-blue-500'}`} style={{ fontSize: fontSize.base }}>{totalQuestions}<span className={`text-sm ${totalQuestions > maxQuestions ? 'text-red-400' : 'text-zinc-400 dark:text-gray-600'}`}>/{maxQuestions}</span></span></div>
                     <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Marks</span><span className="font-mono font-medium text-blue-500" style={{ fontSize: fontSize.base }}>{totalMarks}</span></div>
                   </div>
-                  <button onClick={handleGenerate} disabled={subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid}
+                  <button onClick={handleGenerate} disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2" style={{ fontSize: fontSize.sm }}>
                     {(() => { const useOwn = localStorage.getItem('use_own_key') === 'true'; const prov = localStorage.getItem('provider') || 'mesh'; const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key'); return useOwn && key ? 'Generate (Your Key)' : `Generate (${2 + totalQuestions} credits)`; })()}
                   </button>
@@ -711,7 +734,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
 
       <FinalizeExam
         show={showFinalizeExam}
-        onClose={() => setShowFinalizeExam(false)}
+        onClose={onFinalizeClose}
         examData={{
           examName,
           difficulty,
@@ -751,6 +774,26 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           message={notification.message}
           onClose={() => setNotification(null)}
         />
+      )}
+
+      {templateToApply && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setTemplateToApply(null); }}>
+          <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
+            <h3 className="font-semibold text-zinc-900 dark:text-white text-center" style={{ fontSize: fontSize.base }}>Apply Template</h3>
+            <p className="text-zinc-500 dark:text-gray-400 text-center" style={{ fontSize: fontSize.sm }}>Use "{templateToApply.name}" for this exam?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setTemplateToApply(null)}
+                className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors"
+                style={{ fontSize: fontSize.sm }}>Cancel</button>
+              <button onClick={confirmApplyTemplate} disabled={applyingTemplate}
+                className="flex-1 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] disabled:opacity-40 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+                style={{ fontSize: fontSize.sm }}>
+                {applyingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

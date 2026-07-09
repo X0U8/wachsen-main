@@ -41,13 +41,13 @@ export default async function handler(req, res) {
 
     // Process claim
     const { error: updateError } = await authed.from('profiles').update({
-      credits: (profile.credits || 0) + dailyCredits,
+      credits: dailyCredits,
       last_claimed: now.toISOString(),
     }).eq('id', userId);
 
     if (updateError) return res.status(500).json({ error: 'Failed to update credits' });
 
-    return res.json({ success: true, creditsAdded: dailyCredits, newTotal: (profile.credits || 0) + dailyCredits, lastClaimed: now.toISOString() });
+    return res.json({ success: true, creditsAdded: dailyCredits, newTotal: dailyCredits, lastClaimed: now.toISOString() });
   } catch (error) {
     console.error('Claim credits error:', error);
     return res.status(500).json({ error: 'Internal server error' });

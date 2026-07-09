@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, RefreshCw, AlertCircle, CheckCircle2, CircleStop } from 'lucide-react';
+import { ChevronLeft, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Notification from '../ui/Notification';
 import { useUserProfile } from '../lib/UserContext';
@@ -25,7 +25,7 @@ interface FinalizeExamProps {
 }
 
 export default function FinalizeExam({ show, onClose, examData, userId }: FinalizeExamProps) {
-  const { refreshCredits, userProfile } = useUserProfile();
+  const { refreshCredits } = useUserProfile();
   const [isGenerating, setIsGenerating] = useState(true);
   const [examBlueprint, setExamBlueprint] = useState<any>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -35,7 +35,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [generatedQuestions, setGeneratedQuestions] = useState<any>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [allQuestionsGenerated, setAllQuestionsGenerated] = useState(false);
   const [failedSegments, setFailedSegments] = useState<Set<string>>(new Set());
   const [allSegmentsAttempted, setAllSegmentsAttempted] = useState(false);
   const [segmentJsonData, setSegmentJsonData] = useState<Record<string, any>>({});
@@ -80,7 +79,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       if (!response.ok) {
         const text = await response.text().catch(() => '');
         let msg = `API error: ${response.status}`;
-        try { const e = JSON.parse(text); msg = e.error || msg; } catch {}
+        try { const e = JSON.parse(text); msg = e.error || msg; } catch { }
         showNotification('error', msg);
         setIsGenerating(false);
         return;
@@ -110,11 +109,19 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     const segment = subject.segments[segmentIndex];
     const segmentKey = `${subjectIndex}-${segmentIndex}`;
 
+    const moveNext = () => {
+      const ns = segmentIndex + 1;
+      if (ns < subject.segments.length) { setCurrentSegmentIndex(ns); setCooldownRemaining(30); startCooldown(() => generateSegmentQuestions(subjectIndex, ns)); }
+      else if (subjectIndex + 1 < examBlueprint.length) { setCurrentSubjectIndex(subjectIndex + 1); setCurrentSegmentIndex(0); setCooldownRemaining(30); startCooldown(() => generateSegmentQuestions(subjectIndex + 1, 0)); }
+      else { setIsGeneratingQuestions(false); setAllSegmentsAttempted(true); showNotification('info', 'All segments processed.'); }
+    };
+
     try {
       const authToken = await getAuthToken();
       const apiKey = getUseOwnKey() ? getApiKey() : '';
       const provider = getProvider();
       const model = provider === 'mistral' ? 'mistral-small-latest' : getActiveModel();
+
       const response = await fetch(`/api/generate-segment-questions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -133,95 +140,39 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       });
 
       if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        let msg = `API error: ${response.status}`;
-        try { const e = JSON.parse(text); msg = e.error || msg; } catch {}
-        showNotification('error', msg);
+        if (retryCount < 1) {
+          setTimeout(() => generateSegmentQuestions(subjectIndex, segmentIndex, retryCount + 1), 2000);
+          return;
+        }
         setFailedSegments(prev => new Set(prev).add(segmentKey));
+        showNotification('error', `Failed on segment ${segment.range} after retries`);
+        moveNext();
         return;
       }
+
       const data = await response.json();
       if (data.success) {
         const questionsWithIndex = data.questions.map((q: any) => ({ ...q, subjectIndex }));
         setGeneratedQuestions(prev => [...prev, ...questionsWithIndex]);
         setSegmentJsonData(prev => ({ ...prev, [segmentKey]: data.raw }));
-        setFailedSegments(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(segmentKey);
-          return newSet;
-        });
-
-        // Move to next segment
-        const nextSegmentIndex = segmentIndex + 1;
-        const nextSubjectIndex = subjectIndex;
-
-        if (nextSegmentIndex < subject.segments.length) {
-          setCurrentSegmentIndex(nextSegmentIndex);
-          setCooldownRemaining(30);
-          startCooldown(() => generateSegmentQuestions(nextSubjectIndex, nextSegmentIndex));
-        } else if (subjectIndex + 1 < examBlueprint.length) {
-          setCurrentSubjectIndex(subjectIndex + 1);
-          setCurrentSegmentIndex(0);
-          setCooldownRemaining(30);
-          startCooldown(() => generateSegmentQuestions(subjectIndex + 1, 0));
-        } else {
-          setIsGeneratingQuestions(false);
-          setAllSegmentsAttempted(true);
-          if (failedSegments.size === 0) {
-            showNotification('success', 'All questions generated successfully!');
-          } else {
-            showNotification('info', 'Some segments failed. You can regenerate them.');
-          }
-        }
+        setFailedSegments(prev => { const ns = new Set(prev); ns.delete(segmentKey); return ns; });
+        moveNext();
       } else {
-        if (retryCount < 3) {
-          // Auto-retry on error with no cooldown
-          console.log(`Retrying segment ${subjectIndex}-${segmentIndex}, attempt ${retryCount + 1}`);
-          setTimeout(() => generateSegmentQuestions(subjectIndex, segmentIndex, retryCount + 1), 1000);
+        if (retryCount < 1) {
+          setTimeout(() => generateSegmentQuestions(subjectIndex, segmentIndex, retryCount + 1), 2000);
         } else {
           setFailedSegments(prev => new Set(prev).add(segmentKey));
-          showNotification('error', `Failed to generate questions for ${subject.name} segment ${segment.range}`);
-          // Move to next segment immediately on failure
-          const nextSegmentIndex = segmentIndex + 1;
-          if (nextSegmentIndex < subject.segments.length) {
-            setCurrentSegmentIndex(nextSegmentIndex);
-            setCooldownRemaining(30);
-            startCooldown(() => generateSegmentQuestions(subjectIndex, nextSegmentIndex));
-          } else if (subjectIndex + 1 < examBlueprint.length) {
-            setCurrentSubjectIndex(subjectIndex + 1);
-            setCurrentSegmentIndex(0);
-            setCooldownRemaining(30);
-            startCooldown(() => generateSegmentQuestions(subjectIndex + 1, 0));
-          } else {
-            setIsGeneratingQuestions(false);
-            setAllSegmentsAttempted(true);
-            showNotification('info', 'Some segments failed. You can regenerate them.');
-          }
+          moveNext();
         }
       }
     } catch (error) {
-      console.error('Error generating segment questions:', error);
-      if (retryCount < 3) {
-        setTimeout(() => generateSegmentQuestions(subjectIndex, segmentIndex, retryCount + 1), 1000);
+      console.error('Segment generation error:', error);
+      if (retryCount < 1) {
+        setTimeout(() => generateSegmentQuestions(subjectIndex, segmentIndex, retryCount + 1), 2000);
       } else {
         setFailedSegments(prev => new Set(prev).add(segmentKey));
-        showNotification('error', 'Failed to generate questions. Please try again.');
-        // Continue to next segment
-        const nextSegmentIndex = segmentIndex + 1;
-        if (nextSegmentIndex < subject.segments.length) {
-          setCurrentSegmentIndex(nextSegmentIndex);
-          setCooldownRemaining(30);
-          startCooldown(() => generateSegmentQuestions(subjectIndex, nextSegmentIndex));
-        } else if (subjectIndex + 1 < examBlueprint.length) {
-          setCurrentSubjectIndex(subjectIndex + 1);
-          setCurrentSegmentIndex(0);
-          setCooldownRemaining(30);
-          startCooldown(() => generateSegmentQuestions(subjectIndex + 1, 0));
-        } else {
-          setIsGeneratingQuestions(false);
-          setAllSegmentsAttempted(true);
-          showNotification('info', 'Some segments failed. You can regenerate them.');
-        }
+        showNotification('error', `Failed on segment ${segment.range}`);
+        moveNext();
       }
     }
   };
@@ -284,7 +235,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       isTemplate: false,
       categoryId: examData.categoryId || null,
       status: examData.accessType === 'specific' && examData.startDateTime && examData.startDateTime !== 'anytime' ? 'Pending' : 'active',
-      generatedExam: JSON.stringify(generatedQuestions),
+      generatedExam: JSON.stringify(generatedQuestions.map((q: any, i: number) => ({ ...q, id: i + 1 }))),
       ExamPlan: JSON.stringify(examBlueprint)
     };
 
@@ -342,10 +293,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             </button>
             <h2 className="font-base" style={{ fontSize: fontSize.base }}>Finalize Exam</h2>
           </div>
-          <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-gray-800/80 backdrop-blur-sm border border-zinc-300 dark:border-gray-700 rounded-lg px-2 py-1">
-            <CircleStop className="w-4 h-4 text-zinc-900 dark:text-white fill-yellow-500" />
-            <span className="font-medium text-zinc-900 dark:text-white" style={{ fontSize: fontSize.xs }}>{userProfile?.credits || 0}</span>
-          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 pb-32">
@@ -360,7 +307,9 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-blue-500 dark:text-blue-400 font-medium" style={{ fontSize: fontSize.sm }}>Exam Plan</h3>
                   {cooldownRemaining > 0 && (
-                    <span className="text-amber-500 dark:text-amber-400" style={{ fontSize: fontSize.xs }}>Thinking about questions, Writting in: {cooldownRemaining}s</span>
+                    <span className="text-amber-500 dark:text-amber-400" style={{ fontSize: fontSize.xs }}>
+                      Generating in {cooldownRemaining}s
+                    </span>
                   )}
                 </div>
                 <div className="space-y-4">
@@ -381,10 +330,10 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
                                 <div className="flex items-center gap-1">
                                   {isCompleted && <CheckCircle2 className="w-3 h-3 text-green-500 dark:text-green-400" />}
                                   {isCurrentSegment && <RefreshCw className="w-3 h-3 text-blue-500 dark:text-blue-400 animate-spin" />}
-                                  {isFailed && !isGeneratingQuestions && <AlertCircle className="w-3 h-3 text-red-500 dark:text-red-400" />}
+                                  {isFailed && !isCurrentSegment && <AlertCircle className="w-3 h-3 text-red-500 dark:text-red-400" />}
                                   {!isCompleted && !isCurrentSegment && !isFailed && <div className="w-3 h-3 rounded-full border border-zinc-400 dark:border-gray-600" />}
                                   <span className="text-[10px]">
-                                    {isCompleted ? 'Generated' : isCurrentSegment ? 'Generating...' : isFailed ? 'Failed' : 'active'}
+                                    {isCompleted ? 'Done' : isCurrentSegment ? 'Generating...' : isFailed ? 'Failed' : 'Waiting'}
                                   </span>
                                 </div>
                               </div>
@@ -441,7 +390,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
               <button
                 onClick={() => handleSaveExam()}
                 disabled={isSaving}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-all" style={{ fontSize: fontSize.sm }}
+                className="w-full bg-blue-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-all" style={{ fontSize: fontSize.sm }}
               >
                 {isSaving ? 'Saving...' : 'Save Exam'}
               </button>

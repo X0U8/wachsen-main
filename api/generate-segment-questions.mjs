@@ -9,8 +9,6 @@ const MESH_MODEL = process.env.MESH_MODEL || 'openai/gpt-4o';
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-const DEDUCT_AMOUNT = 1;
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -31,16 +29,29 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'No API key provided.' });
     }
 
-    // Check credits only when using the app's key
+
+    // Calculate question count from segment range
+    const [segStart, segEnd] = (segment.range || '1-1').split('-').map(Number);
+    const questionCount = (segEnd || segStart) - segStart + 1;
+
+    // Reserve credits BEFORE calling AI
     if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
       });
       const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
       const currentCredits = profile?.credits || 0;
-      if (currentCredits < DEDUCT_AMOUNT) {
-        return res.status(400).json({ error: `Insufficient credits. Need ${DEDUCT_AMOUNT} credit. You have ${currentCredits}.` });
+      if (currentCredits < questionCount) {
+        return res.status(400).json({ error: `Insufficient credits. Need ${questionCount} credits. You have ${currentCredits}.` });
       }
+      const { data: updated, error: deductError } = await authed.from('profiles')
+        .update({ credits: currentCredits - questionCount })
+        .eq('id', userId)
+        .select('credits');
+      if (deductError || !updated || updated.length === 0) {
+        return res.status(500).json({ error: 'Failed to reserve credits.' });
+      }
+    } else {
     }
 
     const qTypesInfo = questionTypes.map(q => {
@@ -69,10 +80,8 @@ CRITICAL INSTRUCTIONS:
    - "correct_answer" must be the ACTUAL option text, NOT an index
    - For single correct: "correct_answer": "Option A"
    - For multiple correct: "correct_answer": ["Option A", "Option B"]
-4. For integer questions, provide the correct numeric answer
+ 4. For integer questions, provide the correct numeric answer
 5. For true/false questions, provide "true" or "false"
-6. Explanations MUST be very short — one or two sentences max.
-7. Use $...$ for math notation, NEVER use double backslashes .
 
 Return the response in this JSON format:
 {
@@ -82,8 +91,7 @@ Return the response in this JSON format:
       "type": "mcq",
       "question": "Question text here",
       "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_answer": "Option A",
-      "explanation": "Short explanation here"
+      "correct_answer": "Option A"
     }
   ]
 }
@@ -101,7 +109,7 @@ Return the response in this JSON format:
       body: JSON.stringify({
         model: activeModel,
         messages: [
-          { role: 'system', content: 'You are an exam question generator. Return only valid JSON. Keep explanations very short. For math inside $...$ use a single backslash. Example: $\\sqrt{x}$. NEVER use double backslashes.' },
+          { role: 'system', content: 'You are an exam question generator. Return only valid JSON. For math inside $...$ use a single backslash. Example: $\\sqrt{x}$. NEVER use double backslashes.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -155,36 +163,53 @@ Return the response in this JSON format:
     }
 
     if (!Array.isArray(parsedQuestions?.questions) || parsedQuestions.questions.length === 0) {
+      const refundCredits = async () => {
+        if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+          const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
+          const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
+          await authed.from('profiles').update({ credits: (profile?.credits || 0) + questionCount }).eq('id', userId);
+        }
+      };
+      await refundCredits();
       return res.status(422).json({ error: 'Response missing questions array', raw: content });
     }
 
     parsedQuestions = normalizeStrings(parsedQuestions);
 
+    const refundCredits = async () => {
+      if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
+        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
+        await authed.from('profiles').update({ credits: (profile?.credits || 0) + questionCount }).eq('id', userId);
+      }
+    };
+
     // Validate each question format
     for (const q of parsedQuestions.questions) {
       if (!q.id || !q.type || !q.question || !q.correct_answer) {
-        return res.status(422).json({ error: `Question #${q.id || '?'} missing required fields (id, type, question, correct_answer)`, raw: content });
+        await refundCredits();
+        return res.status(422).json({ error: `Question #${q.id || '?'} missing required fields`, raw: content });
       }
       if (q.type === 'mcq' && (!Array.isArray(q.options) || q.options.length < 2)) {
+        await refundCredits();
         return res.status(422).json({ error: `MCQ question #${q.id} needs at least 2 options`, raw: content });
       }
     }
 
-    // Deduct credits after successful generation (only when using app key)
+    // Credits already reserved — no extra deduction needed
+
+    return res.status(200).json({ success: true, questions: parsedQuestions.questions, raw: content });
+  } catch (error) {
+    // Refund credits on failure
     if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
       try {
         const authed = createClient(supabaseUrl, supabaseAnonKey, {
           global: { headers: { Authorization: `Bearer ${authToken}` } }
         });
         const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-        await authed.from('profiles').update({ credits: (profile?.credits || 0) - DEDUCT_AMOUNT }).eq('id', userId);
-      } catch (e) {
-        console.error('Credit deduction failed:', e);
-      }
+        await authed.from('profiles').update({ credits: (profile?.credits || 0) + questionCount }).eq('id', userId);
+      } catch (e) { console.error('Credit refund failed:', e); }
     }
-
-    return res.status(200).json({ success: true, questions: parsedQuestions.questions, raw: content });
-  } catch (error) {
     console.error('Error generating segment questions:', error);
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }

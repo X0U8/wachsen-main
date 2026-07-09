@@ -12,7 +12,7 @@ jspm_packages/
 .tmp/
 .temp/
 
-components/onbaording/TakeExam
+
 
 supabase
 .env

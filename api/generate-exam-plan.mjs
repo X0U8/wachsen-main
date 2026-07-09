@@ -7,7 +7,6 @@ const MESH_MODEL = process.env.MESH_MODEL || 'openai/gpt-4o';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 const DEDUCT_AMOUNT = 2;
 
@@ -28,8 +27,9 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'No API key provided. Set MESH_API_KEY in .env or provide an apiKey.' });
     }
 
-    // Check credits only when using the app's key
-    if (!userKey && supabase && userId && authToken) {
+
+    // Reserve credits BEFORE calling AI
+    if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
       });
@@ -38,6 +38,14 @@ export default async function handler(req, res) {
       if (currentCredits < DEDUCT_AMOUNT) {
         return res.status(400).json({ error: `Insufficient credits. Need ${DEDUCT_AMOUNT} credits. You have ${currentCredits}.` });
       }
+      const { data: updated, error: deductError } = await authed.from('profiles')
+        .update({ credits: currentCredits - DEDUCT_AMOUNT })
+        .eq('id', userId)
+        .select('credits');
+      if (deductError || !updated || updated.length === 0) {
+        return res.status(500).json({ error: 'Failed to reserve credits.' });
+      }
+    } else {
     }
 
     const totalQuestions = subjects.reduce((total, sub) => {
@@ -66,7 +74,7 @@ DIFFICULTY REQUIREMENTS (STRICT):
   * EASY: Focus on basic concepts and fundamental topics
   * MEDIUM: Focus on moderate complexity topics
   * HARD: Focus on advanced and challenging topics
-  * ADVANCE: Focus on the most complex and advanced topics possible
+  * ADVANCE: Focus on the most complex and advanced topics possible, The Toughest Questions you can make.
 
 CRITICAL INSTRUCTIONS:
 1. Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the raw JSON object
@@ -115,14 +123,14 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error(`${apiLabel} API request failed:`, response.status, JSON.stringify(data));
+      await refundCredits();
       return res.status(502).json({ error: `${apiLabel} API request failed`, code: data.error?.code, details: data.error?.message, request_id: data.error?.request_id });
     }
 
     let content = data.choices?.[0]?.message?.content || '';
 
     if (!content) {
-      return res.status(502).json({ error: `${apiLabel} API returned no content` });
+      await refundCredits();
     }
 
     content = content.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
@@ -131,6 +139,7 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
     try {
       parsedPlan = JSON.parse(content);
     } catch (parseError) {
+      await refundCredits();
       return res.status(500).json({ error: 'Failed to parse AI response as JSON', raw: content });
     }
 
@@ -145,38 +154,36 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
     };
     parsedPlan = normalizeStrings(parsedPlan);
 
+    const refundCredits = async () => {
+      if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
+        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
+        await authed.from('profiles').update({ credits: (profile?.credits || 0) + DEDUCT_AMOUNT }).eq('id', userId);
+      }
+    };
+
     // Validate format
     if (!Array.isArray(parsedPlan?.subjects) || parsedPlan.subjects.length === 0) {
+      await refundCredits();
       return res.status(422).json({ error: 'Response missing subjects array', raw: content });
     }
     for (const sub of parsedPlan.subjects) {
       if (!sub.name || !Array.isArray(sub.segments)) {
+        await refundCredits();
         return res.status(422).json({ error: `Subject "${sub.name || 'unnamed'}" missing name or segments array`, raw: content });
       }
       for (const seg of sub.segments) {
         if (!seg.range || !Array.isArray(seg.topics)) {
+          await refundCredits();
           return res.status(422).json({ error: `Segment in "${sub.name}" missing range or topics array`, raw: content });
         }
-      }
-    }
-
-    // Deduct credits after successful generation (only when using app key)
-    if (!userKey && supabase && userId && authToken) {
-      try {
-        const authed = createClient(supabaseUrl, supabaseAnonKey, {
-          global: { headers: { Authorization: `Bearer ${authToken}` } }
-        });
-        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-        await authed.from('profiles').update({ credits: (profile?.credits || 0) - DEDUCT_AMOUNT }).eq('id', userId);
-      } catch (e) {
-        console.error('Credit deduction failed:', e);
       }
     }
 
     return res.status(200).json({ success: true, plan: parsedPlan, raw: content });
 
   } catch (error) {
-    console.error('Error generating exam plan:', error);
+    await refundCredits();
     return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 }

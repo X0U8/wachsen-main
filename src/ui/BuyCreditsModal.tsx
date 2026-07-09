@@ -194,14 +194,14 @@ const getCurrencySymbol = (currency: string): string => {
 const basePricingTiers = {
   monthly: [
     { name: 'Free', creditsPerDay: 20, popular: false, totalCredits: 600, color: 'from-gray-600 to-gray-700', maxQuestions: 25, maxExamTypes: 5, maxSubjects: 3 },
-    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 2250, color: 'from-blue-500 to-indigo-600', maxQuestions: 50, maxExamTypes: 10, maxSubjects: 5 },
-    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 4500, color: 'from-indigo-600 to-purple-600', maxQuestions: 75, maxExamTypes: 15, maxSubjects: 8 },
-    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 9000, color: 'from-pink-500 to-rose-600', maxQuestions: 100, maxExamTypes: 20, maxSubjects: 10 },
+    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 2250, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5 },
+    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 4500, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8 },
+    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 9000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10 },
   ],
   yearly: [
-    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 27000, color: 'from-blue-500 to-indigo-600', maxQuestions: 50, maxExamTypes: 10, maxSubjects: 5 },
-    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 54000, color: 'from-indigo-600 to-purple-600', maxQuestions: 75, maxExamTypes: 15, maxSubjects: 8 },
-    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 108000, color: 'from-pink-500 to-rose-600', maxQuestions: 100, maxExamTypes: 20, maxSubjects: 10 },
+    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 27000, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5 },
+    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 54000, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8 },
+    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 108000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10 },
   ],
 };
 

@@ -42,10 +42,12 @@ const getProgress = () => {
   return Math.min(100, (elapsed / total) * 100);
 };
 
+const todayStr = new Date().toDateString();
+
 export default function ClaimCreditsModal({ show, onClose, userProfile, refreshCredits }: ClaimCreditsModalProps) {
   const [claiming, setClaiming] = useState(false);
   const [msg, setMsg] = useState<{ type: string; text: string } | null>(null);
-  const [claimed, setClaimed] = useState(false);
+  const [claimed, setClaimed] = useState(() => localStorage.getItem('last_claimed_date') === todayStr);
 
   const handleClaim = async () => {
     if (claimed) return;
@@ -61,7 +63,7 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
       });
       const d = await r.json();
       if (d.success) {
-        setMsg({ type: 'success', text: `+${d.creditsAdded} credits claimed!` });
+        setMsg({ type: 'success', text: `Credits set to ${d.creditsAdded}` });
         localStorage.setItem('last_claimed_date', new Date().toDateString());
         await refreshCredits();
         setClaimed(true);
@@ -106,8 +108,7 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>{getTimePassed()}</span>
-            <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>{getTimeLeft()}</span>
+            <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>{getTimeLeft()} for next claim</span>
           </div>
           <div className="w-full bg-zinc-200 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
             <div className="h-full bg-[#007AFF] rounded-full transition-all duration-1000"
@@ -116,8 +117,8 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
         </div>
 
         <div className="bg-zinc-50 dark:bg-gray-950 rounded-xl p-3 text-center">
-          <p className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Available today</p>
-          <p className="font-bold text-[#007AFF]" style={{ fontSize: fontSize['2xl'] || '1.5rem' }}>+{dailyCredits}</p>
+          <p className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Available</p>
+          <p className="font-bold text-[#007AFF]" style={{ fontSize: fontSize['2xl'] || '1.5rem' }}>{dailyCredits}</p>
           <p className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>credits</p>
         </div>
 
@@ -132,7 +133,7 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
           style={{ fontSize: fontSize.sm }}>
           {claiming ? <><Loader2 className="w-4 h-4 animate-spin" /> Claiming...</>
             : claimed ? 'Claimed'
-              : <><Gift className="w-4 h-4" /> Claim Credits</>}
+              : <>Claim</>}
         </button>
       </div>
     </div>

@@ -108,7 +108,7 @@ export default function Exam() {
         .select('*')
         .eq('userId', userId!)
         .order('created_at', { ascending: true })
-        .limit(10);
+        .limit(50);
       if (error) throw error;
       const examTypes = (data || []).map(d => ({
         id: d.id, name: d.name, subjects: d.subjects || [], academicLevel: d.academicLevel || '',
@@ -258,12 +258,7 @@ export default function Exam() {
           <div className="flex items-center gap-1.5 sm:gap-2 bg-zinc-150/50 dark:bg-gray-900/50 border border-zinc-250 dark:border-gray-800 rounded-xl px-2.5 sm:px-3 py-1.5 text-zinc-600 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
             <strong className="text-zinc-850 dark:text-gray-100 font-semibold">{userProfile?.credits || 0}</strong>
             <span className="hidden sm:inline">credits</span>
-            <button onClick={() => {
-              const lastClaimed = localStorage.getItem('last_claimed_date');
-              const today = new Date().toDateString();
-              if (lastClaimed === today) return;
-              setShowClaim(true);
-            }} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Daily credits">+</button>
+            <button onClick={() => setShowClaim(true)} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Daily credits">+</button>
           </div>
           <button onClick={() => navigate('/settings')} className="p-1.5 rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Settings">
             <SettingsIcon size={14} />
@@ -302,7 +297,7 @@ export default function Exam() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-5 pb-28 overflow-y-auto min-h-0">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-5 pb-24 mb-2 overflow-y-auto min-h-0">
         {tab === 'exams' && (
           <>
             {examTypes.length === 0 ? (
@@ -326,8 +321,8 @@ export default function Exam() {
                       <SpotlightCard
                         key={exam.id}
                         onClick={() => isDisabled ? (setDisabledItemName(exam.name), setShowUpgradeModal(true)) : navigate(`/exam-details/${exam.id}`)}
-                        spotlightColor={isDisabled ? undefined : "rgba(37, 99, 235, 0.12)"}
-                        className={`exam-card bg-white dark:bg-gray-900/40 rounded-xl border transition-all duration-300 ${isDisabled ? 'border-zinc-200 dark:border-gray-800/60 opacity-40 cursor-not-allowed' : 'border-zinc-200 dark:border-gray-800/80 hover:border-zinc-300 dark:hover:border-gray-700 cursor-pointer'}`}
+                        spotlightColor={isDisabled ? "rgba(0, 255, 180, 0.15)" : "rgba(37, 99, 235, 0.12)"}
+                        className={`exam-card bg-white dark:bg-gray-900/40 rounded-xl border transition-all duration-300 ${isDisabled ? 'border-zinc-200 dark:border-gray-800/60 opacity-50 cursor-pointer hover:bg-zinc-50 dark:hover:bg-gray-800/50' : 'border-zinc-200 dark:border-gray-800/80 hover:border-zinc-300 dark:hover:border-gray-700 cursor-pointer'}`}
                         style={{ animationDelay: `${i * 50}ms` } as React.CSSProperties}
                       >
                         <div className="p-3 sm:p-4">

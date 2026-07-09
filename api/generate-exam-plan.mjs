@@ -112,7 +112,7 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
       body: JSON.stringify({
         model: activeModel,
         messages: [
-          { role: 'system', content: 'You are an exam generator. Return only valid JSON. For math inside $...$ use a single backslash. Example: $\\sqrt{x}$. NEVER use double backslashes.' },
+          { role: 'system', content: 'You are an exam generator. Return only valid JSON. For any math content, wrap LaTeX expressions in $...$ delimiters. Ensure all backslashes in LaTeX commands are properly escaped for JSON (e.g. a single backslash becomes \\\\).' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -143,18 +143,14 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
       return res.status(500).json({ error: 'Failed to parse AI response as JSON', raw: content });
     }
 
-    // Normalize all string values — replace double backslashes with single
-    const normalizeStrings = (obj) => {
-      if (typeof obj === 'string') return obj.replace(/\\\\/g, '\\');
-      if (Array.isArray(obj)) return obj.map(normalizeStrings);
-      if (obj && typeof obj === 'object') {
-        for (const key in obj) { obj[key] = normalizeStrings(obj[key]); }
-      }
+    // Normalize LaTeX row separators: any run of backslashes before a space → exactly \\
+    const fixLatex = (obj) => {
+      if (typeof obj === 'string') return obj.replace(/\\+(?= )/g, '\\\\');
+      if (Array.isArray(obj)) return obj.map(fixLatex);
+      if (obj && typeof obj === 'object') { for (const k in obj) obj[k] = fixLatex(obj[k]); }
       return obj;
     };
-    parsedPlan = normalizeStrings(parsedPlan);
-
-    const refundCredits = async () => {
+    parsedPlan = fixLatex(parsedPlan);    const refundCredits = async () => {
       if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
         const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
         const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();

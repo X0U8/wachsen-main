@@ -15,13 +15,14 @@ export function MathJaxProvider({ children }: { children: React.ReactNode }) {
     if (window.MathJax) { setReady(true); return; }
 
     window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+      },
       options: {
         renderActions: {
           addMenu: []
         }
-      },
-      loader: {
-        load: ['input/asciimath', 'output/chtml']
       },
       startup: {
         typeset: false
@@ -29,7 +30,7 @@ export function MathJaxProvider({ children }: { children: React.ReactNode }) {
     };
 
     const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/mml-chtml.js';
+    script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js';
     script.async = true;
     script.onload = () => {
       setReady(true);

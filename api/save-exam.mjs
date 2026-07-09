@@ -28,8 +28,6 @@ export default async function handler(req, res) {
       totalQuestions: examData.totalQuestions || 0,
       totalMarks: examData.totalMarks || 0,
       subjects: examData.subjects || '[]',
-      isTemplate: examData.isTemplate || false,
-      templateName: examData.templateName || null,
       categoryId: examData.categoryId || null,
       status: examData.status || 'Pending',
       generatedExam: examData.generatedExam || '[]',

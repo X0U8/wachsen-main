@@ -205,6 +205,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
   };
 
   const handleSaveExam = async () => {
+    if (isSaving) return;
     setIsSaving(true);
 
     // Calculate total questions and marks
@@ -232,7 +233,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       totalQuestions,
       totalMarks,
       subjects: JSON.stringify(examData.subjects),
-      isTemplate: false,
       categoryId: examData.categoryId || null,
       status: examData.accessType === 'specific' && examData.startDateTime && examData.startDateTime !== 'anytime' ? 'Pending' : 'active',
       generatedExam: JSON.stringify(generatedQuestions.map((q: any, i: number) => ({ ...q, id: i + 1 }))),

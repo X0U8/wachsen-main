@@ -75,7 +75,8 @@ Question Types: ${qTypesInfo}
 CRITICAL INSTRUCTIONS:
 1. Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the raw JSON object
 2. DIFFICULTY IS CRITICAL: All questions MUST match the "${difficulty.toUpperCase()}" difficulty level
-3. For MCQ questions:
+3. Keep questions at high school or early college level — avoid advanced topics beyond typical curriculum
+4. For MCQ questions:
    - Generate exactly ${questionTypes.find(q => q.type === 'mcq')?.mcqOptions || 4} options
    - "correct_answer" must be the ACTUAL option text, NOT an index
    - For single correct: "correct_answer": "Option A"
@@ -109,7 +110,7 @@ Return the response in this JSON format:
       body: JSON.stringify({
         model: activeModel,
         messages: [
-          { role: 'system', content: 'You are an exam question generator. Return only valid JSON. For math inside $...$ use a single backslash. Example: $\\sqrt{x}$. NEVER use double backslashes.' },
+          { role: 'system', content: 'You are an exam question generator. Return only valid JSON. For any math content, wrap LaTeX expressions in $...$ delimiters. Ensure all backslashes in LaTeX commands are properly escaped for JSON (e.g. a single backslash becomes \\\\).' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -132,15 +133,6 @@ Return the response in this JSON format:
 
     content = content.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
 
-    // Normalize all string values — replace double backslashes with single
-    const normalizeStrings = (obj) => {
-      if (typeof obj === 'string') return obj.replace(/\\\\/g, '\\');
-      if (Array.isArray(obj)) return obj.map(normalizeStrings);
-      if (obj && typeof obj === 'object') {
-        for (const key in obj) { obj[key] = normalizeStrings(obj[key]); }
-      }
-      return obj;
-    };
 
     let parsedQuestions;
     let parseAttempts = 0;
@@ -162,27 +154,19 @@ Return the response in this JSON format:
       }
     }
 
+    // Normalize LaTeX row separators: any run of backslashes before a space → exactly \\
+    const fixLatex = (obj) => {
+      if (typeof obj === 'string') return obj.replace(/\\+(?= )/g, '\\\\');
+      if (Array.isArray(obj)) return obj.map(fixLatex);
+      if (obj && typeof obj === 'object') { for (const k in obj) obj[k] = fixLatex(obj[k]); }
+      return obj;
+    };
+    parsedQuestions = fixLatex(parsedQuestions);
+
     if (!Array.isArray(parsedQuestions?.questions) || parsedQuestions.questions.length === 0) {
-      const refundCredits = async () => {
-        if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
-          const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
-          const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-          await authed.from('profiles').update({ credits: (profile?.credits || 0) + questionCount }).eq('id', userId);
-        }
-      };
       await refundCredits();
       return res.status(422).json({ error: 'Response missing questions array', raw: content });
     }
-
-    parsedQuestions = normalizeStrings(parsedQuestions);
-
-    const refundCredits = async () => {
-      if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
-        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
-        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-        await authed.from('profiles').update({ credits: (profile?.credits || 0) + questionCount }).eq('id', userId);
-      }
-    };
 
     // Validate each question format
     for (const q of parsedQuestions.questions) {

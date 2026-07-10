@@ -9,6 +9,27 @@ import Notification from '../ui/Notification';
 import Footer from './Footer';
 import { fontSize } from '../lib/utils';
 import { idbGet, idbSet } from '../lib/idb';
+import { jsonrepair } from 'jsonrepair';
+
+export const safeParseJSON = (str: string) => {
+  try {
+    return JSON.parse(str);
+  } catch (err) {
+    try {
+      const repaired = jsonrepair(str);
+      return JSON.parse(repaired);
+    } catch (repairErr) {
+      // Fix unescaped backslashes that aren't valid JSON escape sequences
+      const sanitized = str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+      try {
+        return JSON.parse(sanitized);
+      } catch (finalErr) {
+        const finalRepaired = jsonrepair(sanitized);
+        return JSON.parse(finalRepaired);
+      }
+    }
+  }
+};
 
 export const normalizeQuestionType = (type?: string): 'mcq' | 'integer' | 'true_false' | 'laq' => {
   if (!type) return 'mcq';
@@ -22,6 +43,7 @@ export const normalizeQuestionType = (type?: string): 'mcq' | 'integer' | 'true_
 import RevisionLogList from './revision/RevisionLogList';
 import RevisionQuestionsList from './revision/RevisionQuestionsList';
 import RevisionRetryModal from './revision/RevisionRetryModal';
+import SegmentSelectorModal from './revision/SegmentSelectorModal';
 
 interface RevisionLogData {
   questions: Array<{
@@ -73,12 +95,14 @@ const resolveConceptsFromPlan = (questions: any[], planData: any) => {
 export default function RevisionLog() {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
-  const { userProfile } = useUserProfile();
+  const { userProfile, refreshProfile } = useUserProfile();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [logData, setLogData] = useState<RevisionLogData | null>(null);
   const [showConceptCards, setShowConceptCards] = useState(false);
-  const [conceptCards, setConceptCards] = useState<Array<{ front: string; back: string }>>([]);
+  const [conceptCards, setConceptCards] = useState<any[]>([]);
+  const [examPlan, setExamPlan] = useState<any>(null);
+  const [showSegmentSelector, setShowSegmentSelector] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [revisionList, setRevisionList] = useState<any[]>([]);
   const [extraRevisionLogs, setExtraRevisionLogs] = useState<any[]>([]);
@@ -218,19 +242,38 @@ export default function RevisionLog() {
     }
   };
 
-  const generateConceptCards = async () => {
-    if (examQuestions.length === 0 || generatingCards) return;
+  const generateConceptCards = async (selectedTopics: string) => {
+    if (generatingCards) return;
     setGeneratingCards(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || '';
+
+      const useOwnKey = localStorage.getItem('use_own_key') === 'true';
+      const userApiKey = localStorage.getItem(localStorage.getItem('provider') === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
+      const activeProvider = localStorage.getItem('provider') || 'mesh';
+      const activeModel = localStorage.getItem('mesh_active_model') || '';
+
       const response = await fetch('/api/ask-question', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: `Given these concepts that I failed: ${subtopics.join(', ')}. Generate ${cardCount} revision flashcards. For each flashcard, provide a "front" (a conceptual question or formula prompt) and a "back" (the concise answer or explanation). Return only a valid JSON array format: [{"front": "...", "back": "..."}]`,
+          question: `Based on these concepts: ${selectedTopics}. Generate exactly 10 conceptual multiple-choice questions. For each question, provide:
+1. "question": The conceptual question text.
+2. "options": An array of exactly 4 choices.
+3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).
+4. "explanation": A concise explanation of the correct answers.
+
+Return ONLY a valid JSON array matching this format:
+[{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2], "explanation": "..."}]`,
           correctAnswer: '',
           userAnswer: '',
-          useOwnKey: localStorage.getItem('use_own_key') === 'true',
-          apiKey: localStorage.getItem('use_own_key') === 'true' ? localStorage.getItem('mesh_api_key') : undefined
+          userId: userProfile?.id,
+          authToken,
+          apiKey: useOwnKey ? userApiKey : undefined,
+          useOwnKey,
+          provider: activeProvider,
+          model: activeModel
         })
       });
 
@@ -239,10 +282,13 @@ export default function RevisionLog() {
 
       let replyText = data.reply || '[]';
       replyText = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
-      const cards = JSON.parse(replyText);
+      const cards = safeParseJSON(replyText);
       
       setConceptCards(cards);
       setShowConceptCards(true);
+      if (data.creditsDeducted > 0) {
+        refreshProfile();
+      }
     } catch (err) {
       console.error('Error generating concept cards:', err);
       showNotification('error', 'Failed to generate concept cards');
@@ -311,6 +357,7 @@ export default function RevisionLog() {
         setExamQuestions([]);
         setSubtopics([]);
         setResultId(null);
+        setExamPlan(null);
 
         // Check IndexedDB cache first
         const cacheKey = `revision_${examId}`;
@@ -320,6 +367,7 @@ export default function RevisionLog() {
           try {
             const questionsData = JSON.parse(cachedData.questions);
             const examLogsData = JSON.parse(cachedData.examLogs);
+            setExamPlan(examLogsData);
             
             let loadedResultId = cachedData.resultId;
             if (!loadedResultId) {
@@ -374,6 +422,7 @@ export default function RevisionLog() {
           const doc = revDocs[0];
           const questionsData = JSON.parse(doc.questions as string);
           const examLogsData = JSON.parse(doc.examLogs as string);
+          setExamPlan(examLogsData);
 
           // Fetch the matching resultId corresponding to this examId
           let fetchedResultId = null;
@@ -619,30 +668,42 @@ export default function RevisionLog() {
       {headerContent}
       <main className="flex-grow max-w-4xl w-full mx-auto p-4 sm:p-5 space-y-6">
         {/* Revision Options Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-2">
           {/* View Result */}
           <button
             onClick={() => resultId && navigate(`/results/${resultId}`)}
             disabled={!resultId}
-            className="py-2.5 px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60 border border-zinc-250 dark:border-zinc-800 rounded-2xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="py-2.5 px-2 sm:px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60 border border-zinc-250 dark:border-zinc-800 rounded-2xl text-[10px] sm:text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             View Result
           </button>
 
           {/* Generate Concept Cards */}
           <button
-            onClick={generateConceptCards}
+            onClick={() => {
+              console.log('Concept Cards clicked. examPlan:', examPlan);
+              if (examPlan) {
+                setShowSegmentSelector(true);
+              } else {
+                console.log('No exam plan found. Falling back to direct generation from subtopics:', subtopics);
+                if (subtopics.length > 0) {
+                  generateConceptCards(subtopics.join(', '));
+                } else {
+                  showNotification('error', 'No topics available to generate concept cards.');
+                }
+              }
+            }}
             disabled={generatingCards}
-            className="py-2.5 px-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-2xl text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="py-2.5 px-2 sm:px-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-2xl text-[10px] sm:text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {generatingCards ? (
               <>
-                <Loader2 className="w-4 h-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin mr-2" />
+                <Loader2 className="w-3.5 h-3.5 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin mr-1 sm:mr-2" />
                 Generating...
               </>
             ) : (
               <>
-                Concept Cards ({cardCount})
+                Concept Cards
               </>
             )}
           </button>
@@ -650,7 +711,7 @@ export default function RevisionLog() {
           {/* Retry Questions */}
           <button
             onClick={handleRetry}
-            className="py-2.5 px-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl text-xs font-semibold text-green-600 dark:text-green-400 hover:bg-green-500/20 transition-all flex items-center justify-center cursor-pointer"
+            className="py-2.5 px-2 sm:px-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl text-[10px] sm:text-xs font-semibold text-green-600 dark:text-green-400 hover:bg-green-500/20 transition-all flex items-center justify-center cursor-pointer"
           >
             Retry Questions
           </button>
@@ -673,6 +734,15 @@ export default function RevisionLog() {
         handleAISelfCheck={handleAISelfCheck}
         checkingAI={checkingAI}
       />
+
+      {showSegmentSelector && (
+        <SegmentSelectorModal
+          isOpen={showSegmentSelector}
+          onClose={() => setShowSegmentSelector(false)}
+          examPlan={examPlan}
+          onSelectSegment={(topics) => generateConceptCards(topics)}
+        />
+      )}
 
       {notification && (
         <Notification

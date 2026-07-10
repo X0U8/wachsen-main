@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../lib/ThemeContext.tsx';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
-import { ArrowLeft, Sun, Moon, Type, Gift, Key, Check, Eye, EyeOff, Trash2, AlertTriangle, Plus } from 'lucide-react';
+import { ArrowLeft, Sun, Moon, Type, Gift, Key, Check, Eye, EyeOff, Trash2, AlertTriangle, Plus, User } from 'lucide-react';
 import BuyCreditsModal from '../../ui/BuyCreditsModal';
+import { supabase } from '../../services/supabase';
+import EditProfileModal from './EditProfileModal';
 
 const FONT_OPTIONS = [
   { value: 'small' as const, label: 'Small' },
@@ -31,6 +33,8 @@ export default function Settings() {
   const [showAddModel, setShowAddModel] = useState(false);
   const [newModel, setNewModel] = useState('');
   const [useOwnKey, setUseOwnKey] = useState(false);
+
+  const [showEditProfile, setShowEditProfile] = useState(false);
 
   useEffect(() => {
     const savedKey = localStorage.getItem('mesh_api_key');
@@ -116,6 +120,24 @@ export default function Settings() {
         </header>
 
         <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-6 space-y-6">
+          {/* Edit Profile */}
+          <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-4 transition-colors">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <User className="w-5 h-5 text-purple-500" />
+                <div>
+                  <p className="font-medium text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.sm }}>Profile Settings</p>
+                  <p className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>
+                    Edit your avatar, name, gender, country, and DOB
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowEditProfile(true)}
+                className="px-3 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-lg font-medium transition-colors cursor-pointer"
+                style={{ fontSize: fontSize.xs }}>Edit Profile</button>
+            </div>
+          </div>
+
           {/* Subscription */}
           <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-4 transition-colors">
             <div className="flex items-center justify-between">
@@ -302,6 +324,8 @@ export default function Settings() {
           refreshProfile={refreshProfile}
         />
       )}
+
+      <EditProfileModal show={showEditProfile} onClose={() => setShowEditProfile(false)} />
     </>
   );
 }

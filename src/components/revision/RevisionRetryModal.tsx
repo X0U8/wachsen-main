@@ -56,10 +56,9 @@ export default function RevisionRetryModal({
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-6 shadow-2xl relative">
-        <div className="flex items-center justify-between">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-2xl h-[600px] flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white">
+        <div className="flex items-center justify-between flex-shrink-0">
           <h3 className="text-sm font-semibold text-zinc-800 dark:text-white flex items-center gap-2 uppercase tracking-wider">
-
             Retry Questions
           </h3>
           <button
@@ -72,90 +71,93 @@ export default function RevisionRetryModal({
 
         {/* Conditional Layout: Show summary only when all questions answered */}
         {!isFinished ? (
-          <>
+          <div className="flex-grow flex flex-col justify-between overflow-hidden mt-4 space-y-4">
             {/* Progress indicator */}
-            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">
+            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-semibold uppercase tracking-wider flex-shrink-0">
               <span>Question {currentRetryIndex + 1} of {retryData.length}</span>
             </div>
 
-            {/* Single question view */}
-            <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-850/80 rounded-2xl p-5 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-center text-xs font-bold text-zinc-650 dark:text-zinc-300 flex-shrink-0">
-                  {currentRetryIndex + 1}
-                </div>
-                <div className="flex-grow space-y-4">
-                  <div className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal">
-                    <MathText text={question.question || question.text || ''} />
+            {/* Scrollable Question Content Area */}
+            <div className="flex-grow overflow-y-auto pr-1 space-y-4">
+              {/* Single question view */}
+              <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-850/80 rounded-2xl p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-center text-xs font-bold text-zinc-650 dark:text-zinc-300 flex-shrink-0">
+                    {currentRetryIndex + 1}
                   </div>
+                  <div className="flex-grow space-y-4">
+                    <div className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal h-32 overflow-y-auto pr-1">
+                      <MathText text={question.question || question.text || ''} />
+                    </div>
 
-                  {/* MCQ & True-False: Option Buttons */}
-                  {(isMCQ || isTrueFalse) ? (
-                    <div className="space-y-2">
-                      {question.shuffledOptions && question.shuffledOptions.map((option: string, optIdx: number) => (
-                        <button
-                          key={optIdx}
-                          onClick={() => !result && handleRetryAnswer(question.id, option)}
+                    {/* MCQ & True-False: Option Buttons */}
+                    {(isMCQ || isTrueFalse) ? (
+                      <div className="space-y-2">
+                        {question.shuffledOptions && question.shuffledOptions.map((option: string, optIdx: number) => (
+                          <button
+                            key={optIdx}
+                            onClick={() => !result && handleRetryAnswer(question.id, option)}
+                            disabled={!!result}
+                            className={`w-full p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${result
+                                ? result.isCorrect && String(question.correctAnswer ?? question.correct_answer) === option
+                                  ? 'bg-green-500/10 border-green-500/40 text-green-600 dark:text-green-400 font-medium'
+                                  : answer === option && !result.isCorrect
+                                    ? 'bg-red-500/10 border-red-500/40 text-red-655 dark:text-red-400 font-medium'
+                                    : 'bg-zinc-100/50 dark:bg-zinc-900/20 border-zinc-200 dark:border-zinc-850/50 opacity-40 text-zinc-450 dark:text-zinc-600'
+                                : answer === option
+                                  ? 'bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-semibold'
+                                  : 'bg-white dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-850 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800/30 text-zinc-750 dark:text-zinc-300'
+                              }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-250 dark:border-zinc-700 flex items-center justify-center text-[10px] text-zinc-600 dark:text-zinc-400">
+                                {String.fromCharCode(65 + optIdx)}
+                              </span>
+                              <span><MathText text={option} /></span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : isInteger ? (
+                      /* Integer: Simple text input */
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={answer || ''}
+                          onChange={(e) => !result && setRetryAnswers(prev => ({ ...prev, [question.id]: e.target.value }))}
                           disabled={!!result}
-                          className={`w-full p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${result
-                              ? result.isCorrect && String(question.correctAnswer ?? question.correct_answer) === option
-                                ? 'bg-green-500/10 border-green-500/40 text-green-600 dark:text-green-400 font-medium'
-                                : answer === option && !result.isCorrect
-                                  ? 'bg-red-500/10 border-red-500/40 text-red-655 dark:text-red-400 font-medium'
-                                  : 'bg-zinc-100/50 dark:bg-zinc-900/20 border-zinc-200 dark:border-zinc-850/50 opacity-40 text-zinc-450 dark:text-zinc-600'
-                              : answer === option
-                                ? 'bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-semibold'
-                                : 'bg-white dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-850 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800/30 text-zinc-750 dark:text-zinc-300'
-                            }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-250 dark:border-zinc-700 flex items-center justify-center text-[10px] text-zinc-600 dark:text-zinc-400">
-                              {String.fromCharCode(65 + optIdx)}
-                            </span>
-                            <span><MathText text={option} /></span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : isInteger ? (
-                    /* Integer: Simple text input */
-                    <div className="space-y-3">
-                      <input
-                        type="text"
-                        value={answer || ''}
-                        onChange={(e) => !result && setRetryAnswers(prev => ({ ...prev, [question.id]: e.target.value }))}
-                        disabled={!!result}
-                        placeholder="Enter numeric answer..."
-                        className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-900/30 text-xs text-zinc-800 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-650 disabled:opacity-50 focus:outline-none focus:border-blue-500"
-                      />
-                      {!result && (
-                        <button
-                          onClick={() => handleRetryAnswer(question.id, answer)}
-                          disabled={!answer}
-                          className="w-full py-2 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 rounded-xl text-xs text-blue-600 dark:text-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium cursor-pointer"
-                        >
-                          Submit Answer
-                        </button>
-                      )}
-                    </div>
-                  ) : null}
+                          placeholder="Enter numeric answer..."
+                          className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-900/30 text-xs text-zinc-800 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-650 disabled:opacity-50 focus:outline-none focus:border-blue-500"
+                        />
+                        {!result && (
+                          <button
+                            onClick={() => handleRetryAnswer(question.id, answer)}
+                            disabled={!answer}
+                            className="w-full py-2 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 rounded-xl text-xs text-blue-600 dark:text-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium cursor-pointer"
+                          >
+                            Submit Answer
+                          </button>
+                        )}
+                      </div>
+                    ) : null}
 
-                  {/* Result display */}
-                  {result && (
-                    <div className={`mt-3 p-3 rounded-xl text-xs font-semibold ${result.isCorrect
-                        ? 'bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400'
-                        : 'bg-red-500/10 border border-red-500/30 text-red-655 dark:text-red-400'
-                      }`}>
-                      {result.isCorrect ? 'Correct!' : 'Incorrect'}
-                    </div>
-                  )}
+                    {/* Result display */}
+                    {result && (
+                      <div className={`mt-3 p-3 rounded-xl text-xs font-semibold ${result.isCorrect
+                          ? 'bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400'
+                          : 'bg-red-500/10 border border-red-500/30 text-red-655 dark:text-red-400'
+                        }`}>
+                        {result.isCorrect ? 'Correct!' : 'Incorrect'}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Navigation / Next button (User must answer to move on) */}
             {result && (
-              <div className="mt-4">
+              <div className="mt-4 flex-shrink-0">
                 <button
                   onClick={() => {
                     if (currentRetryIndex < retryData.length - 1) {
@@ -168,10 +170,10 @@ export default function RevisionRetryModal({
                 </button>
               </div>
             )}
-          </>
+          </div>
         ) : (
           /* Results summary when finished */
-          <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-850 rounded-2xl p-5 space-y-4">
+          <div className="flex-grow flex flex-col justify-center bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-850 rounded-2xl p-5 space-y-4 my-4 overflow-y-auto">
             <h4 className="text-xs font-semibold text-zinc-800 dark:text-white uppercase tracking-wider">Retry Results</h4>
             <div className="text-sm text-zinc-650 dark:text-gray-300">
               {(() => {

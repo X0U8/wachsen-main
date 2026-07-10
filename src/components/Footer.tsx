@@ -90,7 +90,7 @@ export default function Footer() {
             )}
           </button>
 
-          <NavLink to="/groups" icon={<UsersIcon ref={groupsRef} size={20} />} />
+          <NavLink to="/friends" icon={<UsersIcon ref={groupsRef} size={20} />} />
           <NavLink to="/revision" icon={<TelescopeIcon ref={revisionRef} size={20} />} />
         </div>
       </footer>

@@ -6,6 +6,7 @@ import FinalizeExam from './FinalizeExam';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
 import { supabase } from '../../services/supabase';
+import { NON_INT_SUBJECTS } from '../../data/nonIntSubjects';
 
 interface QuestionType {
   type: 'mcq' | 'integer' | 'true_false';
@@ -154,6 +155,9 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
 
   const totalQuestions = subjects.reduce((total, sub) => total + sub.questionTypes.reduce((qTotal, q) => qTotal + q.count, 0), 0);
   const totalMarks = subjects.reduce((total, sub) => total + sub.questionTypes.reduce((qTotal, q) => qTotal + (q.count * q.correctMarks), 0), 0);
+  const hasConflict = subjects.some(sub => 
+    selectedTypes.includes('integer') && NON_INT_SUBJECTS.has(sub.name.toLowerCase().trim())
+  );
 
   // Get max questions based on premium tier
   const getMaxTemplates = () => {
@@ -346,6 +350,17 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
   const addSubject = (sub?: any) => {
     if (sub) {
       if (subjects.find(s => s.id === sub.id)) return;
+      
+      const hasIntSelected = selectedTypes.includes('integer');
+      const isNonInt = NON_INT_SUBJECTS.has(sub.name.toLowerCase().trim());
+      
+      if (hasIntSelected && isNonInt) {
+        setNotification({
+          type: 'error',
+          message: `Integer type questions are not possible in ${sub.name}`
+        });
+      }
+
       setSubjects([...subjects, {
         id: sub.id, name: sub.name, academicLevel: sub.academicLevel || 'Grade 10', chapters: '', questionTypes: selectedTypes.map(type => ({
           type, count: defaultCounts[type] || 5, correctMarks: defaultCorrectMarks, negativeMarks: defaultNegativeMarks,
@@ -613,7 +628,14 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                           setSubjects(prev => prev.map(sub => {
                             const qTypes = [...sub.questionTypes];
                             const idx = qTypes.findIndex(t => t.type === type);
-                            if (idx >= 0) qTypes[idx] = { ...qTypes[idx], count: 5 };
+                            if (idx >= 0) {
+                              qTypes[idx] = { ...qTypes[idx], count: 5 };
+                            } else {
+                              qTypes.push({
+                                type, count: 5, correctMarks: defaultCorrectMarks, negativeMarks: defaultNegativeMarks,
+                                mcqOptions: type === 'mcq' ? 4 : undefined, mcqMultiple: type === 'mcq' ? false : undefined
+                              });
+                            }
                             return { ...sub, questionTypes: qTypes };
                           }));
                         }
@@ -701,6 +723,14 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                         <p className="text-[9px] text-zinc-400 dark:text-gray-500">{sub.chapters.length}/200</p>
                       </div>
                     </div>
+                    {selectedTypes.includes('integer') && NON_INT_SUBJECTS.has(sub.name.toLowerCase().trim()) && (
+                      <div className="mt-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2 text-red-650 dark:text-red-400">
+                        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
+                        <p className="text-xs font-medium leading-relaxed">
+                          Integer type questions in the subject <strong>{sub.name}</strong> are not possible. Either select a different subject or remove the integer type.
+                        </p>
+                      </div>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -732,7 +762,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                     <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Questions</span><span className={`font-mono font-medium ${totalQuestions > maxQuestions ? 'text-red-500' : 'text-blue-500'}`} style={{ fontSize: fontSize.base }}>{totalQuestions}<span className={`text-sm ${totalQuestions > maxQuestions ? 'text-red-400' : 'text-zinc-400 dark:text-gray-600'}`}>/{maxQuestions}</span></span></div>
                     <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Marks</span><span className="font-mono font-medium text-blue-500" style={{ fontSize: fontSize.base }}>{totalMarks}</span></div>
                   </div>
-                  <button onClick={handleGenerate} disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid}
+                  <button onClick={handleGenerate} disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid || hasConflict}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2" style={{ fontSize: fontSize.sm }}>
                     {(() => { const useOwn = localStorage.getItem('use_own_key') === 'true'; const prov = localStorage.getItem('provider') || 'mesh'; const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key'); return useOwn && key ? 'Generate (Your Key)' : `Generate (${2 + totalQuestions} credits)`; })()}
                   </button>

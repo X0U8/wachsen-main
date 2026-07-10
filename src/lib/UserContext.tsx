@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
+import { localStorageCache } from './localStorage';
 
 export interface UserProfile {
   id: string;
@@ -139,6 +140,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshCredits = refreshProfile;
+
+  useEffect(() => {
+    if (userProfile) {
+      localStorageCache.set(localStorageCache.keys.USER_PROFILE, userProfile);
+      localStorageCache.set(localStorageCache.keys.CREDITS, userProfile.credits || 0);
+    } else {
+      localStorageCache.remove(localStorageCache.keys.USER_PROFILE);
+      localStorageCache.remove(localStorageCache.keys.CREDITS);
+    }
+  }, [userProfile]);
 
   const logout = async () => {
     await supabase.auth.signOut();

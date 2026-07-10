@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -69,6 +69,7 @@ export default function ExamDetails() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const EXAMS_PER_PAGE = 10;
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const formatSimpleDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -217,6 +218,27 @@ export default function ExamDetails() {
       setLoadingExams(false);
     }
   };
+
+  useEffect(() => {
+    if (!hasMoreExams || loadingExams) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        fetchExams(false);
+      }
+    }, { rootMargin: '200px' });
+
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) {
+        observer.unobserve(currentSentinel);
+      }
+    };
+  }, [hasMoreExams, loadingExams, exams.length]);
 
   const handleLoadMore = () => {
     fetchExams(false);
@@ -438,24 +460,11 @@ export default function ExamDetails() {
           )}
         </div>
 
-        {/* Load More Button */}
+        {/* Infinite Scroll Sentinel */}
         {exams.length > 0 && hasMoreExams && (
-          <div className="flex justify-center mt-6">
-            <button
-              onClick={handleLoadMore}
-              disabled={loadingExams}
-              className="px-6 py-2.5 bg-white dark:bg-gray-900 hover:bg-zinc-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed border border-zinc-200 dark:border-gray-800 rounded-xl font-medium transition-all flex items-center gap-2 text-zinc-700 dark:text-gray-300"
-              style={{ fontSize: fontSize.sm }}
-            >
-              {loadingExams ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Loading
-                </>
-              ) : (
-                'Load More'
-              )}
-            </button>
+          <div ref={sentinelRef} className="flex justify-center items-center gap-2 mt-6 py-4 text-zinc-400 dark:text-zinc-550">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+            <span className="text-xs font-semibold uppercase tracking-wider">Loading more exams...</span>
           </div>
         )}
       </main>

@@ -6,7 +6,7 @@ import { HistoryIcon } from '../icons/HistoryIcon';
 import { UsersIcon } from '../icons/UsersIcon';
 import { TelescopeIcon } from '../icons/TelescopeIcon';
 import { fontSize } from '../lib/utils';
-import ProfileCard from './ProfileCard';
+import ProfileCard from './profile/ProfileCard';
 
 export default function Footer() {
   const location = useLocation();

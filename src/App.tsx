@@ -5,8 +5,10 @@ import Login from './components/onboarding/Login';
 import Onboarding from './components/onboarding/OnboardingPage';
 import Exam from './components/exam/ExamPage';
 import ExamDetails from './components/exam-details/ExamDetailsPage';
-import Settings from './components/Settings';
-import TakeExam from './components/TakeExam';
+import Settings from './components/settings/Settings';
+import TakeExam from './components/exam/TakeExam';
+import Results from './components/results/Results';
+import ResultDetails from './components/results/ResultDetails';
 
 import { UserProvider, useUserProfile } from './lib/UserContext.tsx';
 import { ThemeProvider } from './lib/ThemeContext.tsx';
@@ -70,6 +72,8 @@ function MainApp() {
 
       <Route path="/exam-details/:id" element={<ExamDetails />} />
       <Route path="/exam/:instanceId" element={<TakeExam />} />
+      <Route path="/results" element={<Results />} />
+      <Route path="/results/:resultId" element={<ResultDetails />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/exam" />} />
     </Routes>

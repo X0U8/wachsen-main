@@ -1,21 +1,23 @@
 import React, { useEffect, useRef } from 'react';
 import { useMathJax } from '../lib/MathJaxContext';
 
-const MathText = ({ text }: { text: string }) => {
+const MathText = ({ text }: { text: any }) => {
   const ready = useMathJax();
   const containerRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const textStr = String(text ?? '');
+
     // HTML-escape so < > & don't get interpreted as tags before MathJax runs
-    const escaped = (text || '')
+    const escaped = textStr
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
     containerRef.current.innerHTML = escaped;
 
-    if (!ready || !text?.includes('$')) return;
+    if (!ready || !textStr.includes('$')) return;
 
     // Clear MathJax's internal cache for this element so it re-processes
     if (window.MathJax?.typesetClear) {
@@ -29,7 +31,7 @@ const MathText = ({ text }: { text: string }) => {
     return () => clearTimeout(timer);
   }, [text, ready]);
 
-  if (!text) return null;
+  if (text === null || text === undefined) return null;
 
   return <span ref={containerRef} style={{ display: 'inline-block' }} />;
 };

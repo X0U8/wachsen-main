@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, Clock, GraduationCap, CheckCircle2, AlertCircle, Lock as LockIcon, CircleStop, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Notification from '../../ui/Notification';
-import FinalizeExam from '../FinalizeExam';
+import FinalizeExam from './FinalizeExam';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
 import { supabase } from '../../services/supabase';
@@ -198,6 +198,45 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     }
     return true;
   };
+
+  const updateTypeCount = (type: 'mcq' | 'integer' | 'true_false', val: number) => {
+    setDefaultCounts(prev => ({ ...prev, [type]: val }));
+    setSubjects(prev => prev.map(sub => {
+      const qTypes = [...sub.questionTypes];
+      const idx = qTypes.findIndex(t => t.type === type);
+      if (idx >= 0) qTypes[idx] = { ...qTypes[idx], count: val };
+      return { ...sub, questionTypes: qTypes };
+    }));
+  };
+
+  const intervalRef = useRef<any>(null);
+  const timeoutRef = useRef<any>(null);
+
+  const startAdjusting = (type: 'mcq' | 'integer' | 'true_false', direction: 'up' | 'down', currentVal: number) => {
+    stopAdjusting();
+    let val = currentVal;
+    const adjust = () => {
+      if (direction === 'up') {
+        val = Math.min(300, val + 5);
+      } else {
+        val = Math.max(5, val - 5);
+      }
+      updateTypeCount(type, val);
+    };
+    adjust();
+    timeoutRef.current = setTimeout(() => {
+      intervalRef.current = setInterval(adjust, 80);
+    }, 350);
+  };
+
+  const stopAdjusting = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  useEffect(() => {
+    return () => stopAdjusting();
+  }, []);
 
   const handleSaveTemplate = async () => {
     if (!templateName.trim() || !userProfile?.$id) return;
@@ -407,30 +446,31 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                         placeholder="Enter exam name manually..." />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col justify-between">
-                        <label className="text-zinc-500 dark:text-gray-400 font-medium mb-2" style={{ fontSize: fontSize.xs }}>Correct Marks</label>
-                        <div className="relative flex-1 flex items-stretch">
-                          <input type="text" inputMode="numeric" maxLength={1} value={defaultCorrectMarks || ''}
-                            onChange={(e) => {
-                              const v = e.target.value.replace(/\D/g, '');
-                              if (v !== '') setDefaultCorrectMarks(parseInt(v));
-                              else setDefaultCorrectMarks(0);
-                            }}
-                            className="w-full bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-700 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-green-500 focus:outline-none transition-all h-full"
-                            style={{ fontSize: fontSize.sm }} />
+                      <div className="space-y-2">
+                        <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Correct Marks</label>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setDefaultCorrectMarks(Math.max(1, defaultCorrectMarks - 1))}
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium"
+                            style={{ fontSize: fontSize.sm }}>-</button>
+                          <span className="flex-1 text-center font-semibold text-green-500 bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-700 rounded-lg py-2.5" style={{ fontSize: fontSize.sm }}>{defaultCorrectMarks}</span>
+                          <button onClick={() => setDefaultCorrectMarks(Math.min(5, defaultCorrectMarks + 1))}
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium"
+                            style={{ fontSize: fontSize.sm }}>+</button>
                         </div>
                       </div>
-                      <div className="flex flex-col justify-between">
-                        <label className="text-zinc-500 dark:text-gray-400 font-medium mb-2" style={{ fontSize: fontSize.xs }}>Negative Marks</label>
-                        <div className="relative flex-1 flex items-stretch">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-red-500 dark:text-red-400 font-medium pointer-events-none z-10" style={{ fontSize: fontSize.sm }}>-</span>
-                          <input type="text" inputMode="numeric" maxLength={1} value={defaultNegativeMarks !== undefined ? defaultNegativeMarks : ''}
-                            onChange={(e) => {
-                              const v = e.target.value.replace(/\D/g, '');
-                              setDefaultNegativeMarks(v !== '' ? parseInt(v) : 0);
-                            }}
-                            className="w-full bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-700 rounded-xl pl-7 pr-3 py-2.5 focus:ring-1 focus:ring-red-500 focus:outline-none transition-all h-full"
-                            style={{ fontSize: fontSize.sm }} />
+                      <div className="space-y-2">
+                        <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Negative Marks</label>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setDefaultNegativeMarks(Math.max(0, defaultNegativeMarks - 1))}
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium"
+                            style={{ fontSize: fontSize.sm }}>-</button>
+                          <div className="flex-1 flex items-center bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-700 rounded-lg py-2.5">
+                            <span className="text-red-500 font-semibold pl-3" style={{ fontSize: fontSize.sm }}>-</span>
+                            <span className="flex-1 text-center font-semibold text-red-500" style={{ fontSize: fontSize.sm }}>{defaultNegativeMarks}</span>
+                          </div>
+                          <button onClick={() => setDefaultNegativeMarks(Math.min(5, defaultNegativeMarks + 1))}
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium"
+                            style={{ fontSize: fontSize.sm }}>+</button>
                         </div>
                       </div>
                     </div>
@@ -583,30 +623,30 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                         </span>
                         {isActive && (
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                            <input type="text" inputMode="numeric" maxLength={2} value={count || ''}
-                              onChange={(e) => {
-                                const raw = e.target.value.replace(/\D/g, '');
-                                setDefaultCounts(prev => ({ ...prev, [type]: raw !== '' ? parseInt(raw) : 0 }));
-                              }}
-                              onBlur={(e) => {
-                                let raw = e.target.value.replace(/\D/g, '');
-                                let val = raw !== '' ? parseInt(raw) : 5;
-                                if (val < 5) val = 5;
-                                if (val > 99) val = 99;
-                                setDefaultCounts(prev => ({ ...prev, [type]: val }));
-                                setSubjects(prev => prev.map(sub => {
-                                  const qTypes = [...sub.questionTypes];
-                                  const idx = qTypes.findIndex(t => t.type === type);
-                                  if (idx >= 0) qTypes[idx] = { ...qTypes[idx], count: val };
-                                  return { ...sub, questionTypes: qTypes };
-                                }));
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                              }}
-                              className="w-14 bg-white dark:bg-gray-900 border border-zinc-300 dark:border-gray-700 rounded-lg px-2 py-1 text-center font-medium text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                              style={{ fontSize: fontSize.sm }} />
-                            <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Qs</span>
+                            <button
+                              type="button"
+                              onMouseDown={() => startAdjusting(type, 'down', count)}
+                              onMouseUp={stopAdjusting}
+                              onMouseLeave={stopAdjusting}
+                              onTouchStart={() => startAdjusting(type, 'down', count)}
+                              onTouchEnd={stopAdjusting}
+                              className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-550 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-semibold select-none"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 text-center font-bold text-[#007AFF]" style={{ fontSize: fontSize.sm }}>{count}</span>
+                            <button
+                              type="button"
+                              onMouseDown={() => startAdjusting(type, 'up', count)}
+                              onMouseUp={stopAdjusting}
+                              onMouseLeave={stopAdjusting}
+                              onTouchStart={() => startAdjusting(type, 'up', count)}
+                              onTouchEnd={stopAdjusting}
+                              className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-550 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-semibold select-none"
+                            >
+                              +
+                            </button>
+                            <span className="text-zinc-400 dark:text-gray-500 font-medium ml-1" style={{ fontSize: fontSize.xs }}>Qs</span>
                           </div>
                         )}
                       </div>
@@ -745,7 +785,9 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           isPublic,
           startDateTime,
           endDateTime,
-          categoryId
+          categoryId,
+          defaultCorrectMarks,
+          defaultNegativeMarks,
         }}
         userId={userProfile?.$id || ''}
       />

@@ -1,10 +1,10 @@
 import { Clipboard, Check } from 'lucide-react';
-import { useUserProfile } from '../lib/UserContext.tsx';
+import { useUserProfile } from '../../lib/UserContext.tsx';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PlanIcon from '../ui/PlanIcon';
-import { fontSize } from '../lib/utils';
-import { useTheme } from '../lib/ThemeContext.tsx';
+import PlanIcon from '../../ui/PlanIcon';
+import { fontSize } from '../../lib/utils';
+import { useTheme } from '../../lib/ThemeContext.tsx';
 
 const MAX_ROT = 28;
 

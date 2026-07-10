@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ChevronDown, Clock, AlertCircle, CheckCircle2, Loader2, X, RefreshCw, CheckSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../services/supabase';
-import { useUserProfile } from '../lib/UserContext';
-import Notification from '../ui/Notification';
-import MathText from '../ui/MathText';
-import { fontSize } from '../lib/utils';
+import { supabase } from '../../services/supabase';
+import { useUserProfile } from '../../lib/UserContext';
+import Notification from '../../ui/Notification';
+import MathText from '../../ui/MathText';
+import { fontSize } from '../../lib/utils';
 
 interface Question {
   id: number;
@@ -121,8 +121,10 @@ export default function TakeExam() {
               let qMarks = q.marks || q.correctMarks;
               let qNeg = q.negative_marks || q.negativeMarks;
 
+              const normalizedType = (q.type || 'mcq').toLowerCase().trim();
+
               if (q.subjectIndex !== undefined && parsedSubjects[q.subjectIndex]) {
-                const qt = parsedSubjects[q.subjectIndex].questionTypes?.find((t: any) => t.type === q.type);
+                const qt = parsedSubjects[q.subjectIndex].questionTypes?.find((t: any) => t.type === normalizedType);
                 if (qt) {
                   qMarks = qMarks ?? qt.correctMarks;
                   qNeg = qNeg ?? qt.negativeMarks;
@@ -131,14 +133,14 @@ export default function TakeExam() {
 
               const formattedQ: Question = {
                 id: q.id,
-                type: q.type,
+                type: normalizedType,
                 text: q.question,
                 options: q.options || [],
                 correct_answer: q.correct_answer || q.correctAnswer || '',
                 explanation: q.explanation || '',
                 difficulty: q.difficulty || 'medium',
-                marks: qMarks ?? 4,
-                negative_marks: qNeg ?? 0,
+                marks: qMarks ?? mappedRes.correct_marks ?? 4,
+                negative_marks: qNeg ?? mappedRes.negative_marks ?? 0,
               };
 
               subjectMap.get(subjectName)!.push(formattedQ);
@@ -254,32 +256,26 @@ export default function TakeExam() {
   }, [instanceId]);
 
   useEffect(() => {
-    if (!isExamStarted || !examData || isSubmitting) return;
-
-    const startTime = localStorage.getItem(`exam_start_${instanceId}`);
-    if (!startTime) return;
-
-    const totalSeconds = (examData.totalTime || 0) * 60;
+    if (!isExamStarted || !examData || isSubmitting || timeLeft === null) return;
 
     const timer = setInterval(() => {
-      const now = Date.now();
-      const elapsed = Math.floor((now - parseInt(startTime)) / 1000);
-      if (examData?.examType === 'casual') {
-        setTimeLeft(elapsed);
-      } else {
-        const remaining = totalSeconds - elapsed;
-        if (remaining <= 0) {
-          clearInterval(timer);
-          setTimeLeft(0);
-          setShowAutoSubmitModal(true);
+      setTimeLeft(prev => {
+        if (prev === null) return prev;
+        if (examData?.examType === 'casual') {
+          return prev + 1;
         } else {
-          setTimeLeft(remaining);
+          if (prev <= 1) {
+            clearInterval(timer);
+            setShowAutoSubmitModal(true);
+            return 0;
+          }
+          return prev - 1;
         }
-      }
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isExamStarted, examData, isSubmitting, instanceId]);
+  }, [isExamStarted, examData, isSubmitting, timeLeft === null]);
 
   useEffect(() => {
     if (!isExamStarted || isSubmitting) return;
@@ -420,13 +416,13 @@ export default function TakeExam() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswer = useCallback((questionId: number, answer: string) => {
+  const handleAnswer = useCallback((questionId: number, answer: string, skipThrottle = false, skipToggle = false) => {
     if (isSubmitting) return;
     const now = Date.now();
-    if (now - lastAnswerTime.current < 300) return;
-    lastAnswerTime.current = now;
+    if (!skipThrottle && now - lastAnswerTime.current < 300) return;
+    if (!skipThrottle) lastAnswerTime.current = now;
     setAnswers(prev => {
-      if (prev[questionId] === answer) {
+      if (!skipToggle && prev[questionId] === answer) {
         const newAnswers = { ...prev };
         delete newAnswers[questionId];
         return newAnswers;
@@ -455,16 +451,18 @@ export default function TakeExam() {
 
       questions.forEach(q => {
         const userAnswer = answers[q.id];
-        if (userAnswer === q.correct_answer) {
-          obtainedMarks += q.marks;
+        const normUser = String(userAnswer || '').trim();
+        const normCorrect = String(q.correct_answer ?? '').trim();
+        if (normUser === normCorrect) {
+          obtainedMarks += Number(q.marks || 0);
           correctAnswers.push(q.id);
         } else if (userAnswer !== undefined && userAnswer !== "") {
-          obtainedMarks -= q.negative_marks;
+          obtainedMarks -= Number(q.negative_marks || 0);
           wrongAnswers.push(q.id);
         }
       });
 
-      const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
+      const totalMarks = questions.reduce((sum, q) => sum + Number(q.marks || 0), 0);
       const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
       const percentageValue = isNaN(percentage) || !isFinite(percentage) ? 0 : Math.round(percentage);
 
@@ -549,7 +547,7 @@ export default function TakeExam() {
         }
       }
 
-      navigate('/results', { state: { resultId: finalResultId } });
+      navigate(`/results/${finalResultId}`);
     } catch (err: any) {
       showNotification('error', `Failed to save results: ${err.message || 'Unknown error'}. Please check your internet and try again.`);
       setIsSubmitting(false);
@@ -825,7 +823,7 @@ export default function TakeExam() {
                             value={answers[currentQuestion.id] || ''}
                             onChange={(e) => {
                               const val = e.target.value.replace(/[^0-9-]/g, '');
-                              if (val.length <= 15) handleAnswer(currentQuestion.id, val);
+                              if (val.length <= 15) handleAnswer(currentQuestion.id, val, true, true);
                             }}
                             className="w-full bg-zinc-100 dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-6 text-center text-3xl text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:outline-none transition-all placeholder:text-zinc-300 dark:placeholder:text-gray-800"
                           />
@@ -885,7 +883,7 @@ export default function TakeExam() {
                           key={idx}
                           onClick={() => setCurrentQuestionIdx(idx)}
                           className={`w-10 h-10 rounded-lg transition-all ${idx === currentQuestionIdx
-                            ? 'bg-blue-500/50 text-blue-400 border border-blue-500/50 scale-110'
+                            ? 'bg-blue-600 text-white border border-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.4)] ring-2 ring-blue-500/30'
                             : reviewList.has(idx)
                               ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                               : answers[questions[idx].id]

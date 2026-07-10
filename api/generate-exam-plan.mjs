@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { jsonrepair } from 'jsonrepair';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
@@ -18,6 +19,14 @@ export default async function handler(req, res) {
     const activeProvider = provider || 'mesh';
     const isMistral = activeProvider === 'mistral';
     const meshKey = userKey || (isMistral ? process.env.MISTRAL_API_KEY : MESH_API_KEY);
+
+    const refundCredits = async () => {
+      if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
+        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
+        await authed.from('profiles').update({ credits: (profile?.credits || 0) + DEDUCT_AMOUNT }).eq('id', userId);
+      }
+    };
 
     if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
       return res.status(400).json({ error: 'Invalid subjects data' });
@@ -54,8 +63,8 @@ export default async function handler(req, res) {
 
     const subjectsInfo = subjects.map(sub => {
       const qCount = sub.questionTypes.reduce((qTotal, q) => qTotal + q.count, 0);
-      const qTypes = sub.questionTypes.map(q => q.type.toUpperCase()).join(', ');
-      return `- ${sub.name}: ${qCount} questions (${qTypes}) - Topics: ${sub.chapters || 'Not specified'}`;
+      const qTypesDistribution = sub.questionTypes.map(q => `${q.type.toLowerCase()}: ${q.count} questions`).join(', ');
+      return `- ${sub.name}: Total ${qCount} questions (${qTypesDistribution}) - Chapters: ${sub.chapters || 'Not specified'}`;
     }).join('\n');
 
     const prompt = `Generate a json for an exam plan with the following details:
@@ -67,19 +76,19 @@ Total Questions: ${totalQuestions}
 Subjects and Question Distribution:
 ${subjectsInfo}
 
-DIFFICULTY REQUIREMENTS (STRICT):
-- User-selected difficulty: ${difficulty}
-- At least 80% of subtopics MUST align with this difficulty level
-- Difficulty definitions:
-  * EASY: Focus on basic concepts and fundamental topics
-  * MEDIUM: Focus on moderate complexity topics
-  * HARD: Focus on advanced and challenging topics
-  * ADVANCE: Focus on the most complex and advanced topics possible, The Toughest Questions you can make.
+DIFFICULTY (determines subtopic depth):
+- EASY: most basic subtopics
+- MEDIUM: moderate subtopics
+- HARD: advanced subtopics
+- ADVANCE: the most complex subtopics possible
+
+NOTE: Adjust the depth and complexity of generated subtopics according to the selected difficulty.
 
 CRITICAL INSTRUCTIONS:
 1. Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the raw JSON object
 2. Generate specific subtopics for each subject based on the chapters/topics provided
 3. Distribute questions logically across subtopics
+4. Each segment in the "segments" list MUST contain exactly 5 questions (e.g., "1-5", "6-10", "11-15") and must be assigned exactly ONE question type ('mcq', 'integer', or 'true_false') from the requested distribution for that subject. For example, if a subject has 10 mcq and 5 integer questions, you should have 3 segments in total: 2 segments assigned 'mcq' type and 1 segment assigned 'integer' type.
 
 Return the response in this JSON format:
 {
@@ -87,16 +96,14 @@ Return the response in this JSON format:
     {
       "name": "Subject Name",
       "segments": [
-        { "range": "1-10", "topics": ["Subtopic1", "Subtopic2"] },
-        { "range": "11-20", "topics": ["Subtopic3", "Subtopic4"] }
+        { "range": "1-5", "type": "mcq", "topics": ["Subtopic1", "Subtopic2"] },
+        { "range": "6-10", "type": "mcq", "topics": ["Subtopic3", "Subtopic4"] },
+        { "range": "11-15", "type": "integer", "topics": ["Subtopic5"] }
       ]
     }
   ]
 }
 
-For each subject, create ranges of exactly 10 questions like "1-10", "11-20", "21-30" based on question count.
-Each range MUST contain exactly 10 questions except the last range which can have fewer.
-Each range should contain relevant subtopics as an array (max 5 subtopics per range).
 Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the raw JSON object`;
 
     const apiUrl = isMistral ? MISTRAL_API_URL : MESH_API_URL;
@@ -116,7 +123,8 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 4096
+        max_tokens: 4096,
+        response_format: { type: 'json_object' }
       })
     });
 
@@ -135,12 +143,53 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
 
     content = content.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
 
+    const repairJsonWithAI = async (brokenContent) => {
+      try {
+        const repairResponse = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${meshKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: activeModel,
+            messages: [
+              { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors (like missing commas, unescaped quotes, or mismatched braces), and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
+              { role: 'user', content: brokenContent }
+            ],
+            temperature: 0.1,
+            max_tokens: 4096,
+            response_format: { type: 'json_object' }
+          })
+        });
+
+        if (repairResponse.ok) {
+          const repairData = await repairResponse.json();
+          let repairedText = repairData.choices?.[0]?.message?.content || '';
+          repairedText = repairedText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
+          return JSON.parse(repairedText);
+        }
+      } catch (err) {
+        console.error('AI JSON repair failed:', err);
+      }
+      return null;
+    };
+
     let parsedPlan;
     try {
       parsedPlan = JSON.parse(content);
     } catch (parseError) {
-      await refundCredits();
-      return res.status(500).json({ error: 'Failed to parse AI response as JSON', raw: content });
+      try {
+        parsedPlan = JSON.parse(jsonrepair(content));
+      } catch (repairError) {
+        const aiRepaired = await repairJsonWithAI(content);
+        if (aiRepaired) {
+          parsedPlan = aiRepaired;
+        } else {
+          await refundCredits();
+          return res.status(500).json({ error: 'Failed to parse AI response as JSON', raw: content });
+        }
+      }
     }
 
     // Normalize LaTeX row separators: any run of backslashes before a space → exactly \\
@@ -150,13 +199,7 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
       if (obj && typeof obj === 'object') { for (const k in obj) obj[k] = fixLatex(obj[k]); }
       return obj;
     };
-    parsedPlan = fixLatex(parsedPlan);    const refundCredits = async () => {
-      if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
-        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
-        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-        await authed.from('profiles').update({ credits: (profile?.credits || 0) + DEDUCT_AMOUNT }).eq('id', userId);
-      }
-    };
+    parsedPlan = fixLatex(parsedPlan);
 
     // Validate format
     if (!Array.isArray(parsedPlan?.subjects) || parsedPlan.subjects.length === 0) {

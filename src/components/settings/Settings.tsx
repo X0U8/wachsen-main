@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../lib/ThemeContext.tsx';
-import { useUserProfile } from '../lib/UserContext';
-import { fontSize } from '../lib/utils';
+import { useTheme } from '../../lib/ThemeContext.tsx';
+import { useUserProfile } from '../../lib/UserContext';
+import { fontSize } from '../../lib/utils';
 import { ArrowLeft, Sun, Moon, Type, Gift, Key, Check, Eye, EyeOff, Trash2, AlertTriangle, Plus } from 'lucide-react';
-import BuyCreditsModal from '../ui/BuyCreditsModal';
+import BuyCreditsModal from '../../ui/BuyCreditsModal';
 
 const FONT_OPTIONS = [
   { value: 'small' as const, label: 'Small' },

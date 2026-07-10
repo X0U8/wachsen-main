@@ -31,6 +31,8 @@ export default async function handler(req, res) {
       categoryId: examData.categoryId || null,
       status: examData.status || 'Pending',
       generatedExam: examData.generatedExam || '[]',
+      correct_marks: examData.correct_marks ?? examData.defaultCorrectMarks ?? 4,
+      negative_marks: examData.negative_marks ?? examData.defaultNegativeMarks ?? 0,
       ExamPlan: examData.ExamPlan || '{}'
     }).select().single();
 

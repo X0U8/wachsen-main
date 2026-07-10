@@ -1,0 +1,1040 @@
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../../services/supabase';
+import { useUserProfile } from '../../lib/UserContext';
+import {
+  Loader2, CheckCircle2, XCircle, Clock, Award, ChevronLeft, ChevronUp,
+  BarChart3, Brain, Target, Zap, AlertTriangle, Info, PieChart, Activity, Sparkle, X, Send
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import MathText from '../../ui/MathText';
+import Notification from '../../ui/Notification';
+import { fontSize } from '../../lib/utils';
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, PieChart as RePieChart, Pie, Legend
+} from 'recharts';
+
+
+
+function parseStoredValue<T>(value: unknown, fallback: T): T {
+  if (value == null) return fallback;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return value as T;
+}
+
+function normalizeResultQuestions(rawGeneratedExam: unknown, parsedSubjects: any[]) {
+  const parsed = parseStoredValue<any>(rawGeneratedExam, []);
+  const allQuestions: any[] = [];
+  const counts: number[] = [];
+
+  const subjectsList = Array.isArray(parsedSubjects) ? parsedSubjects : [];
+
+  // Newer exams are stored as a flat array of question objects.
+  if (Array.isArray(parsed) && parsed.length > 0 && (parsed[0]?.question || parsed[0]?.text)) {
+    const subjectMap = new Map<string, any[]>();
+
+    parsed.forEach((q: any) => {
+      let subjectName = 'Unknown';
+      if (q.subjectIndex !== undefined && subjectsList[q.subjectIndex]) {
+        subjectName = subjectsList[q.subjectIndex].name || subjectsList[q.subjectIndex].subject || 'Unknown';
+      } else if (q.subjectName || q.subject) {
+        subjectName = q.subjectName || q.subject;
+      }
+
+      if (!subjectMap.has(subjectName)) {
+        subjectMap.set(subjectName, []);
+      }
+
+      subjectMap.get(subjectName)!.push({
+        ...q,
+        text: q.question || q.text || '',
+        question: q.question || q.text || '',
+        correct_answer: q.correct_answer || q.correctAnswer || q.answer || '',
+        subject: subjectName,
+        chapter: q.chapter || q.chapters || ''
+      });
+    });
+
+    subjectMap.forEach((subjectQuestions) => {
+      counts.push(subjectQuestions.length);
+      allQuestions.push(...subjectQuestions);
+    });
+
+    return { allQuestions, counts };
+  }
+
+  const subjects = Array.isArray(parsed) ? parsed : (parsed?.subjects || []);
+  subjects.forEach((s: any) => {
+    const qs = Array.isArray(s.questions) ? s.questions : [];
+    counts.push(qs.length);
+    allQuestions.push(...qs.map((q: any) => ({
+      ...q,
+      text: q.question || q.text || '',
+      question: q.question || q.text || '',
+      correct_answer: q.correct_answer || q.correctAnswer || q.answer || '',
+      subject: s.subject || s.subjectName || s.name || q.subject || q.subjectName || '',
+      chapter: s.chapter || s.chapters || q.chapter || ''
+    })));
+  });
+
+  return { allQuestions, counts };
+}
+
+function normalizeExamPlanSubjects(rawPlan: unknown): any[] {
+  const parsed = parseStoredValue<any>(rawPlan, null);
+  if (Array.isArray(parsed)) return parsed;
+  if (parsed && Array.isArray(parsed.subjects)) return parsed.subjects;
+  return [];
+}
+
+function normalizeName(value: unknown): string {
+  return String(value || '').trim().toLowerCase();
+}
+
+function buildPlanTopicEntries(planSubject: any) {
+  if (!planSubject) return [];
+
+  if (Array.isArray(planSubject.segments)) {
+    return planSubject.segments.flatMap((segment: any) => {
+      const topics = Array.isArray(segment?.topics) ? segment.topics : [];
+      return topics
+        .map((topic: any) => ({
+          range: segment?.range || (segment?.from && segment?.to ? `${segment.from}-${segment.to}` : ''),
+          label: typeof topic === 'string' ? topic : (topic?.name || topic?.topic || '')
+        }))
+        .filter((entry: any) => entry.label);
+    });
+  }
+
+  if (Array.isArray(planSubject.topics)) {
+    return planSubject.topics
+      .map((topic: any) => ({
+        range: topic?.range || (topic?.from && topic?.to ? `${topic.from}-${topic.to}` : ''),
+        label: typeof topic === 'string' ? topic : (topic?.name || topic?.topic || '')
+      }))
+      .filter((entry: any) => entry.label);
+  }
+
+  return [];
+}
+
+export default function ResultDetails() {
+  const { resultId } = useParams<{ resultId: string }>();
+  const navigate = useNavigate();
+  const { userProfile, refreshProfile, refreshCredits } = useUserProfile();
+
+  const [loading, setLoading] = useState(true);
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [result, setResult] = useState<any>(null);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [examPlan, setExamPlan] = useState<any>(null);
+  const [examChapters, setExamChapters] = useState<any>(null);
+  const [subjectQuestionCounts, setSubjectQuestionCounts] = useState<number[]>([]);
+  const [filter, setFilter] = useState<'all' | 'correct' | 'wrong' | 'skipped'>('all');
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [expandedSubjectIdx, setExpandedSubjectIdx] = useState<number | null>(null);
+
+  // AI Tutor state
+  const [showTutor, setShowTutor] = useState(false);
+  const [tutorQuestion, setTutorQuestion] = useState<any>(null);
+  const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [isSendingChat, setIsSendingChat] = useState(false);
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom of chat history when it changes
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatHistory]);
+
+  const openTutorChat = (q: any) => {
+    const originalIndex = questions.findIndex(qq => qq.id === q.id);
+    const status = analytics.correctIds.includes(q.id) ? 'correct' : (analytics.wrongIds.includes(q.id) ? 'wrong' : 'skipped');
+    const userAns = analytics.userAnswers[q.id] || '(No answer provided)';
+
+    setTutorQuestion(q);
+    setShowTutor(true);
+
+    let intro = `Hi! I am your AI tutor. I noticed you got Question ${originalIndex + 1} `;
+    if (status === 'correct') {
+      intro += `correct! Excellent job. Would you like to review the core concepts or discuss any specific step of this question?`;
+    } else if (status === 'wrong') {
+      intro += `incorrect. Your answer was "${userAns}", but the correct answer is "${q.correct_answer}". Let's work together to understand why. Ask me anything about the theory or execution!`;
+    } else {
+      intro += `skipped. The correct answer is "${q.correct_answer}". Let's go over how to solve this so you are ready next time!`;
+    }
+
+    setChatHistory([
+      { role: 'assistant', content: intro }
+    ]);
+  };
+
+  const sendTutorMessage = async () => {
+    if (!chatInput.trim() || isSendingChat || !tutorQuestion) return;
+
+    const userMessageText = chatInput.trim();
+    setChatInput('');
+    setIsSendingChat(true);
+
+    const userMessage = { role: 'user' as const, content: userMessageText };
+    const updatedHistory = [...chatHistory, userMessage];
+    setChatHistory(updatedHistory);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || '';
+
+      const useOwnKey = localStorage.getItem('use_own_key') === 'true';
+      const userApiKey = localStorage.getItem('mesh_api_key') || '';
+      const activeProvider = localStorage.getItem('active_provider') || 'mesh';
+      const activeModel = localStorage.getItem('active_model') || '';
+
+      const userAns = analytics.userAnswers[tutorQuestion.id] || '';
+
+      const response = await fetch('/api/ask-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: tutorQuestion.text,
+          correctAnswer: tutorQuestion.correct_answer,
+          userAnswer: userAns,
+          options: tutorQuestion.options,
+          history: updatedHistory.slice(1), // omit the initial assistant intro
+          userId: userProfile?.id,
+          authToken,
+          apiKey: useOwnKey ? userApiKey : undefined,
+          provider: activeProvider,
+          model: activeModel
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to ask tutor');
+      }
+
+      setChatHistory(prev => [...prev, { role: 'assistant', content: data.reply }]);
+      if (data.creditsDeducted > 0) {
+        refreshCredits();
+      }
+    } catch (err: any) {
+      console.error(err);
+      showNotification('error', err.message || 'Failed to communicate with tutor');
+      setChatHistory(prev => prev.filter((_, i) => i !== prev.length - 1));
+      setChatInput(userMessageText);
+    } finally {
+      setIsSendingChat(false);
+    }
+  };
+
+  const planSubjects = useMemo(() => normalizeExamPlanSubjects(examPlan), [examPlan]);
+
+  const analysisSubjects = useMemo(() => {
+    const chapterSubjects = Array.isArray(examChapters) ? examChapters : [];
+
+    if (chapterSubjects.length > 0) {
+      return chapterSubjects.map((subject: any, idx: number) => {
+        const planSubjectByIndex = planSubjects[idx];
+        const planSubjectByName = planSubjects.find((ps: any) =>
+          normalizeName(ps?.name || ps?.subjectName) === normalizeName(subject?.name || subject?.subjectName)
+        );
+        const matchedPlanSubject = planSubjectByIndex || planSubjectByName || null;
+
+        return {
+          ...subject,
+          name: subject?.name || subject?.subjectName || matchedPlanSubject?.name || matchedPlanSubject?.subjectName || `Subject ${idx + 1}`,
+          chapters: subject?.chapters || subject?.chapter || '',
+          planSubject: matchedPlanSubject,
+          planTopics: buildPlanTopicEntries(matchedPlanSubject)
+        };
+      });
+    }
+
+    if (planSubjects.length > 0) {
+      return planSubjects.map((subject: any, idx: number) => ({
+        ...subject,
+        name: subject?.name || subject?.subjectName || `Subject ${idx + 1}`,
+        chapters: subject?.chapters || subject?.chapter || '',
+        planSubject: subject,
+        planTopics: buildPlanTopicEntries(subject)
+      }));
+    }
+
+    // Fallback: build unique subjects list directly from the questions array
+    const uniqueSubjects = new Map<string, number>();
+    questions.forEach(q => {
+      const sName = q.subject || q.subjectName || 'Unknown';
+      uniqueSubjects.set(sName, (uniqueSubjects.get(sName) || 0) + 1);
+    });
+
+    return Array.from(uniqueSubjects.entries()).map(([name, count]) => ({
+      name,
+      count,
+      chapters: '',
+      planSubject: null,
+      planTopics: []
+    }));
+  }, [examChapters, planSubjects, questions]);
+
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message });
+  };
+
+
+
+  useEffect(() => {
+    if (!resultId) return;
+
+    const fetchResult = async () => {
+      try {
+        setLoading(true);
+        // Phase 1: Fetch result document
+        const { data: resDoc, error: getResultError } = await supabase
+          .from('results')
+          .select('*')
+          .eq('id', resultId)
+          .single();
+        if (getResultError) throw getResultError;
+
+        setResult(resDoc);
+        setUserId(resDoc.userId || null);
+        setLoading(false);
+
+        // Phase 2: Fetch questions in background (non-blocking for LCP)
+        setLoadingQuestions(true);
+        const { data: examDocs, error: examError } = await supabase
+          .from('exams')
+          .select('generatedExam, ExamPlan, subjects')
+          .eq('id', resDoc.examId)
+          .limit(1);
+
+        if (examError) throw examError;
+
+        if (examDocs && examDocs.length > 0) {
+          const examDoc = examDocs[0];
+
+          // Set subjects column if exists (contains chapter info)
+          let subjectsParsed: any[] = [];
+          if (examDoc.subjects) {
+            subjectsParsed = parseStoredValue(examDoc.subjects, []);
+            setExamChapters(subjectsParsed);
+          }
+
+          if (examDoc.generatedExam) {
+            const { allQuestions, counts } = normalizeResultQuestions(examDoc.generatedExam, subjectsParsed);
+            setQuestions(allQuestions);
+            setSubjectQuestionCounts(counts);
+          }
+          // Set ExamPlan if exists
+          if (examDoc.ExamPlan) {
+            const planParsed = parseStoredValue(examDoc.ExamPlan, null);
+            setExamPlan(planParsed);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching result details:', err);
+      } finally {
+        setLoading(false);
+        setLoadingQuestions(false);
+      }
+    };
+
+    fetchResult();
+  }, [resultId]);
+
+  // Scroll listener for scroll-to-top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Reset selection when filter changes
+  useEffect(() => {
+    setSelectedQuestionId(null);
+  }, [filter]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Analytics Calculations
+  const analytics = useMemo(() => {
+    if (!result || questions.length === 0) return null;
+
+    const correctIds = parseStoredValue(result.correctAnswers, []);
+    const wrongIds = parseStoredValue(result.wrongAnswers, []);
+    const userAnswers = parseStoredValue(result.userAnswers, {});
+    const questionTimes = parseStoredValue(result.timeSpentPerQuestion, {});
+
+    const attempted = correctIds.length + wrongIds.length;
+    const skipped = questions.length - correctIds.length - wrongIds.length;
+    const totalTimeTakenSec = result.startTime && result.endTime
+      ? Math.floor((new Date(result.endTime).getTime() - new Date(result.startTime).getTime()) / 1000)
+      : 0;
+
+    const avgTimePerAttempt = attempted > 0 ? (totalTimeTakenSec / attempted) : 0;
+
+    // Chapter-wise analytics: computed by matching question subject names
+    const chapterAnalytics: Record<string, { correct: number, wrong: number, total: number, start: number, end: number, subject: string }> = {};
+    analysisSubjects.forEach((subject: any, idx: number) => {
+      const key = String(idx);
+      chapterAnalytics[key] = { correct: 0, wrong: 0, total: 0, start: 0, end: 0, subject: subject.name || '' };
+
+      const subjectNameLower = (subject.name || '').toLowerCase().trim();
+      const subjectQuestions = questions.filter(q => {
+        const qSub = (q.subject || q.subjectName || '').toLowerCase().trim();
+        return qSub === subjectNameLower;
+      });
+
+      chapterAnalytics[key].total = subjectQuestions.length;
+      subjectQuestions.forEach(q => {
+        if (correctIds.includes(q.id)) chapterAnalytics[key].correct++;
+        else if (wrongIds.includes(q.id)) chapterAnalytics[key].wrong++;
+      });
+    });
+
+    // 1. Line Graph Data (Time consumed per question)
+    const timePerQuestionData = questions.map((q, idx) => ({
+      name: `Q${idx + 1}`,
+      time: questionTimes[q.id] || 0
+    }));
+
+    // 2. Difficulty vs Performance Data
+    const difficultyDataMap: Record<string, { correct: number, wrong: number, skipped: number }> = {
+      easy: { correct: 0, wrong: 0, skipped: 0 },
+      medium: { correct: 0, wrong: 0, skipped: 0 },
+      hard: { correct: 0, wrong: 0, skipped: 0 },
+      advance: { correct: 0, wrong: 0, skipped: 0 }
+    };
+
+    questions.forEach(q => {
+      const diff = (q.difficulty || 'medium').toLowerCase();
+      const normalizedDiff = diff in difficultyDataMap ? diff : 'medium';
+      if (correctIds.includes(q.id)) difficultyDataMap[normalizedDiff].correct++;
+      else if (wrongIds.includes(q.id)) difficultyDataMap[normalizedDiff].wrong++;
+      else difficultyDataMap[normalizedDiff].skipped++;
+    });
+
+    const difficultyChartData = Object.entries(difficultyDataMap).map(([level, stats]) => ({
+      level: level.charAt(0).toUpperCase() + level.slice(1),
+      ...stats
+    }));
+
+    // 3. Doughnut Data
+    const doughnutData = [
+      { name: 'Correct', value: correctIds?.length || 0, color: '#22c55e' },
+      { name: 'Wrong', value: wrongIds?.length || 0, color: '#ef4444' },
+      { name: 'Skipped', value: (questions?.length || 0) - (correctIds?.length || 0) - (wrongIds?.length || 0), color: '#4b5563' }
+    ];
+
+    // 4. Mental Health / Performance Matrix
+    const performanceMatrix = {
+      quickRight: 0, // Quick thinking skill
+      quickWrong: 0, // Concept not clear / Blind guess / Silly mistake
+      slowRight: 0,  // Tough question / Confused
+      slowWrong: 0   // Silly mistake / Conceptually incorrect
+    };
+
+    questions.forEach(q => {
+      const time = questionTimes[q.id] || 0;
+      if (!userAnswers[q.id]) return;
+
+      const isQuick = time <= avgTimePerAttempt;
+      const isRight = correctIds.includes(q.id);
+
+      if (isQuick && isRight) performanceMatrix.quickRight++;
+      else if (isQuick && !isRight) performanceMatrix.quickWrong++;
+      else if (!isQuick && isRight) performanceMatrix.slowRight++;
+      else if (!isQuick && !isRight) performanceMatrix.slowWrong++;
+    });
+
+    return {
+      correctIds,
+      wrongIds,
+      userAnswers,
+      questionTimes,
+      attempted,
+      skipped,
+      accuracy: Math.round((correctIds.length / (attempted || 1)) * 100),
+      totalTimeTakenSec,
+      totalTimeTakenMin: Math.floor(totalTimeTakenSec / 60),
+      avgTimePerAttempt: Math.round(avgTimePerAttempt),
+      timePerQuestionData,
+      difficultyChartData,
+      doughnutData,
+      performanceMatrix,
+      chapterAnalytics
+    };
+  }, [result, questions, analysisSubjects, subjectQuestionCounts]);
+
+  // Filter questions by status
+  const filteredQuestions = useMemo(() => {
+    if (!analytics) return [];
+    return questions.filter(q => {
+      const status = analytics.correctIds.includes(q.id) ? 'correct' : (analytics.wrongIds.includes(q.id) ? 'wrong' : 'skipped');
+      if (filter === 'all') return true;
+      return status === filter;
+    });
+  }, [questions, analytics, filter]);
+
+  // Get currently selected question (or first one as default)
+  const selectedQuestion = useMemo(() => {
+    if (filteredQuestions.length === 0) return null;
+    return filteredQuestions.find(q => q.id === selectedQuestionId) || filteredQuestions[0];
+  }, [filteredQuestions, selectedQuestionId]);
+
+  if (!loading && !result) {
+    return (
+      <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6">
+
+        <h2 style={{ fontSize: fontSize.sm }}>Result Not Found</h2>
+        <button onClick={() => navigate('/exam')} className="mt-6 px-4 py-2 bg-blue-600 rounded-xl" style={{ fontSize: fontSize.sm }}>Back to Results</button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center">
+        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+        <p className="mt-4 text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Analyzing your performance...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white">
+      <header className="p-2 flex items-center justify-between border-b border-gray-900 bg-zinc-50/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-10">
+        <div className="flex items-center gap-2">
+          <button onClick={() => navigate('/exam')} className="p-2 hover:bg-white dark:hover:bg-gray-900 rounded-full transition-colors">
+            <ChevronLeft className="w-6 h-6 text-zinc-900 dark:text-white" />
+          </button>
+          <h1 className="sm:text-lg font-medium text-zinc-900 dark:text-white truncate max-w-[200px] sm:max-w-[300px]" style={{ fontSize: fontSize.base }}>
+            {result.examName || 'Results'}
+          </h1>
+        </div>
+      </header>
+
+      <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full space-y-12">
+        {/* Top Marks Display */}
+        <div className="text-center  space-y-2 py-4">
+          <div className="text-5xl font-black text-zinc-900 dark:text-white">
+            {result.marksObtained}<span className="text-blue-500">/</span><span className="text-gray-600">{result.totalMarks}</span>
+          </div>
+
+        </div>
+
+        {/* Score Overview Cards - One Row on all screens */}
+        <div className="grid grid-cols-4 gap-2 md:gap-4">
+          {analytics ? [
+            { label: 'Final Score', value: result.marksObtained, color: 'text-zinc-900 dark:text-white font-bold' },
+            { label: 'Accuracy', value: `${analytics.accuracy}%`, color: 'text-zinc-900 dark:text-white font-bold' },
+            { label: 'Time Taken', value: `${analytics.totalTimeTakenMin}m`, color: 'text-zinc-900 dark:text-white font-bold' },
+            { label: 'Attempted', value: `${analytics.attempted}/${questions.length}`, color: 'text-zinc-900 dark:text-white font-bold' },
+          ].map((card, i) => (
+            <div key={i} className="bg-white dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 p-3 md:p-6 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center text-center space-y-1 md:space-y-2">
+              <p className="text-[9px] text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>{card.label}</p>
+              <p className={`md:text-3xl truncate w-full ${card.color}`} style={{ fontSize: fontSize.base }}>{card.value}</p>
+            </div>
+          )) : [
+            { label: 'Final Score', value: result.marksObtained, color: 'text-zinc-900 dark:text-white font-bold' },
+            { label: 'Accuracy', value: 'Loading...', color: 'text-zinc-400 dark:text-zinc-500' },
+            { label: 'Time Taken', value: 'Loading...', color: 'text-zinc-400 dark:text-zinc-500' },
+            { label: 'Attempted', value: 'Loading...', color: 'text-zinc-400 dark:text-zinc-500' },
+          ].map((card, i) => (
+            <div key={i} className="bg-white dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 p-3 md:p-6 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center text-center space-y-1 md:space-y-2">
+              <p className="text-[10px] text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>{card.label}</p>
+              <p className={`md:text-3xl truncate w-full ${card.color}`} style={{ fontSize: fontSize.base }}>{card.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Graphs Grid */}
+        {loadingQuestions ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl h-80 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              </div>
+            ))}
+          </div>
+        ) : !analytics ? (
+          <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl text-center text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
+            Question data is unavailable for this result, so detailed analytics cannot be shown.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* 1. Line Graph: Time per Question */}
+            <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-4">
+              <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Time Spent Per Question</h3>
+              <div className="overflow-x-auto">
+                <div
+                  style={{ minWidth: Math.max(analytics?.timePerQuestionData?.length * 32 || 300, 300) }}
+                  className="h-64"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analytics?.timePerQuestionData || []}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fill: '#6b7280', fontSize: 10 }}
+                        tickLine={false}
+                        axisLine={false}
+                        interval={0}
+                      />
+                      <YAxis hide />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }}
+                        itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="time"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        dot={{ fill: '#3b82f6', r: 2 }}
+                        activeDot={{ r: 5, stroke: '#111827', strokeWidth: 2 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Stacked Bar: Difficulty vs Performance */}
+            <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-6">
+              <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Difficulty Analysis</h3>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analytics.difficultyChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                    <XAxis dataKey="level" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                    <YAxis hide />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
+                      contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }}
+                    />
+                    <Bar dataKey="correct" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="skipped" stackId="a" fill="#4b5563" />
+                    <Bar dataKey="wrong" stackId="a" fill="#ef4444" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 3. Doughnut: Global Distribution */}
+            <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-6">
+              <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Global Status</h3>
+              <div className="h-64 w-full flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RePieChart>
+                    <Pie
+                      data={analytics.doughnutData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={8}
+                      dataKey="value"
+                    >
+                      {analytics.doughnutData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }}
+                    />
+                    <Legend verticalAlign="bottom" height={36} />
+                  </RePieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* 4.  Performance Line Chart */}
+            <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-6">
+              <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Performance Matrix</h3>
+              <div className="grid grid-cols-2 gap-3 h-64">
+                {[
+                  { label: 'Quick + Right', value: analytics.performanceMatrix.quickRight, desc: 'Quick Thinking Skill', color: 'bg-green-500/5 dark:bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-300' },
+                  { label: 'Quick + Wrong', value: analytics.performanceMatrix.quickWrong, desc: 'Silly Mistake / Blind Guess', color: 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300' },
+                  { label: 'Slow + Correct', value: analytics.performanceMatrix.slowRight, desc: 'Tough Question / Confused', color: 'bg-blue-500/5 dark:bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-300' },
+                  { label: 'Slow + Wrong', value: analytics.performanceMatrix.slowWrong, desc: 'Conceptual Gap', color: 'bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-300' },
+                ].map((item, idx) => (
+                  <div key={idx} className={`${item.color} border p-4 rounded-2xl flex flex-col justify-center items-center text-center space-y-1`}>
+                    <div className="text-2xl font-bold">{item.value}</div>
+                    <div className="text-[10px] font-semibold">{item.label}</div>
+                    <div className="text-[8px] opacity-70">{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 5. Topic-wise Analysis — uses planner data when available */}
+            {analysisSubjects.length > 0 && (() => {
+              return (
+                <>
+                  <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-4">
+                    <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Topic-wise Analysis</h3>
+                    <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+                      {analysisSubjects.map((subject: any, idx: number) => {
+                        const hasSubtopics = subject.planTopics.length > 0;
+                        const isExpanded = expandedSubjectIdx === idx;
+                        return (
+                          <div key={idx}>
+                            <div
+                              className={`flex items-center gap-3 p-3 bg-zinc-100 dark:bg-gray-800/30 rounded-xl border border-zinc-200 dark:border-gray-700/50 ${hasSubtopics ? 'cursor-pointer hover:border-zinc-300 dark:hover:border-gray-600' : ''} transition-all`}
+                              onClick={() => hasSubtopics && setExpandedSubjectIdx(isExpanded ? null : idx)}
+                            >
+                              <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-[10px] text-blue-500 dark:text-blue-400 font-semibold shrink-0">
+                                {idx + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-zinc-900 dark:text-white" style={{ fontSize: fontSize.xs }}>{subject.name || ''}</div>
+                                {subject.chapters ? <div className="text-[10px] text-zinc-550 dark:text-gray-400 mt-0.5">{subject.chapters}</div> : null}
+                              </div>
+                              {hasSubtopics && (
+                                <div className={`text-zinc-500 dark:text-gray-500 text-[10px] shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</div>
+                              )}
+                            </div>
+                            {isExpanded && hasSubtopics && (
+                              <div className="ml-10 mt-1 flex flex-row flex-wrap gap-1.5">
+                                {subject.planTopics.map((topic: any, tIdx: number) => {
+                                  const showRange = tIdx === 0 || topic.range !== subject.planTopics[tIdx - 1].range;
+                                  return (
+                                    <div key={tIdx} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-100 dark:bg-gray-950 border border-zinc-200 dark:border-gray-800 rounded-lg max-w-full">
+                                      <div className="text-[9px] text-zinc-450 dark:text-gray-500 shrink-0 w-10 font-semibold">
+                                        {showRange && topic.range ? `Q${String(topic.range).replace('-', '–')}` : ''}
+                                      </div>
+                                      <div className="text-[10px] text-zinc-700 dark:text-gray-300 min-w-0">
+                                        <MathText text={topic.label} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 6. Subject-wise Breakdown chart */}
+                  <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-4">
+                    <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Subject-wise Breakdown</h3>
+                    <div className="h-64 overflow-x-auto">
+                      <div style={{ minWidth: Math.max(analysisSubjects.length * 40, 400), height: 240 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={analysisSubjects.map((subject: any, idx: number) => {
+                            const stats = analytics.chapterAnalytics?.[String(idx)] || { correct: 0, wrong: 0, total: subjectQuestionCounts[idx] || 0, start: 0, end: 0, subject: '' };
+                            const skipped = Math.max(0, stats.total - stats.correct - stats.wrong);
+                            return {
+                              name: (subject.name || '').length > 10 ? (subject.name || '').substring(0, 10) + '…' : (subject.name || ''),
+                              fullName: subject.name || '',
+                              chapter: subject.chapters || '',
+                              correct: stats.correct,
+                              wrong: stats.wrong,
+                              skipped: Math.max(0, skipped)
+                            };
+                          })} barSize={80}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                            <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 8 }} tickLine={false} axisLine={false} interval={0} angle={0} textAnchor="middle" height={40} />
+                            <YAxis hide />
+                            <Tooltip
+                              cursor={{ fill: 'rgba(59,130,246,0.05)' }}
+                              contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }}
+                              content={({ active, payload }: any) => {
+                                if (active && payload && payload.length) {
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-3 space-y-1 shadow-lg">
+                                      <div className="text-[10px] text-zinc-900 dark:text-white font-bold">{d.fullName}</div>
+                                      {d.chapter ? <div className="text-[9px] text-zinc-500 dark:text-gray-400">{d.chapter}</div> : null}
+                                      <div className="text-[9px] text-green-600 dark:text-green-400 font-semibold">Correct: {d.correct}</div>
+                                      <div className="text-[9px] text-red-600 dark:text-red-400 font-semibold">Wrong: {d.wrong}</div>
+                                      <div className="text-[9px] text-zinc-600 dark:text-gray-400 font-semibold">Skipped: {d.skipped}</div>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
+                            <Bar dataKey="correct" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
+                            <Bar dataKey="wrong" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} />
+                            <Bar dataKey="skipped" stackId="a" fill="#4b5563" radius={[6, 6, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+
+        {/* Question Review List */}
+        {loadingQuestions ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div key={i} className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl h-32 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+              </div>
+            ))}
+          </div>
+        ) : !analytics ? (
+          <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-3xl p-6 text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
+            Question review is unavailable because this result does not include usable question data.
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-900 pb-4">
+              <div className="flex items-center gap-2">
+                <h3 style={{ fontSize: fontSize.sm }}>Question-wise Analysis</h3>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex gap-1 bg-white/50 dark:bg-gray-900/50 rounded-full p-1">
+                  <button
+                    onClick={() => setFilter('all')}
+                    className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'all' ? 'bg-blue-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                      }`}
+                  >
+                    All ({questions.length})
+                  </button>
+                  <button
+                    onClick={() => setFilter('wrong')}
+                    className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'wrong' ? 'bg-red-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                      }`}
+                  >
+                    Wrong ({analytics.wrongIds.length})
+                  </button>
+                  <button
+                    onClick={() => setFilter('correct')}
+                    className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'correct' ? 'bg-green-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                      }`}
+                  >
+                    Correct ({analytics.correctIds.length})
+                  </button>
+                  <button
+                    onClick={() => setFilter('skipped')}
+                    className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'skipped' ? 'bg-gray-600 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                      }`}
+                  >
+                    Skipped ({analytics.skipped})
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Question Number Grid - click to view */}
+            <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-16 gap-1.5 justify-center">
+              {filteredQuestions.map((q) => {
+                const originalIndex = questions.findIndex(qq => qq.id === q.id);
+                const status = analytics.correctIds.includes(q.id) ? 'correct' : (analytics.wrongIds.includes(q.id) ? 'wrong' : 'skipped');
+                const isSelected = selectedQuestion?.id === q.id;
+                const statusColor =
+                  status === 'correct' ? 'bg-green-500/10 dark:bg-green-500/20 border-green-300 dark:border-green-500/40 text-green-700 dark:text-green-400 hover:bg-green-500/20 dark:hover:bg-green-500/30'
+                    : status === 'wrong' ? 'bg-red-500/10 dark:bg-red-500/20 border-red-300 dark:border-red-500/40 text-red-700 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30'
+                      : 'bg-zinc-200/50 dark:bg-gray-800 border-zinc-300 dark:border-gray-700 text-zinc-650 dark:text-gray-400 hover:bg-zinc-300/50 dark:hover:bg-gray-700/80';
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => setSelectedQuestionId(q.id)}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg border text-[10px] font-medium transition-all flex items-center justify-center ${statusColor} ${isSelected ? 'ring-2 ring-blue-500 scale-110' : ''
+                      }`} style={{ fontSize: fontSize.xs }}
+                  >
+                    {originalIndex + 1}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Selected Question Detail View */}
+            {selectedQuestion && (() => {
+              const q = selectedQuestion;
+              const originalIndex = questions.findIndex(qq => qq.id === q.id);
+              const status = analytics.correctIds.includes(q.id) ? 'correct' : (analytics.wrongIds.includes(q.id) ? 'wrong' : 'skipped');
+              const timeSpent = analytics.questionTimes[q.id] || 0;
+              const userAns = analytics.userAnswers[q.id];
+              const currentIdx = filteredQuestions.findIndex(fq => fq.id === q.id);
+              const hasPrev = currentIdx > 0;
+              const hasNext = currentIdx < filteredQuestions.length - 1;
+
+              return (
+                <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-3xl overflow-hidden">
+                  <div className="p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${status === 'correct' ? 'bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400'
+                            : status === 'wrong' ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                              : 'bg-zinc-200 dark:bg-gray-800 text-zinc-650 dark:text-gray-400'
+                          }`} style={{ fontSize: fontSize.xs }}>
+                          {originalIndex + 1}
+                        </span>
+                        <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
+                          <div className="text-[8px] sm:text-[10px] text-zinc-550 dark:text-gray-400 font-medium">Time Taken</div>
+                          <div className="text-[10px] text-zinc-900 dark:text-white font-bold" style={{ fontSize: fontSize.xs }}>{timeSpent}s</div>
+                        </div>
+                        <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
+                          <div className="text-[8px] sm:text-[10px] text-zinc-550 dark:text-gray-400 font-medium">Difficulty</div>
+                          <div className="text-[10px] text-zinc-900 dark:text-white font-bold capitalize" style={{ fontSize: fontSize.xs }}>{q.difficulty || 'medium'}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => hasPrev && setSelectedQuestionId(filteredQuestions[currentIdx - 1].id)}
+                          disabled={!hasPrev}
+                          className="p-2 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:bg-zinc-100 dark:disabled:bg-gray-905 disabled:cursor-not-allowed rounded-lg text-zinc-700 dark:text-gray-300 disabled:text-zinc-400 dark:disabled:text-gray-600 border border-zinc-350 dark:border-gray-700/50 transition-all cursor-pointer"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => hasNext && setSelectedQuestionId(filteredQuestions[currentIdx + 1].id)}
+                          disabled={!hasNext}
+                          className="p-2 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:bg-zinc-100 dark:disabled:bg-gray-905 disabled:cursor-not-allowed rounded-lg text-zinc-700 dark:text-gray-300 disabled:text-zinc-400 dark:disabled:text-gray-600 border border-zinc-350 dark:border-gray-700/50 transition-all cursor-pointer"
+                        >
+                          <ChevronLeft className="w-4 h-4 rotate-180" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="font-medium leading-relaxed text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+                      <MathText text={q.text} />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className={`p-3 rounded-2xl border flex items-center justify-between ${status === 'correct' ? 'bg-green-500/5 border-green-500/20 text-green-600 dark:text-green-400'
+                            : status === 'wrong' ? 'bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400'
+                              : 'bg-zinc-100 dark:bg-gray-900 border-zinc-200 dark:border-gray-800 text-zinc-500 dark:text-gray-400'
+                          }`} style={{ fontSize: fontSize.xs }}>
+                          <div className="flex flex-col gap-1 flex-1">
+                            <span className="text-[10px] text-zinc-500 dark:text-gray-455 font-medium">Your Answer</span>
+                            <span className="font-semibold"><MathText text={userAns || 'Not Attempted'} /></span>
+                          </div>
+                        </div>
+                        <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-2xl text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.xs }}>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-[10px] text-zinc-500 dark:text-blue-500/80 font-medium">Correct Answer</span>
+                            <span className="font-semibold"><MathText text={q.correct_answer} /></span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ask AI Tutor Button */}
+                      <div className="flex justify-end pt-3 mt-1 border-t border-zinc-205 dark:border-gray-800/50">
+                        <button
+                          onClick={() => openTutorChat(q)}
+                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] sm:text-xs font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Sparkle className="w-3.5 h-3.5" />
+                          Ask About this Question
+                        </button>
+                      </div>
+                    </div>
+                  </div>  </div>
+              );
+            })()}
+          </div>
+        )}
+      </main>
+
+
+
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
+
+      {/* AI Tutor Chat Overlay */}
+      {showTutor && tutorQuestion && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl w-full max-w-lg h-[500px] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="p-4 border-b border-zinc-200/50 dark:border-gray-800 flex items-center justify-between bg-zinc-50/50 dark:bg-gray-900/50 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <Sparkle className="w-5 h-5 text-blue-500 animate-pulse" />
+                <div>
+                  <div className="text-sm font-bold text-zinc-900 dark:text-white">AI Tutor</div>
+                  <div className="text-[10px] text-zinc-500 dark:text-gray-400">
+                    {localStorage.getItem('use_own_key') === 'true' ? 'Using own API key' : `Cost: 1 Credit (You have ${userProfile?.credits || 0})`}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTutor(false)}
+                className="p-1.5 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded-xl transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
+              </button>
+            </div>
+
+            {/* Messages Area */}
+            <div className="flex-grow p-4 overflow-y-auto space-y-4">
+              {chatHistory.map((msg, i) => (
+                <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${msg.role === 'user'
+                      ? 'bg-blue-600 text-white rounded-tr-none'
+                      : 'bg-zinc-100 dark:bg-gray-800/80 text-zinc-900 dark:text-gray-200 rounded-tl-none border border-zinc-200/20 dark:border-gray-700/30'
+                    }`}>
+                    <MathText text={msg.content} />
+                  </div>
+                </div>
+              ))}
+              {isSendingChat && (
+                <div className="flex justify-start">
+                  <div className="bg-zinc-100 dark:bg-gray-800/80 border border-zinc-200/20 dark:border-gray-700/30 rounded-2xl rounded-tl-none p-3.5 flex items-center gap-2">
+                    <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
+                    <span className="text-[10px] text-zinc-500 dark:text-gray-450 font-medium">Tutor is thinking...</span>
+                  </div>
+                </div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input Footer */}
+            <div className="p-3 border-t border-zinc-200/50 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/50">
+              <form
+                onSubmit={(e) => { e.preventDefault(); sendTutorMessage(); }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  type="text"
+                  placeholder="Ask a follow-up question..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  disabled={isSendingChat}
+                  className="flex-grow bg-white dark:bg-gray-950 border border-zinc-200 dark:border-gray-800 rounded-xl px-4 py-2.5 text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-gray-500 focus:ring-1 focus:ring-blue-600 focus:outline-none transition-all disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={!chatInput.trim() || isSendingChat}
+                  className="p-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-250 dark:disabled:bg-gray-800 text-white disabled:text-zinc-500 dark:disabled:text-gray-600 rounded-xl transition-all shadow-md hover:shadow-lg disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

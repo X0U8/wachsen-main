@@ -4,9 +4,10 @@ import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import {
   Loader2, CheckCircle2, XCircle, Clock, Award, ChevronLeft, ChevronUp,
-  BarChart3, Brain, Target, Zap, AlertTriangle, Info, PieChart, Activity, Sparkle, X
+  BarChart3, Brain, Target, Zap, AlertTriangle, Info, PieChart, Activity, Sparkle, X, Printer
 } from 'lucide-react';
 import AITutorModal from './AITutorModal';
+import PrintQuestion from './PrintQuestion';
 import { motion } from 'framer-motion';
 import MathText from '../../ui/MathText';
 import Notification from '../../ui/Notification';
@@ -147,6 +148,13 @@ export default function ResultDetails() {
 
   // AI Tutor state
   const [tutorQuestion, setTutorQuestion] = useState<any>(null);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [examMeta, setExamMeta] = useState<{
+    totalTime: number;
+    totalMarks: number;
+    correctMarks: number;
+    negativeMarks: number;
+  }>({ totalTime: 60, totalMarks: 100, correctMarks: 4, negativeMarks: 0 });
 
   const planSubjects = useMemo(() => normalizeExamPlanSubjects(examPlan), [examPlan]);
 
@@ -225,7 +233,7 @@ export default function ResultDetails() {
         setLoadingQuestions(true);
         const { data: examDocs, error: examError } = await supabase
           .from('exams')
-          .select('generatedExam, ExamPlan, subjects')
+          .select('generatedExam, ExamPlan, subjects, totalTime, totalMarks, correct_marks, negative_marks')
           .eq('id', resDoc.examId)
           .limit(1);
 
@@ -240,6 +248,13 @@ export default function ResultDetails() {
             subjectsParsed = parseStoredValue(examDoc.subjects, []);
             setExamChapters(subjectsParsed);
           }
+
+          setExamMeta({
+            totalTime: examDoc.totalTime || 60,
+            totalMarks: examDoc.totalMarks || 0,
+            correctMarks: examDoc.correct_marks ?? 4,
+            negativeMarks: examDoc.negative_marks ?? 0
+          });
 
           if (examDoc.generatedExam) {
             const { allQuestions, counts } = normalizeResultQuestions(examDoc.generatedExam, subjectsParsed);
@@ -421,7 +436,7 @@ export default function ResultDetails() {
     return (
       <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center">
         <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
-        <p className="mt-4 text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Analyzing your performance...</p>
+        <p className="mt-4 text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Analyzing</p>
       </div>
     );
   }
@@ -437,6 +452,13 @@ export default function ResultDetails() {
             {result.examName || 'Results'}
           </h1>
         </div>
+        <button
+          onClick={() => setShowPrintPreview(true)}
+          className="px-3.5 py-1.5 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 hover:bg-zinc-100 dark:hover:bg-gray-800 text-zinc-900 dark:text-white rounded-xl text-xs font-medium shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer mr-2"
+        >
+          <Printer className="w-3.5 h-3.5" />
+          Print Exam
+        </button>
       </header>
 
       <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full space-y-12">
@@ -884,6 +906,17 @@ export default function ResultDetails() {
           showNotification={showNotification}
           originalIndex={questions.findIndex(qq => qq.id === tutorQuestion.id) + 1}
           status={analytics.correctIds.includes(tutorQuestion.id) ? 'correct' : (analytics.wrongIds.includes(tutorQuestion.id) ? 'wrong' : 'skipped')}
+        />
+      )}
+
+      {/* Print Exam Preview Overlay */}
+      {showPrintPreview && (
+        <PrintQuestion
+          isOpen={showPrintPreview}
+          onClose={() => setShowPrintPreview(false)}
+          examName={result.examName}
+          questions={questions}
+          examMeta={examMeta}
         />
       )}
     </div>

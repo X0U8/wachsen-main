@@ -3,10 +3,10 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './services/supabase';
 import Login from './components/onboarding/Login';
 import Onboarding from './components/onboarding/OnboardingPage';
-import Exam from './components/exam/ExamPage';
+import Exam from './components/main/ExamPage';
 import ExamDetails from './components/exam-details/ExamDetailsPage';
 import Settings from './components/settings/Settings';
-import TakeExam from './components/exam/TakeExam';
+import TakeExam from './components/main/TakeExam';
 import Results from './components/results/Results';
 import ResultDetails from './components/results/ResultDetails';
 

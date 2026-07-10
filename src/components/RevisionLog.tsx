@@ -10,6 +10,15 @@ import Footer from './Footer';
 import { fontSize } from '../lib/utils';
 import { idbGet, idbSet } from '../lib/idb';
 
+export const normalizeQuestionType = (type?: string): 'mcq' | 'integer' | 'true_false' | 'laq' => {
+  if (!type) return 'mcq';
+  const clean = type.toLowerCase().trim();
+  if (clean === 'integer' || clean === 'num' || clean === 'numeric') return 'integer';
+  if (clean === 'true_false' || clean === 'true/false' || clean === 'true-false' || clean === 'truefalse') return 'true_false';
+  if (clean === 'laq' || clean === 'subjective' || clean === 'long') return 'laq';
+  return 'mcq';
+};
+
 import RevisionLogList from './revision/RevisionLogList';
 import RevisionQuestionsList from './revision/RevisionQuestionsList';
 import RevisionRetryModal from './revision/RevisionRetryModal';
@@ -136,27 +145,18 @@ export default function RevisionLog() {
   const [currentRetryIndex, setCurrentRetryIndex] = useState(0);
 
   const handleRetry = () => {
-    // Prepare retry data with correct and wrong options for MCQ
-    const retryQuestions = examQuestions.map((q: any) => {
-      if (q.questionType === 'mcq' && q.options && q.options.length > 0) {
-        // For MCQ, shuffle existing options
-        return {
-          ...q,
-          shuffledOptions: [...q.options].sort(() => Math.random() - 0.5)
-        };
-      } else if (q.questionType === 'integer' || q.questionType === 'true-false') {
-        // For integer/true-false, create simple options
-        return {
-          ...q,
-          shuffledOptions: [
-            q.correctAnswer,
-            generateWrongAnswer(q.correctAnswer)
-          ].sort(() => Math.random() - 0.5)
-        };
-      } else {
-        // For LAQ, no options needed
-        return { ...q, shuffledOptions: [] };
-      }
+    if (!logData?.questions?.length) return;
+    const retryQuestions = logData.questions.map((q: any) => {
+      const qType = normalizeQuestionType(q.type || q.questionType);
+      return {
+        ...q,
+        type: qType,
+        shuffledOptions: qType === 'mcq' && q.options && q.options.length > 0
+          ? [...q.options].sort(() => Math.random() - 0.5)
+          : qType === 'true_false'
+          ? ['True', 'False']
+          : []
+      };
     });
     setRetryData(retryQuestions);
     setRetryAnswers({});
@@ -171,9 +171,11 @@ export default function RevisionLog() {
     const question = retryData.find((q: any) => q.id === questionId);
     if (!question) return;
 
-    // For MCQ, integer, true-false: instant feedback
-    if (question.questionType === 'mcq' || question.questionType === 'integer' || question.questionType === 'true-false') {
-      const isCorrect = answer === question.correctAnswer;
+    // For MCQ, integer, true_false: instant feedback
+    const qType = normalizeQuestionType(question.type || question.questionType);
+    if (qType === 'mcq' || qType === 'integer' || qType === 'true_false') {
+      const correctAns = question.correctAnswer ?? question.correct_answer;
+      const isCorrect = String(correctAns).trim() === String(answer ?? '').trim();
       setRetryResults(prev => ({
         ...prev,
         [questionId]: { isCorrect }
@@ -343,23 +345,14 @@ export default function RevisionLog() {
             setLogData({ questions: mergedQuestions });
             setExamQuestions(mergedQuestions);
 
-            // Filter wrong and skipped questions
-            const wrongAndSkipped = mergedQuestions.filter((q: any) => {
-              const isSkipped = !q.userAnswer;
-              const isWrong = q.userAnswer && q.userAnswer !== q.correct_answer && q.userAnswer !== q.correctAnswer;
-              return isSkipped || isWrong;
-            });
-
-            setExamQuestions(wrongAndSkipped);
-
-            // Extract subtopics from concepts of wrong/skipped questions
-            const topics = wrongAndSkipped
+            // Extract subtopics from concepts
+            const topics = mergedQuestions
               .map((q: any) => q.concept?.split(':')[0]?.trim())
               .filter((t: string) => t);
             setSubtopics(topics);
 
-            // Calculate card count: wrong/skipped questions * 2
-            setCardCount(wrongAndSkipped.length * 2);
+            // Calculate card count
+            setCardCount(mergedQuestions.length * 2);
             setLoading(false);
             return;
           } catch (cacheErr) {
@@ -411,23 +404,14 @@ export default function RevisionLog() {
           setLogData({ questions: mergedQuestions });
           setExamQuestions(mergedQuestions);
 
-          // Filter wrong and skipped questions
-          const wrongAndSkipped = mergedQuestions.filter((q: any) => {
-            const isSkipped = !q.userAnswer;
-            const isWrong = q.userAnswer && q.userAnswer !== q.correct_answer && q.userAnswer !== q.correctAnswer;
-            return isSkipped || isWrong;
-          });
-
-          setExamQuestions(wrongAndSkipped);
-
-          // Extract subtopics from concepts of wrong/skipped questions
-          const topics = wrongAndSkipped
+          // Extract subtopics from concepts
+          const topics = mergedQuestions
             .map((q: any) => q.concept?.split(':')[0]?.trim())
             .filter((t: string) => t);
           setSubtopics(topics);
 
-          // Calculate card count: wrong/skipped questions * 2
-          setCardCount(wrongAndSkipped.length * 2);
+          // Calculate card count
+          setCardCount(mergedQuestions.length * 2);
         } else {
           setError('No revision log found for this exam');
         }
@@ -634,10 +618,8 @@ export default function RevisionLog() {
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white font-sans antialiased select-none pb-24">
       {headerContent}
       <main className="flex-grow max-w-4xl w-full mx-auto p-4 sm:p-5 space-y-6">
-        <RevisionQuestionsList questions={logData.questions} />
-
         {/* Revision Options Row */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-2">
           {/* View Result */}
           <button
             onClick={() => resultId && navigate(`/results/${resultId}`)}
@@ -673,6 +655,8 @@ export default function RevisionLog() {
             Retry Questions
           </button>
         </div>
+
+        <RevisionQuestionsList questions={logData.questions} />
       </main>
 
       {showConceptCards && <ConceptCards onClose={() => setShowConceptCards(false)} cards={conceptCards} />}

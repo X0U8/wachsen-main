@@ -16,12 +16,13 @@ export default async function handler(req, res) {
 
   try {
     const { subjects, examName, difficulty, userId, authToken, apiKey: userKey, provider, model } = req.body;
-    const activeProvider = provider || 'mesh';
+    const isByok = !!(userKey && userKey.trim());
+    const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
-    const meshKey = userKey || (isMistral ? process.env.MISTRAL_API_KEY : MESH_API_KEY);
+    const meshKey = isByok ? userKey : MESH_API_KEY;
 
     const refundCredits = async () => {
-      if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+      if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
         const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
         const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
         await authed.from('profiles').update({ credits: (profile?.credits || 0) + DEDUCT_AMOUNT }).eq('id', userId);
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
 
 
     // Reserve credits BEFORE calling AI
-    if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+    if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
       });
@@ -123,7 +124,6 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 4096,
         response_format: { type: 'json_object' }
       })
     });
@@ -158,7 +158,6 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
-            max_tokens: 4096,
             response_format: { type: 'json_object' }
           })
         });

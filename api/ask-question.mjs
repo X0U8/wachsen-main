@@ -23,21 +23,15 @@ export default async function handler(req, res) {
       userId, 
       authToken, 
       apiKey: userKey, 
+      useOwnKey,
       provider, 
       model 
     } = req.body;
 
-    const activeProvider = provider || 'mesh';
+    const isByok = !!(useOwnKey && userKey && userKey.trim());
+    const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
-    const meshKey = userKey || (isMistral ? process.env.MISTRAL_API_KEY : MESH_API_KEY);
-
-    const refundCredits = async () => {
-      if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
-        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
-        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-        await authed.from('profiles').update({ credits: (profile?.credits || 0) + DEDUCT_AMOUNT }).eq('id', userId);
-      }
-    };
+    const meshKey = isByok ? userKey : MESH_API_KEY;
 
     if (!question) {
       return res.status(400).json({ error: 'Missing question content' });
@@ -47,29 +41,33 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'No API key provided. Set MESH_API_KEY in .env or provide an apiKey.' });
     }
 
-    // Deduct credit BEFORE calling AI
-    let finalCredits = null;
-    if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
-      const authed = createClient(supabaseUrl, supabaseAnonKey, {
+    // Initial credit verification BEFORE calling AI (Bypass if useOwnKey is true)
+    let currentCredits = 0;
+    let authedSupabase = null;
+    if (!useOwnKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+      authedSupabase = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
       });
-      const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-      const currentCredits = profile?.credits || 0;
-      if (currentCredits < DEDUCT_AMOUNT) {
-        return res.status(400).json({ error: `Insufficient credits. Need ${DEDUCT_AMOUNT} credit. You have ${currentCredits}.` });
+      const { data: profile } = await authedSupabase.from('profiles').select('credits').eq('id', userId).single();
+      currentCredits = profile?.credits || 0;
+      if (currentCredits < 1) {
+        return res.status(400).json({ error: `Insufficient credits. You need at least 1 credit to ask a question. You have ${currentCredits}.` });
       }
-      const { data: updated, error: deductError } = await authed.from('profiles')
-        .update({ credits: currentCredits - DEDUCT_AMOUNT })
-        .eq('id', userId)
-        .select('credits');
-      if (deductError || !updated || updated.length === 0) {
-        return res.status(500).json({ error: 'Failed to deduct credits.' });
-      }
-      finalCredits = updated[0].credits;
     }
 
-    // Build the system prompt
-    const systemPrompt = `You are a helpful tutor explaining exam questions. Be concise and explain in a clear, easy-to-understand way. 
+    if (!question) {
+      return res.status(400).json({ error: 'Missing question content' });
+    }
+
+    if (!meshKey) {
+      return res.status(500).json({ error: 'No API key provided. Set MESH_API_KEY in .env or provide an apiKey.' });
+    }
+
+    // Build the system prompt (direct, clear, and concise but allows full mathematical derivations; restricts raw markdown symbols)
+    const systemPrompt = `You are a helpful tutor explaining exam questions. Be direct, clear, and explain in short. Avoid unnecessary conversational fluff. Keep explanations concise, but make sure to write out all mathematical steps and derivations fully and clearly.
+
+Do NOT use raw markdown formatting symbols like headers (###), markdown bolding (**), bullet lists with dashes, or dividers (---). Instead, format your output into separate, clean paragraphs. Start a new line whenever a new step, equation, or part of the explanation begins (e.g. after full stops, colons, or semicolons where appropriate) to make the text clean, readable, and well-spaced.
+
 Wrap any math content, variables, formulas, or equations in single $...$ delimiters for inline LaTeX (e.g. $E = mc^2$).
 
 Context of the question under discussion:
@@ -100,24 +98,38 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       body: JSON.stringify({
         model: activeModel,
         messages: conversationMessages,
-        temperature: 0.7,
-        max_tokens: 1024
+        temperature: 0.7
       })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      await refundCredits();
       return res.status(502).json({ error: `${apiLabel} API request failed`, code: data.error?.code, details: data.error?.message });
     }
 
     const reply = data.choices?.[0]?.message?.content || '';
 
+    // Calculate actual cost based on total tokens used (1 credit per 1000 tokens, min 1)
+    let finalCredits = null;
+    let creditsDeducted = 0;
+    if (!useOwnKey && authedSupabase && userId) {
+      const totalTokens = data.usage?.total_tokens || 500;
+      creditsDeducted = Math.max(1, Math.ceil(totalTokens / 1000));
+      const newCreditsTotal = Math.max(0, currentCredits - creditsDeducted);
+
+      const { data: updated } = await authedSupabase.from('profiles')
+        .update({ credits: newCreditsTotal })
+        .eq('id', userId)
+        .select('credits');
+
+      finalCredits = updated?.[0]?.credits ?? newCreditsTotal;
+    }
+
     return res.json({ 
       success: true, 
       reply,
-      creditsDeducted: !userKey ? DEDUCT_AMOUNT : 0,
+      creditsDeducted,
       remainingCredits: finalCredits
     });
   } catch (error) {

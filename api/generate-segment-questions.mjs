@@ -14,9 +14,10 @@ export default async function handler(req, res) {
 
   try {
     const { segment, subjectName, questionTypes, difficulty, userId, authToken, apiKey: userKey, provider, model, creditsPreReserved } = req.body;
-    const activeProvider = provider || 'mesh';
+    const isByok = !!(userKey && userKey.trim());
+    const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
-    const meshKey = userKey || (isMistral ? process.env.MISTRAL_API_KEY : MESH_API_KEY);
+    const meshKey = isByok ? userKey : MESH_API_KEY;
     const apiUrl = isMistral ? MISTRAL_API_URL : MESH_API_URL;
     const apiLabel = isMistral ? 'Mistral' : 'Mesh';
     const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);
@@ -35,7 +36,7 @@ export default async function handler(req, res) {
     const questionCount = (segEnd || segStart) - segStart + 1;
 
     // Reserve credits BEFORE calling AI (skip if credits were pre-reserved by FinalizeExam)
-    if (!creditsPreReserved && !userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+    if (!creditsPreReserved && !isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
       });
@@ -192,7 +193,6 @@ ${formatExample}`;
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 2048,
         response_format: { type: 'json_object' }
       })
     });
@@ -227,7 +227,6 @@ ${formatExample}`;
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
-            max_tokens: 2048,
             response_format: { type: 'json_object' }
           })
         });
@@ -281,7 +280,7 @@ ${formatExample}`;
 
     const refundCredits = async () => {
       if (creditsPreReserved) return; // FinalizeExam handles refund for pre-reserved credits
-      if (!userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+      if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
         const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
         const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
         await authed.from('profiles').update({ credits: (profile?.credits || 0) + questionCount }).eq('id', userId);
@@ -370,7 +369,7 @@ ${formatExample}`;
     return res.status(200).json({ success: true, questions: parsedQuestions.questions, raw: content });
   } catch (error) {
     // Refund credits on failure (skip if pre-reserved — FinalizeExam handles that)
-    if (!creditsPreReserved && !userKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+    if (!creditsPreReserved && !isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
       try {
         const authed = createClient(supabaseUrl, supabaseAnonKey, {
           global: { headers: { Authorization: `Bearer ${authToken}` } }

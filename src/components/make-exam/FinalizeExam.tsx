@@ -434,11 +434,11 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
               {/* Progress bar */}
               <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-blue-500 dark:text-blue-400 font-medium animate-pulse" style={{ fontSize: fontSize.sm }}>
+                  <h4 className="text-blue-500 dark:text-blue-400 font-medium" style={{ fontSize: fontSize.sm }}>
                     {segmentCountdown !== null
                       ? `Thinking, generating next segment in ${segmentCountdown}s`
                       : (status === 'generating' ? 'Generating Questions...' : 'Generation Complete')}
-                  </h3>
+                  </h4>
                   <span className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>
                     {completedSegments.size}/{totalSegments} segments
                   </span>

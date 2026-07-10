@@ -31,7 +31,9 @@ export default function Exam() {
   const navigate = useNavigate();
   const { userProfile, refreshCredits, refreshProfile } = useUserProfile();
   const [tab, setTab] = useState<Tab>('exams');
-  const [examTypes, setExamTypes] = useState<ExamType[]>([]);
+  const [examTypes, setExamTypes] = useState<ExamType[]>(() => {
+    return localStorageCache.get<ExamType[]>(localStorageCache.keys.EXAM_CATEGORIES) || [];
+  });
   const hasInitializedExamTypes = useRef(false);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -101,7 +103,37 @@ export default function Exam() {
     queryKey: ['examCategories', userId],
     queryFn: async () => {
       const cachedExamTypes = localStorageCache.get<ExamType[]>(localStorageCache.keys.EXAM_CATEGORIES);
-      if (cachedExamTypes && cachedExamTypes.length > 0) return cachedExamTypes;
+
+      if (cachedExamTypes && cachedExamTypes.length > 0) {
+        const hasChallenges = cachedExamTypes.some(cat => cat.name === 'challenges');
+        if (hasChallenges) {
+          return cachedExamTypes;
+        }
+
+        try {
+          const { data, error } = await supabase
+            .from('examtypes')
+            .select('*')
+            .eq('userId', userId!)
+            .eq('name', 'challenges')
+            .maybeSingle();
+
+          if (!error && data) {
+            const newCat: ExamType = {
+              id: data.id,
+              name: data.name,
+              subjects: data.subjects || [],
+              academicLevel: data.academicLevel || ''
+            };
+            const updated = [...cachedExamTypes, newCat];
+            localStorageCache.set(localStorageCache.keys.EXAM_CATEGORIES, updated);
+            return updated;
+          }
+        } catch (e) {
+          console.error("Error loading challenges category separately:", e);
+        }
+        return cachedExamTypes;
+      }
 
       const { data, error } = await supabase
         .from('examtypes')
@@ -117,7 +149,9 @@ export default function Exam() {
       return examTypes;
     },
     enabled: !!userId,
-    staleTime: Infinity, refetchOnMount: false, gcTime: Infinity,
+    staleTime: Infinity,
+    refetchOnMount: false,
+    gcTime: Infinity
   });
 
   useEffect(() => {
@@ -239,10 +273,13 @@ export default function Exam() {
     }
   };
 
-  const slotsLeft = getMaxExamTypes() - examTypes.length;
+  const showChallenges = localStorage.getItem('show_challenges_category') === 'true';
+  const nonChallengeExamTypes = examTypes.filter(et => et.name !== 'challenges');
+  const displayedCategories = examTypes.filter(cat => cat.name !== 'challenges' || showChallenges);
+  const slotsLeft = getMaxExamTypes() - nonChallengeExamTypes.length;
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100 font-sans antialiased select-none">
+    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100 font-sans antialiased select-none pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 w-full px-4 sm:px-6 py-3 sm:py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-900/80 flex items-center justify-between transition-colors duration-300">
         <div>
@@ -301,8 +338,22 @@ export default function Exam() {
         {tab === 'exams' && (
           <>
             {examTypes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-32 text-center gap-2">
-                <p className="text-gray-600 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.sm }}>Tap + to add an exam type</p>
+              <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-full text-blue-600 dark:text-blue-400 animate-pulse">
+                  <Plus className="w-8 h-8" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-gray-100">No Exam Types Yet</h3>
+                  <p className="text-zinc-500 dark:text-gray-400 max-w-sm" style={{ fontSize: fontSize.xs }}>
+                    Create your first exam category to start generating or taking practice tests.
+                  </p>
+                </div>
+                <button
+                  onClick={handleDoubleClick}
+                  className="bg-[#007AFF] hover:bg-[#0062CC] text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition-all duration-200 cursor-pointer flex items-center gap-2 text-sm mt-2"
+                >
+                  <Plus className="w-4 h-4" /> Create Exam Type
+                </button>
                 <p className="text-gray-700 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>{slotsLeft} slots remaining</p>
               </div>
             ) : (
@@ -315,8 +366,10 @@ export default function Exam() {
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  {examTypes.map((exam, i) => {
-                    const isDisabled = i >= getMaxExamTypes();
+                  {displayedCategories.map((exam, i) => {
+                    const isChallengeCategory = exam.name === 'challenges';
+                    const nonChallengeIdx = nonChallengeExamTypes.findIndex(et => et.id === exam.id);
+                    const isDisabled = !isChallengeCategory && nonChallengeIdx >= getMaxExamTypes();
                     return (
                       <SpotlightCard
                         key={exam.id}

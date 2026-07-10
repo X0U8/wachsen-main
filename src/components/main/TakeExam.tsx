@@ -547,7 +547,7 @@ export default function TakeExam() {
         }
       }
 
-      navigate(`/results/${finalResultId}`);
+      navigate('/results');
     } catch (err: any) {
       showNotification('error', `Failed to save results: ${err.message || 'Unknown error'}. Please check your internet and try again.`);
       setIsSubmitting(false);

@@ -68,6 +68,8 @@ export default function ExamDetails() {
   const [loadingExams, setLoadingExams] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const EXAMS_PER_PAGE = 10;
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -116,25 +118,17 @@ export default function ExamDetails() {
 
   // Fetch initial exams with React Query
   const { data: initialExams = [], isLoading: loadingExamsInitial } = useQuery({
-    queryKey: ['examInstances', id, userProfile?.id, statusFilter, sortOrder],
+    queryKey: ['examInstances', id, userProfile?.id, statusFilter, sortOrder, activeSearchQuery],
     queryFn: async () => {
       if (!userProfile?.id) return [];
-      let query = supabase
-        .from('exams')
-        .select('*')
-        .eq('categoryId', id!)
-        .contains('accessIds', [userProfile.id]);
+      const sessionData = await supabase.auth.getSession();
+      const authToken = sessionData.data.session?.access_token || '';
+      
+      const response = await fetch(`/api/search?type=exams&userId=${userProfile.id}&authToken=${authToken}&categoryId=${id}&statusFilter=${statusFilter}&sortOrder=${sortOrder}&query=${encodeURIComponent(activeSearchQuery)}&limit=${EXAMS_PER_PAGE}&offset=0`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to search exams');
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
-
-      const { data, error } = await query
-        .order('created_at', { ascending: sortOrder === 'asc' })
-        .range(0, EXAMS_PER_PAGE - 1);
-
-      if (error) throw error;
-      const documents = data || [];
+      const documents = data.exams || [];
       const fetchedExams: Exam[] = documents.map((doc: any) => ({
         id: doc.id,
         name: doc.examName || 'Untitled Exam',
@@ -172,29 +166,21 @@ export default function ExamDetails() {
     if (!id || !userProfile) return;
 
     if (reset) {
-      queryClient.invalidateQueries({ queryKey: ['examInstances', id, userProfile.id] });
+      queryClient.invalidateQueries({ queryKey: ['examInstances', id, userProfile.id, statusFilter, sortOrder, activeSearchQuery] });
       return;
     }
 
     setLoadingExams(true);
     try {
       const offset = exams.length;
-      let query = supabase
-        .from('exams')
-        .select('*')
-        .eq('categoryId', id)
-        .contains('accessIds', [userProfile.id]);
+      const sessionData = await supabase.auth.getSession();
+      const authToken = sessionData.data.session?.access_token || '';
 
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
+      const response = await fetch(`/api/search?type=exams&userId=${userProfile.id}&authToken=${authToken}&categoryId=${id}&statusFilter=${statusFilter}&sortOrder=${sortOrder}&query=${encodeURIComponent(activeSearchQuery)}&limit=${EXAMS_PER_PAGE}&offset=${offset}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch more exams');
 
-      const { data, error } = await query
-        .order('created_at', { ascending: sortOrder === 'asc' })
-        .range(offset, offset + EXAMS_PER_PAGE - 1);
-
-      if (error) throw error;
-      const documents = data || [];
+      const documents = data.exams || [];
 
       const fetchedExams: Exam[] = documents.map((doc: any) => ({
         id: doc.id,
@@ -366,11 +352,13 @@ export default function ExamDetails() {
           >
             <RefreshCw className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
           </button>
-          <button onClick={handleOpenEditCategoryModal}
-            className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors"
-            title="Update Category">
-            <Wrench className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
-          </button>
+          {examType?.name !== 'challenges' && (
+            <button onClick={handleOpenEditCategoryModal}
+              className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors"
+              title="Update Category">
+              <Wrench className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
+            </button>
+          )}
         </div>
       </header>
 
@@ -378,20 +366,55 @@ export default function ExamDetails() {
       <main className="flex-1 p-4 pb-32">
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-zinc-200 dark:border-gray-800 overflow-hidden">
           {/* Filters */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-950/30">
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option value="all">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="active">Active</option>
-              <option value="Completed">Completed</option>
-              <option value="Expired">Expired</option>
-            </select>
-            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
-              className="bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
-              <option value="desc">Newest</option>
-              <option value="asc">Oldest</option>
-            </select>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-950/30">
+            <div className="flex items-center gap-2">
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="all">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="Completed">Completed</option>
+                <option value="Expired">Expired</option>
+              </select>
+              <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
+                className="bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="desc">Newest</option>
+                <option value="asc">Oldest</option>
+              </select>
+            </div>
+
+            {/* Search Input */}
+            <div className="flex items-center gap-1.5 max-w-xs w-full">
+              <input
+                type="text"
+                placeholder="Search exams..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setActiveSearchQuery(searchInput);
+                  }
+                }}
+                className="flex-1 bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-800 dark:text-gray-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <button
+                onClick={() => setActiveSearchQuery(searchInput)}
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium cursor-pointer transition-colors"
+              >
+                Search
+              </button>
+              {activeSearchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchInput('');
+                    setActiveSearchQuery('');
+                  }}
+                  className="px-2 py-1.5 border border-zinc-300 dark:border-gray-700 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-lg text-xs text-zinc-500 dark:text-gray-400 cursor-pointer transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
           {loadingExamsInitial ? (
             <div className="flex items-center justify-center h-64">
@@ -470,16 +493,18 @@ export default function ExamDetails() {
       </main>
 
       {/* Floating Plus Button - Bottom Center */}
-      <div className="fixed bottom-10 left-0 right-0 flex justify-center z-20 pointer-events-none">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setShowMakeAI(true)}
-          className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 pointer-events-auto"
-        >
-          <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-        </motion.button>
-      </div>
+      {examType?.name !== 'challenges' && (
+        <div className="fixed bottom-10 left-0 right-0 flex justify-center z-20 pointer-events-none">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowMakeAI(true)}
+            className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 pointer-events-auto"
+          >
+            <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          </motion.button>
+        </div>
+      )}
 
       <ExamInfoModal
         exam={selectedExamForInfo}

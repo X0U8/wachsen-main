@@ -141,7 +141,7 @@ export default function AITutorModal({
         {/* Header */}
         <div className="p-4 border-b border-zinc-200/50 dark:border-gray-800 flex items-center justify-between bg-zinc-50/50 dark:bg-gray-900/50 backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <Sparkle className="w-5 h-5 text-blue-500 fill-blue-500 animate-pulse" />
+            <Sparkle className="w-5 h-5 text-blue-500 fill-blue-500 " />
             <div>
               <div className="text-sm font-semibold text-zinc-900 dark:text-white">AI Tutor</div>
               <div className="text-[10px] text-zinc-550 dark:text-gray-400">
@@ -149,7 +149,7 @@ export default function AITutorModal({
               </div>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-1.5 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded-xl transition-colors cursor-pointer"
           >
@@ -161,16 +161,15 @@ export default function AITutorModal({
         <div className="flex-grow p-4 overflow-y-auto space-y-4">
           {chatHistory.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed select-text whitespace-pre-wrap ${
-                msg.role === 'user' 
-                  ? 'bg-blue-600 text-white rounded-tr-none' 
+              <div className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed select-text whitespace-pre-wrap ${msg.role === 'user'
+                  ? 'bg-blue-600 text-white rounded-tr-none'
                   : 'bg-zinc-100 dark:bg-gray-800/80 text-zinc-900 dark:text-gray-200 rounded-tl-none border border-zinc-200/20 dark:border-gray-700/30'
-              }`}>
+                }`}>
                 <MathText text={msg.content} />
               </div>
             </div>
           ))}
-          
+
           {/* Quick Suggestion Pills */}
           {chatHistory.length === 1 && !isSendingChat && (
             <div className="flex flex-wrap gap-2 pt-2 px-1">
@@ -207,7 +206,7 @@ export default function AITutorModal({
 
         {/* Input Footer */}
         <div className="p-3 border-t border-zinc-200/50 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/50">
-          <form 
+          <form
             onSubmit={(e) => { e.preventDefault(); sendTutorMessage(); }}
             className="flex items-center gap-2"
           >

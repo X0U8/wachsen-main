@@ -33,6 +33,7 @@ export default function Settings() {
   const [showAddModel, setShowAddModel] = useState(false);
   const [newModel, setNewModel] = useState('');
   const [useOwnKey, setUseOwnKey] = useState(false);
+  const [showChallengesCategory, setShowChallengesCategory] = useState(false);
 
   const [showEditProfile, setShowEditProfile] = useState(false);
 
@@ -51,6 +52,8 @@ export default function Settings() {
     if (savedActive) setActiveModel(savedActive);
     const savedOwnKey = localStorage.getItem('use_own_key');
     if (savedOwnKey === 'true') setUseOwnKey(true);
+    const savedShowChallenges = localStorage.getItem('show_challenges_category');
+    if (savedShowChallenges === 'true') setShowChallengesCategory(true);
   }, []);
 
   const saveKey = () => {
@@ -107,6 +110,12 @@ export default function Settings() {
     const val = !useOwnKey;
     setUseOwnKey(val);
     localStorage.setItem('use_own_key', val ? 'true' : 'false');
+  };
+
+  const toggleShowChallengesCategory = () => {
+    const nextVal = !showChallengesCategory;
+    setShowChallengesCategory(nextVal);
+    localStorage.setItem('show_challenges_category', nextVal ? 'true' : 'false');
   };
 
   return (
@@ -248,6 +257,18 @@ export default function Settings() {
               <button onClick={toggleUseOwnKey}
                 className={`relative w-10 h-5 rounded-full transition-colors ${useOwnKey ? 'bg-[#007AFF]' : 'bg-zinc-300 dark:bg-gray-700'}`}>
                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${useOwnKey ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </div>
+
+            {/* Show challenges category toggle */}
+            <div className="flex items-center justify-between pt-2 border-t border-zinc-150 dark:border-gray-800">
+              <div>
+                <p className="text-zinc-700 dark:text-gray-300 font-medium" style={{ fontSize: fontSize.xs }}>Show "challenges" category</p>
+                <p className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Make special challenges category visible in exams list</p>
+              </div>
+              <button onClick={toggleShowChallengesCategory}
+                className={`relative w-10 h-5 rounded-full transition-colors ${showChallengesCategory ? 'bg-[#007AFF]' : 'bg-zinc-300 dark:bg-gray-700'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${showChallengesCategory ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
             </div>
           </div>

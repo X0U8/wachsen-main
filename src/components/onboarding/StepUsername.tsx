@@ -25,7 +25,7 @@ export default function StepUsername({ value, onChange, message, verified, input
         />
       </div>
       {message && (
-        <p className={`text-zinc-500 dark:text-zinc-400 ${verified ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-450'} animate-fade-in`} style={{ fontSize: fontSize.xs }}>
+        <p className={`text-zinc-500 dark:text-zinc-400 ${verified ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`} style={{ fontSize: fontSize.xs }}>
           {message}
         </p>
       )}

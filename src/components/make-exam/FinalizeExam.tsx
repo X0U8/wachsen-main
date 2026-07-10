@@ -17,7 +17,6 @@ interface FinalizeExamProps {
     examType?: 'practice' | 'casual';
     accessType?: 'anytime' | 'specific';
     isPublic?: boolean;
-    language?: string;
     startDateTime?: string;
     endDateTime?: string;
     categoryId?: string;
@@ -44,10 +43,20 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
   const [reservedCredits, setReservedCredits] = useState(0);
   const [segmentCountdown, setSegmentCountdown] = useState<number | null>(null);
   const abortRef = useRef(false);
+  const generationIdRef = useRef(0);
+  const hasStartedBlueprintRef = useRef(false);
+  const hasStartedQuestionsRef = useRef(false);
 
   // Reset state when modal closes
   useEffect(() => {
     if (!show) {
+      abortRef.current = true;
+      generationIdRef.current++; // Invalidate any in-flight async operations
+      hasStartedBlueprintRef.current = false;
+      hasStartedQuestionsRef.current = false;
+      if (reservedCredits > 0) {
+        refundAllCredits(reservedCredits);
+      }
       setStatus('idle');
       setExamBlueprint(null);
       setCurrentSegmentIndex(0);
@@ -59,8 +68,9 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       setReservedCredits(0);
       setSegmentCountdown(null);
       setNotification(null);
-      abortRef.current = false;
     }
+    // NOTE: Do NOT reset abortRef here when show becomes true.
+    // generateBlueprint() handles that itself after capturing a fresh generation ID.
   }, [show]);
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
@@ -113,14 +123,14 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     return true;
   };
 
-  // Refund ALL reserved credits (called on permanent failure)
-  const refundAllCredits = async () => {
-    if (getUseOwnKey() || reservedCredits === 0) return;
+  // Refund ALL reserved credits (called on permanent failure or modal close/abort)
+  const refundAllCredits = async (creditsToRefund = reservedCredits) => {
+    if (getUseOwnKey() || creditsToRefund === 0) return;
 
     try {
       const { data: profile } = await supabase.from('profiles').select('credits').eq('id', userId).single();
       await supabase.from('profiles')
-        .update({ credits: (profile?.credits || 0) + reservedCredits })
+        .update({ credits: (profile?.credits || 0) + creditsToRefund })
         .eq('id', userId);
       setReservedCredits(0);
       await refreshCredits();
@@ -129,11 +139,18 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     }
   };
 
+  // Helper: check if a generation run is still valid (not aborted, not superseded)
+  const isStale = (capturedId: number) => abortRef.current || generationIdRef.current !== capturedId;
+
   // ── PHASE 1: Generate Blueprint ──
   const generateBlueprint = async () => {
+    // Claim a unique generation ID; any older async ops with a different ID will bail out
+    const myId = ++generationIdRef.current;
+    abortRef.current = false;
     setStatus('planning');
     try {
       const authToken = await getAuthToken();
+      if (isStale(myId)) return;
       const apiKey = getUseOwnKey() ? getApiKey() : '';
       const provider = getProvider();
       const model = provider === 'mistral' ? 'mistral-small-latest' : getActiveModel();
@@ -144,8 +161,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
           subjects: examData.subjects,
           examName: examData.examName,
           difficulty: examData.difficulty,
-          academicLevel: examData.academicLevel || '',
-          language: examData.language || 'English',
           userId,
           authToken,
           apiKey: apiKey || undefined,
@@ -154,15 +169,19 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         }),
       });
 
+      if (isStale(myId)) return;
+
       if (!response.ok) {
         const text = await response.text().catch(() => '');
         let msg = `API error: ${response.status}`;
         try { const e = JSON.parse(text); msg = e.error || msg; } catch { }
+        if (isStale(myId)) return;
         setStatus('failed');
         setFailureMessage(msg);
         return;
       }
       const data = await response.json();
+      if (isStale(myId)) return;
       if (data.success) {
         setExamBlueprint(data.plan.subjects);
         await refreshCredits();
@@ -171,6 +190,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         setFailureMessage(data.error || 'Failed to generate blueprint');
       }
     } catch (error) {
+      if (isStale(myId)) return;
       console.error('Error generating blueprint:', error);
       setStatus('failed');
       setFailureMessage('Failed to generate blueprint. Please try again.');
@@ -179,6 +199,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
 
   // ── PHASE 2: Generate Questions (linear, halt on failure) ──
   const startQuestionGeneration = async (blueprint: any[]) => {
+    const myId = generationIdRef.current; // Capture current generation ID
     abortRef.current = false;
     setStatus('generating');
     setGeneratedQuestions([]);
@@ -190,6 +211,10 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     const totalCredits = getTotalQuestionCredits();
     if (!getUseOwnKey()) {
       const reserved = await reserveAllCredits(totalCredits);
+      if (isStale(myId)) {
+        if (reserved) refundAllCredits(totalCredits);
+        return;
+      }
       if (!reserved) {
         setStatus('failed');
         setFailureMessage('Insufficient credits to generate this exam.');
@@ -202,7 +227,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     for (let si = 0; si < blueprint.length; si++) {
       const subject = blueprint[si];
       for (let sgi = 0; sgi < subject.segments.length; sgi++) {
-        if (abortRef.current) return;
+        if (isStale(myId)) return;
 
         setCurrentSubjectIndex(si);
         setCurrentSegmentIndex(sgi);
@@ -210,28 +235,32 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         // Countdown delay between API calls to avoid rate limits
         if (allQuestions.length > 0) {
           for (let count = 10; count > 0; count--) {
-            if (abortRef.current) return;
+            if (isStale(myId)) return;
             setSegmentCountdown(count);
             await new Promise(r => setTimeout(r, 1000));
           }
           setSegmentCountdown(null);
         }
 
+        if (isStale(myId)) return;
         const result = await generateOneSegment(subject, si, subject.segments[sgi]);
+        if (isStale(myId)) return;
         if (!result) {
           // Permanent failure — refund ALL credits and halt
-          await refundAllCredits();
+          await refundAllCredits(totalCredits);
           setStatus('failed');
           setFailureMessage(`Failed to generate questions for "${subject.name}" segment ${subject.segments[sgi].range}. No credits were charged.`);
           return;
         }
 
         allQuestions.push(...result);
+        if (isStale(myId)) return;
         setGeneratedQuestions([...allQuestions]);
         setCompletedSegments(prev => new Set(prev).add(`${si}-${sgi}`));
       }
     }
 
+    if (isStale(myId)) return;
     setStatus('done');
     showNotification('info', 'All questions generated successfully!');
   };
@@ -266,7 +295,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             questionTypes,
             difficulty: examData.difficulty,
             academicLevel: examData.subjects.find((s: any) => s.name === subject.name)?.academicLevel || examData.academicLevel || '',
-            language: examData.language || 'English',
             userId,
             authToken,
             apiKey: apiKey || undefined,
@@ -295,6 +323,22 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     return null; // All retries exhausted
   };
 
+  // Start the pipeline when modal opens
+  useEffect(() => {
+    if (show && status === 'idle' && !hasStartedBlueprintRef.current) {
+      hasStartedBlueprintRef.current = true;
+      generateBlueprint();
+    }
+  }, [show, status]);
+
+  // When blueprint is ready, auto-start question generation
+  useEffect(() => {
+    if (examBlueprint && status === 'planning' && !hasStartedQuestionsRef.current) {
+      hasStartedQuestionsRef.current = true;
+      startQuestionGeneration(examBlueprint);
+    }
+  }, [examBlueprint, status]);
+
   // ── PHASE 3: Save Exam ──
   const handleSaveExam = async () => {
     if (isSaving) return;
@@ -313,7 +357,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     const examDocument = {
       examName: examData.examName,
       examType: examData.examType || 'practice',
-      language: examData.language || 'English',
+      language: 'English',
       isPublic: examData.isPublic !== undefined ? examData.isPublic : true,
       createdBy: userId,
       accessIds: [userId],
@@ -357,20 +401,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     }
   };
 
-  // Start the pipeline when modal opens
-  useEffect(() => {
-    if (show && status === 'idle') {
-      generateBlueprint();
-    }
-  }, [show]);
-
-  // When blueprint is ready, auto-start question generation
-  useEffect(() => {
-    if (examBlueprint && status === 'planning') {
-      startQuestionGeneration(examBlueprint);
-    }
-  }, [examBlueprint]);
-
   // Restart everything from scratch
   const handleRestart = () => {
     setStatus('idle');
@@ -382,6 +412,8 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     setCompletedSegments(new Set());
     setReservedCredits(0);
     abortRef.current = false;
+    hasStartedBlueprintRef.current = true;
+    hasStartedQuestionsRef.current = false;
     generateBlueprint();
   };
 
@@ -401,7 +433,17 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       >
         <header className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-gray-900 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <button onClick={() => { abortRef.current = true; onClose(); }} className="p-2 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-full transition-colors">
+            <button 
+              onClick={async () => { 
+                abortRef.current = true; 
+                generationIdRef.current++;
+                if (reservedCredits > 0) {
+                  await refundAllCredits(reservedCredits);
+                }
+                window.location.reload(); 
+              }} 
+              className="p-2 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-full transition-colors"
+            >
               <ChevronLeft className="w-6 h-6" />
             </button>
             <h2 className="font-base" style={{ fontSize: fontSize.base }}>Finalize Exam</h2>

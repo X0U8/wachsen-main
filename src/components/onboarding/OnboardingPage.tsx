@@ -68,21 +68,13 @@ export default function Onboarding({
       return false;
     }
 
-    const now = Date.now();
-    if (now - lastVerifyTime < 3000) {
-      const waitSecs = Math.ceil((3000 - (now - lastVerifyTime)) / 1000);
-      setUsernameMessage(`Please wait ${waitSecs}s before verifying again.`);
-      return false;
-    }
-    setLastVerifyTime(now);
-
     setIsVerifyingUsername(true);
     setUsernameMessage(null);
     try {
       const { data: existing, error } = await supabase
         .from('profiles')
         .select('id')
-        .eq('username', rawUsername)
+        .ilike('username', rawUsername)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') throw error;
@@ -188,8 +180,8 @@ export default function Onboarding({
           onFinalStepCompleted={handleSave}
           onStepChange={(step) => setActiveStep(step)}
           onNext={handleNextInterceptor}
-          nextButtonProps={{ disabled: !isStepValid(activeStep) }}
-          nextButtonText={activeStep === 2 && !usernameVerified ? 'Verify' : 'Continue'}
+          nextButtonProps={{ disabled: !isStepValid(activeStep) || isVerifyingUsername }}
+          nextButtonText={activeStep === 2 && !usernameVerified ? (isVerifyingUsername ? 'Verifying...' : 'Verify') : 'Continue'}
           contentClassName="min-h-[100px]"
         >
           <StepName value={data.name} onChange={v => updateData('name', v)} inputCls={inputCls} />

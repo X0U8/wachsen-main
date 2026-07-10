@@ -14,19 +14,18 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { 
-      question, 
-      correctAnswer, 
-      userAnswer, 
-      options, 
-      history = [], 
-      userId, 
-      authToken, 
-      apiKey: userKey, 
+    const {
+      question,
+      correctAnswer,
+      userAnswer,
+      options,
+      history = [],
+      userId,
+      authToken,
+      apiKey: userKey,
       useOwnKey,
-      provider, 
-      model,
-      language
+      provider,
+      model
     } = req.body;
 
     const isByok = !!(useOwnKey && userKey && userKey.trim());
@@ -71,7 +70,7 @@ Do NOT use raw markdown formatting symbols like headers (###), markdown bolding 
 
 Wrap any math content, variables, formulas, or equations in single $...$ delimiters for inline LaTeX (e.g. $E = mc^2$).
 
-Respond in ${language || 'English'}. Numbers and mathematical expressions must remain in English (e.g., use Arabic numerals "1, 2, 3" not digits from other scripts, and keep LaTeX math notation in English).
+
 
 Context of the question under discussion:
 Question: "${question}"
@@ -129,8 +128,8 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       finalCredits = updated?.[0]?.credits ?? newCreditsTotal;
     }
 
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       reply,
       creditsDeducted,
       remainingCredits: finalCredits

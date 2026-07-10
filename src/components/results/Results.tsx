@@ -15,6 +15,8 @@ export default function Results() {
   const [examTypes, setExamTypes] = useState<any[]>([]);
   const [selectedExamTypeId, setSelectedExamTypeId] = useState<string | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const userId = userProfile?.id || null;
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -38,34 +40,16 @@ export default function Results() {
   }, [userId]);
 
   const { data: initialResults = [], isLoading: loading } = useQuery({
-    queryKey: ['results', userId, selectedExamTypeId],
+    queryKey: ['results', userId, selectedExamTypeId, activeSearchQuery],
     queryFn: async () => {
-      let query = supabase
-        .from('results')
-        .select('*')
-        .eq('userId', userId!)
-        .order('created_at', { ascending: false });
+      if (!userId) return [];
+      const sessionData = await supabase.auth.getSession();
+      const authToken = sessionData.data.session?.access_token || '';
 
-      if (selectedExamTypeId) {
-        // Fetch exams belonging to this category
-        const { data: exams, error: examsError } = await supabase
-          .from('exams')
-          .select('id')
-          .eq('categoryId', selectedExamTypeId);
-
-        if (examsError) throw examsError;
-
-        const examIds = exams?.map(e => e.id) || [];
-        if (examIds.length === 0) {
-          return [];
-        }
-
-        query = query.in('examId', examIds);
-      }
-
-      const { data, error } = await query.range(0, 9);
-      if (error) throw error;
-      return data || [];
+      const response = await fetch(`/api/search?type=results&userId=${userId}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=0`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to search results');
+      return data.results || [];
     },
     enabled: !!userId,
     staleTime: 1000 * 60,
@@ -81,28 +65,17 @@ export default function Results() {
     setLoadingMore(true);
     try {
       const offset = results.length;
-      let query = supabase
-        .from('results')
-        .select('*')
-        .eq('userId', userId)
-        .order('created_at', { ascending: false });
+      const sessionData = await supabase.auth.getSession();
+      const authToken = sessionData.data.session?.access_token || '';
 
-      if (selectedExamTypeId) {
-        const { data: exams } = await supabase
-          .from('exams')
-          .select('id')
-          .eq('categoryId', selectedExamTypeId);
-        const examIds = exams?.map(e => e.id) || [];
-        if (examIds.length === 0) {
-          setLoadingMore(false);
-          return;
-        }
-        query = query.in('examId', examIds);
+      const response = await fetch(`/api/search?type=results&userId=${userId}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=${offset}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to load more results');
+
+      const dataResults = data.results || [];
+      if (dataResults.length > 0) {
+        setExtraResults(prev => [...prev, ...dataResults]);
       }
-
-      const { data, error } = await query.range(offset, offset + 9);
-      if (error) throw error;
-      if (data) setExtraResults(prev => [...prev, ...data]);
     } catch (err) {
       console.error('Error loading more results:', err);
     } finally {
@@ -141,7 +114,7 @@ export default function Results() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white font-sans antialiased select-none">
+    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white font-sans antialiased select-none pb-24">
       <header className="sticky top-0 z-40 w-full px-6 py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-800 flex items-center justify-between transition-colors duration-300">
         <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>Results</h1>
         <div className="relative">
@@ -204,7 +177,45 @@ export default function Results() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-5 pb-28 flex flex-col gap-3">
+      <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-5 pb-6 flex flex-col gap-3">
+        {/* Search Bar */}
+        <div className="flex items-center gap-1.5 w-full bg-white dark:bg-gray-900/40 p-2 rounded-xl border border-zinc-200 dark:border-gray-800/80 mb-2">
+          <input
+            type="text"
+            placeholder="Search results..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setExtraResults([]);
+                setActiveSearchQuery(searchInput);
+              }
+            }}
+            className="flex-1 bg-transparent border-none text-xs text-zinc-800 dark:text-gray-200 placeholder-zinc-400 focus:outline-none"
+          />
+          <button
+            onClick={() => {
+              setExtraResults([]);
+              setActiveSearchQuery(searchInput);
+            }}
+            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+          >
+            Search
+          </button>
+          {activeSearchQuery && (
+            <button
+              onClick={() => {
+                setSearchInput('');
+                setExtraResults([]);
+                setActiveSearchQuery('');
+              }}
+              className="px-2 py-1.5 border border-zinc-300 dark:border-gray-700 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-lg text-xs text-zinc-500 dark:text-gray-400 cursor-pointer transition-colors font-medium"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
         {results.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
             <p className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>No exam results found yet.</p>

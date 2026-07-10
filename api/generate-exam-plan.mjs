@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { subjects, examName, difficulty, academicLevel, language, userId, authToken, apiKey: userKey, provider, model } = req.body;
+    const { subjects, examName, difficulty, userId, authToken, apiKey: userKey, provider, model } = req.body;
     const isByok = !!(userKey && userKey.trim());
     const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
@@ -58,56 +58,55 @@ export default async function handler(req, res) {
     } else {
     }
 
-    const totalQuestions = subjects.reduce((total, sub) => {
-      return total + sub.questionTypes.reduce((qTotal, q) => qTotal + q.count, 0);
-    }, 0);
+    const subjectsTemplate = subjects.map(sub => {
+      const segments = [];
+      let currentQuestionIndex = 1;
 
-    const subjectsInfo = subjects.map(sub => {
-      const qCount = sub.questionTypes.reduce((qTotal, q) => qTotal + q.count, 0);
-      const qTypesDistribution = sub.questionTypes.map(q => `${q.type.toLowerCase()}: ${q.count} questions`).join(', ');
-      return `- ${sub.name}: Total ${qCount} questions (${qTypesDistribution}) - Chapters: ${sub.chapters || 'Not specified'}`;
-    }).join('\n');
+      // Group question types and generate segments of exactly 5 questions (or remainder)
+      sub.questionTypes.forEach(qt => {
+        const type = qt.type.toLowerCase();
+        const totalForType = qt.count;
+        if (totalForType <= 0) return;
+        
+        const segmentCount = Math.ceil(totalForType / 5);
 
-    const prompt = `Generate a json for an exam plan with the following details:
+        for (let i = 0; i < segmentCount; i++) {
+          const start = currentQuestionIndex;
+          const end = Math.min(currentQuestionIndex + 4, start + (totalForType - i * 5) - 1);
+          segments.push({
+            range: `${start}-${end}`,
+            type: type,
+            topics: [] // To be filled by AI
+          });
+          currentQuestionIndex = end + 1;
+        }
+      });
 
-Exam Name: ${examName}
-Difficulty: ${difficulty}
-Academic Level: ${academicLevel || 'Not specified'}
-Total Questions: ${totalQuestions}
+      return {
+        name: sub.name,
+        segments: segments
+      };
+    });
 
-Subjects and Question Distribution:
-${subjectsInfo}
+    const jsonTemplate = {
+      subjects: subjectsTemplate
+    };
 
-DIFFICULTY (determines subtopic depth):
-- EASY: most basic subtopics
-- MEDIUM: moderate subtopics
-- HARD: advanced subtopics
-- ADVANCE: the most complex subtopics possible
+    const prompt = `Generate a JSON exam plan containing subtopics/topics for the following subjects.
+We have already calculated the exact segment structure, question ranges, and types for you.
+You must return the EXACT JSON structure below, but with the empty "topics" arrays populated with specific, relevant subtopics based on the specified chapters/topics for that subject.
 
-NOTE: Adjust the depth and complexity of generated subtopics according to the selected difficulty.
+Chapters/Topics config for each subject:
+${subjects.map(sub => `- ${sub.name}: Chapters are "${sub.chapters || 'General Topics'}"`).join('\n')}
 
-CRITICAL INSTRUCTIONS:
-1. Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the raw JSON object
-2. Generate specific subtopics for each subject based on the chapters/topics provided
-3. Distribute questions logically across subtopics
-4. Each segment in the "segments" list MUST contain exactly 5 questions (e.g., "1-5", "6-10", "11-15") and must be assigned exactly ONE question type ('mcq', 'integer', or 'true_false') from the requested distribution for that subject. For example, if a subject has 10 mcq and 5 integer questions, you should have 3 segments in total: 2 segments assigned 'mcq' type and 1 segment assigned 'integer' type.
-5. LANGUAGE: Write all subtopics, topics, names, and any textual content in ${language || 'English'}. Numbers and mathematical expressions must remain in English (e.g., use Arabic numerals "1, 2, 3" not digits from other scripts, and keep LaTeX math notation in English).
+Required JSON Structure (you MUST keep the exact same "subjects", "name", "segments", "range", and "type" keys and values. Only fill in the "topics" arrays with specific, high-quality, educational subtopics/concepts suitable for the specified chapters and difficulty level: ${difficulty.toUpperCase()}):
 
-Return the response in this JSON format:
-{
-  "subjects": [
-    {
-      "name": "Subject Name",
-      "segments": [
-        { "range": "1-5", "type": "mcq", "topics": ["Subtopic1", "Subtopic2"] },
-        { "range": "6-10", "type": "mcq", "topics": ["Subtopic3", "Subtopic4"] },
-        { "range": "11-15", "type": "integer", "topics": ["Subtopic5"] }
-      ]
-    }
-  ]
-}
+${JSON.stringify(jsonTemplate, null, 2)}
 
-Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the raw JSON object`;
+STRICT RULES:
+1. Return ONLY the valid JSON object — no markdown, no code fences, no extra text.
+2. Do not change the range, name, type, or number of segments.
+3. Ensure every "topics" array contains 2 to 4 relevant subtopic strings.`;
 
     const apiUrl = isMistral ? MISTRAL_API_URL : MESH_API_URL;
     const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);
@@ -122,7 +121,7 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
       body: JSON.stringify({
         model: activeModel,
         messages: [
-          { role: 'system', content: `You are an exam generator. Return only valid JSON. For any math content, wrap LaTeX expressions in $...$ delimiters. Ensure all backslashes in LaTeX commands are properly escaped for JSON (e.g. a single backslash becomes \\\\). Write all content in ${language || 'English'}. Numbers and mathematical expressions must remain in English.` },
+          { role: 'system', content: `You are an exam generator. Return only valid JSON. For any math content, use ONLY $...$ delimiters (single dollar signs). NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap expressions like $\\(...\\)$. ` },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -193,9 +192,20 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
       }
     }
 
-    // Normalize LaTeX row separators: any run of backslashes before a space → exactly \\
+    // Normalize LaTeX delimiters and fix common AI formatting mistakes
     const fixLatex = (obj) => {
-      if (typeof obj === 'string') return obj.replace(/\\+(?= )/g, '\\\\');
+      if (typeof obj === 'string') {
+        let s = obj;
+        // 1. Fix double-wrapped: $\(...\)$ → $...$
+        s = s.replace(/\$\s*\\+\(\s*([\s\S]*?)\s*\\+\)\s*\$/g, (_, inner) => `$${inner}$`);
+        // 2. Convert standalone \(...\) → $...$
+        s = s.replace(/\\+\(([\s\S]*?)\\+\)/g, (_, inner) => `$${inner}$`);
+        // 3. Convert standalone \[...\] → $...$
+        s = s.replace(/\\+\[([\s\S]*?)\\+\]/g, (_, inner) => `$${inner}$`);
+        // 4. Normalize row separators: runs of backslashes before space → \\
+        s = s.replace(/\\+(?= )/g, '\\\\');
+        return s;
+      }
       if (Array.isArray(obj)) return obj.map(fixLatex);
       if (obj && typeof obj === 'object') { for (const k in obj) obj[k] = fixLatex(obj[k]); }
       return obj;

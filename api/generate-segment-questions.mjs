@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { segment, subjectName, questionTypes, difficulty, academicLevel, language, userId, authToken, apiKey: userKey, provider, model, creditsPreReserved } = req.body;
+    const { segment, subjectName, questionTypes, difficulty, academicLevel, userId, authToken, apiKey: userKey, provider, model, creditsPreReserved } = req.body;
     const isByok = !!(userKey && userKey.trim());
     const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
@@ -104,7 +104,7 @@ export default async function handler(req, res) {
     }
 
     rules.push(`${ruleIdx++}. Set the 'difficulty' field for every question: at least 80% of the questions generated must have a 'difficulty' value matching '${difficulty.toLowerCase()}', and the remaining questions should have other difficulty levels ('easy', 'medium', 'hard', or 'advance') to create a natural spread.`);
-    rules.push(`${ruleIdx++}. LANGUAGE: Write all question text, options, and any textual content in ${language || 'English'}. Numbers and mathematical expressions must remain in English (e.g., use Arabic numerals "1, 2, 3" not digits from other scripts, and keep LaTeX math notation in English).`);
+    rules.push(`${ruleIdx++}. MATH/LATEX FORMATTING: For ALL mathematical expressions, use ONLY single dollar sign delimiters $...$. NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap like $\\(...\\)$. Correct: "$\\frac{1}{2}$", "$x^2 + y^2$", "$\\vec{F} = m\\vec{a}$". WRONG (never do this): "$\\(\\frac{1}{2}\\)$", "\\(x^2\\)", "\\[F = ma\\]".`);
 
     const exampleQuestions = [];
     if (hasMcq) {
@@ -123,6 +123,14 @@ export default async function handler(req, res) {
         options: ["Option P value", "Option Q value", "Option R value", "Option S value"],
         correct_answer: "Option Q value",
         difficulty: "easy"
+      });
+      exampleQuestions.push({
+        id: 3,
+        type: "mcq",
+        question: "If $F = \\frac{Gm_1 m_2}{r^2}$, what happens to $F$ when $r$ is doubled?",
+        options: ["$F$ becomes $\\frac{F}{4}$", "$F$ becomes $\\frac{F}{2}$", "$F$ remains the same", "$F$ doubles"],
+        correct_answer: "$F$ becomes $\\frac{F}{4}$",
+        difficulty: "medium"
       });
     }
     if (hasInteger) {
@@ -191,10 +199,10 @@ ${formatExample}`;
       body: JSON.stringify({
         model: activeModel,
         messages: [
-          { role: 'system', content: `You are an exam question generator. Return only valid JSON. For any math content, wrap LaTeX expressions in $...$ delimiters. Ensure all backslashes in LaTeX commands are properly escaped for JSON (e.g. a single backslash becomes \\\\). Write all content in ${language || 'English'}. Numbers and mathematical expressions must remain in English.` },
+          { role: 'system', content: `You are an exam question generator. Return only valid JSON. For any math content, use ONLY $...$ delimiters (single dollar signs). NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap expressions like $\\(...\\)$. ` },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        temperature: 0.4,
         response_format: { type: 'json_object' }
       })
     });
@@ -271,9 +279,20 @@ ${formatExample}`;
       }
     }
 
-    // Normalize LaTeX row separators: any run of backslashes before a space → exactly \\
+    // Normalize LaTeX delimiters and fix common AI formatting mistakes
     const fixLatex = (obj) => {
-      if (typeof obj === 'string') return obj.replace(/\\+(?= )/g, '\\\\');
+      if (typeof obj === 'string') {
+        let s = obj;
+        // 1. Fix double-wrapped: $\(...\)$ → $...$
+        s = s.replace(/\$\s*\\+\(\s*([\s\S]*?)\s*\\+\)\s*\$/g, (_, inner) => `$${inner}$`);
+        // 2. Convert standalone \(...\) → $...$
+        s = s.replace(/\\+\(([\s\S]*?)\\+\)/g, (_, inner) => `$${inner}$`);
+        // 3. Convert standalone \[...\] → $...$
+        s = s.replace(/\\+\[([\s\S]*?)\\+\]/g, (_, inner) => `$${inner}$`);
+        // 4. Normalize row separators: runs of backslashes before space → \\
+        s = s.replace(/\\+(?= )/g, '\\\\');
+        return s;
+      }
       if (Array.isArray(obj)) return obj.map(fixLatex);
       if (obj && typeof obj === 'object') { for (const k in obj) obj[k] = fixLatex(obj[k]); }
       return obj;
@@ -302,7 +321,7 @@ ${formatExample}`;
       for (const q of parsedQuestions.questions) {
         if (q.type === 'mcq' && Array.isArray(q.options) && q.options.length > 0) {
           const correctStr = String(q.correct_answer || '').trim();
-          
+
           if (!correctStr) continue;
 
           // If it matches exactly one of the options, we are good.

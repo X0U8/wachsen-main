@@ -112,7 +112,8 @@ export default function RevisionLog() {
   const [examTypes, setExamTypes] = useState<any[]>([]);
   const [selectedExamTypeId, setSelectedExamTypeId] = useState<string | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [matchingExamIds, setMatchingExamIds] = useState<string[] | null>(null);
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
 
   // Fetch exam types for filtering
   useEffect(() => {
@@ -134,24 +135,7 @@ export default function RevisionLog() {
   }, [userProfile?.id]);
 
   // Fetch matching exam IDs when category changes
-  useEffect(() => {
-    if (!selectedExamTypeId) {
-      setMatchingExamIds(null);
-      return;
-    }
-    const fetchMatchingExams = async () => {
-      try {
-        const { data } = await supabase
-          .from('exams')
-          .select('id')
-          .eq('categoryId', selectedExamTypeId);
-        setMatchingExamIds(data?.map(e => e.id) || []);
-      } catch (err) {
-        console.error('Error fetching matching exams:', err);
-      }
-    };
-    fetchMatchingExams();
-  }, [selectedExamTypeId]);
+
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
@@ -314,31 +298,15 @@ Return ONLY a valid JSON array matching this format:
       const fetchAllRevisionLogs = async () => {
         try {
           setLoading(true);
-          const { data, error } = await supabase
-            .from('revision')
-            .select('id, examID, created_at, question_count')
-            .eq('userID', userProfile.id)
-            .order('created_at', { ascending: false })
-            .range(0, 9);
+          setExtraRevisionLogs([]);
+          const sessionData = await supabase.auth.getSession();
+          const authToken = sessionData.data.session?.access_token || '';
 
-          if (error) throw error;
+          const response = await fetch(`/api/search?type=revision&userId=${userProfile.id}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=0`);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || 'Failed to search revision logs');
 
-          if (data && data.length > 0) {
-            const examIds = data.map(r => r.examID).filter((id): id is string => !!id);
-            const { data: examsData } = await supabase
-              .from('exams')
-              .select('id, examName')
-              .in('id', examIds);
-
-            const examNameMap = new Map(examsData?.map(e => [e.id, e.examName]) || []);
-            const mapped = data.map(r => ({
-              ...r,
-              exams: r.examID ? { examName: examNameMap.get(r.examID) || 'Exam' } : null
-            }));
-            setRevisionList(mapped);
-          } else {
-            setRevisionList([]);
-          }
+          setRevisionList(data.revisionList || []);
         } catch (err) {
           console.error('Error fetching revision list:', err);
           setError('Failed to load revision list');
@@ -475,10 +443,7 @@ Return ONLY a valid JSON array matching this format:
     fetchRevisionLog();
   }, [examId, userProfile?.id]);
 
-  const displayListAll = [...revisionList, ...extraRevisionLogs];
-  const displayList = matchingExamIds
-    ? displayListAll.filter(log => matchingExamIds.includes(log.examID))
-    : displayListAll;
+  const displayList = [...revisionList, ...extraRevisionLogs];
 
   const hasMore = revisionList.length === 10 || (extraRevisionLogs.length > 0 && extraRevisionLogs.length % 10 === 0);
 
@@ -487,28 +452,16 @@ Return ONLY a valid JSON array matching this format:
     setLoadingMore(true);
     try {
       const offset = revisionList.length + extraRevisionLogs.length;
-      const { data, error } = await supabase
-        .from('revision')
-        .select('id, examID, created_at, question_count')
-        .eq('userID', userProfile.id)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + 9);
+      const sessionData = await supabase.auth.getSession();
+      const authToken = sessionData.data.session?.access_token || '';
 
-      if (error) throw error;
+      const response = await fetch(`/api/search?type=revision&userId=${userProfile.id}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=${offset}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to load more revision logs');
 
-      if (data && data.length > 0) {
-        const examIds = data.map(r => r.examID).filter((id): id is string => !!id);
-        const { data: examsData } = await supabase
-          .from('exams')
-          .select('id, examName')
-          .in('id', examIds);
-
-        const examNameMap = new Map(examsData?.map(e => [e.id, e.examName]) || []);
-        const mapped = data.map(r => ({
-          ...r,
-          exams: r.examID ? { examName: examNameMap.get(r.examID) || 'Exam' } : null
-        }));
-        setExtraRevisionLogs(prev => [...prev, ...mapped]);
+      const dataRevisionList = data.revisionList || [];
+      if (dataRevisionList.length > 0) {
+        setExtraRevisionLogs(prev => [...prev, ...dataRevisionList]);
       }
     } catch (err) {
       console.error('Error loading more revision logs:', err);
@@ -536,7 +489,7 @@ Return ONLY a valid JSON array matching this format:
         observer.unobserve(currentSentinel);
       }
     };
-  }, [hasMore, loadingMore, displayListAll.length, examId]);
+  }, [hasMore, loadingMore, displayList.length, examId]);
 
   if (loading) {
     return (
@@ -645,7 +598,45 @@ Return ONLY a valid JSON array matching this format:
     return (
       <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white font-sans antialiased select-none pb-24">
         {headerContent}
-        <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-5">
+        <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-5 flex flex-col gap-3">
+          {/* Search Bar */}
+          <div className="flex items-center gap-1.5 w-full bg-white dark:bg-gray-900/40 p-2 rounded-xl border border-zinc-200 dark:border-gray-800/80 mb-2">
+            <input
+              type="text"
+              placeholder="Search revision logs..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setExtraRevisionLogs([]);
+                  setActiveSearchQuery(searchInput);
+                }
+              }}
+              className="flex-1 bg-transparent border-none text-xs text-zinc-800 dark:text-gray-200 placeholder-zinc-400 focus:outline-none"
+            />
+            <button
+              onClick={() => {
+                setExtraRevisionLogs([]);
+                setActiveSearchQuery(searchInput);
+              }}
+              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+            >
+              Search
+            </button>
+            {activeSearchQuery && (
+              <button
+                onClick={() => {
+                  setSearchInput('');
+                  setExtraRevisionLogs([]);
+                  setActiveSearchQuery('');
+                }}
+                className="px-2 py-1.5 border border-zinc-300 dark:border-gray-700 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-lg text-xs text-zinc-500 dark:text-gray-400 cursor-pointer transition-colors font-medium"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
           <RevisionLogList
             revisionList={displayList}
             onSelectLog={(examID) => navigate(`/revision/${examID}`)}

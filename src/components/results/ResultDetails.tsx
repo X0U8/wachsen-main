@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import MathText from '../../ui/MathText';
 import Notification from '../../ui/Notification';
 import { fontSize } from '../../lib/utils';
+import { idbGet, idbSet } from '../../lib/idb';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart as RePieChart, Pie, Legend
@@ -155,6 +156,8 @@ export default function ResultDetails() {
     correctMarks: number;
     negativeMarks: number;
   }>({ totalTime: 60, totalMarks: 100, correctMarks: 4, negativeMarks: 0 });
+  const [hasRevisionLog, setHasRevisionLog] = useState(true);
+  const [isCreatingRevision, setIsCreatingRevision] = useState(false);
 
   const planSubjects = useMemo(() => normalizeExamPlanSubjects(examPlan), [examPlan]);
 
@@ -205,6 +208,77 @@ export default function ResultDetails() {
     }));
   }, [examChapters, planSubjects, questions]);
 
+  const getQuestionTopic = (q: any, qIdx: number, subjects: any[]) => {
+    if (q.chapter) return q.chapter;
+
+    const targetSubject = subjects?.find(sub =>
+      sub.name?.toLowerCase() === q.subject?.toLowerCase() ||
+      sub.subject?.toLowerCase() === q.subject?.toLowerCase()
+    );
+
+    const segments = targetSubject?.planSubject?.segments || targetSubject?.segments;
+
+    if (Array.isArray(segments)) {
+      const qNum = qIdx + 1;
+      for (const segment of segments) {
+        if (!segment.range) continue;
+        const [start, end] = segment.range.split('-').map(Number);
+        if (qNum >= start && qNum <= (end || start)) {
+          if (Array.isArray(segment.topics)) {
+            return segment.topics.join(', ');
+          }
+          return segment.topics || '';
+        }
+      }
+    }
+    return 'Review Topic';
+  };
+
+  const createRevisionLog = async () => {
+    if (!result || !questions.length || isCreatingRevision || hasRevisionLog) return;
+    setIsCreatingRevision(true);
+
+    try {
+      const correctIds = parseStoredValue(result.correctAnswers, []);
+      const wrongAndSkipped = questions.map((q, qIdx) => {
+        const isCorrect = correctIds.includes(q.id);
+        if (isCorrect) return null;
+
+        const userAns = analytics?.userAnswers?.[q.id] || '';
+        return {
+          id: q.id,
+          originalIndex: qIdx,
+          type: q.type || q.questionType || 'mcq',
+          question: q.question || q.text,
+          options: q.options || [],
+          correct_answer: q.correct_answer || q.correctAnswer || '',
+          userAnswer: userAns,
+          subject: q.subject || 'Review'
+        };
+      }).filter((q): q is NonNullable<typeof q> => q !== null);
+
+      const { error } = await supabase
+        .from('revision')
+        .insert({
+          userID: userId || result.userId,
+          examID: result.examId,
+          questions: JSON.stringify(wrongAndSkipped),
+          examLogs: JSON.stringify(examPlan || analysisSubjects),
+          question_count: wrongAndSkipped.length
+        });
+
+      if (error) throw error;
+
+      setHasRevisionLog(true);
+      showNotification('success', 'Revision log created successfully!');
+    } catch (err: any) {
+      console.error(err);
+      showNotification('error', err.message || 'Failed to create revision log');
+    } finally {
+      setIsCreatingRevision(false);
+    }
+  };
+
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
   };
@@ -217,31 +291,51 @@ export default function ResultDetails() {
     const fetchResult = async () => {
       try {
         setLoading(true);
-        // Phase 1: Fetch result document
-        const { data: resDoc, error: getResultError } = await supabase
-          .from('results')
-          .select('*')
-          .eq('id', resultId)
-          .single();
-        if (getResultError) throw getResultError;
+        const cacheKey = `result_details_${resultId}`;
+        const cached = await idbGet(cacheKey);
 
-        setResult(resDoc);
-        setUserId(resDoc.userId || null);
-        setLoading(false);
+        let resDoc: any;
+        let examDoc: any;
 
-        // Phase 2: Fetch questions in background (non-blocking for LCP)
-        setLoadingQuestions(true);
-        const { data: examDocs, error: examError } = await supabase
-          .from('exams')
-          .select('generatedExam, ExamPlan, subjects, totalTime, totalMarks, correct_marks, negative_marks')
-          .eq('id', resDoc.examId)
-          .limit(1);
+        if (cached) {
+          resDoc = cached.resDoc;
+          examDoc = cached.examDoc;
+          
+          setResult(resDoc);
+          setUserId(resDoc.userId || null);
+          setLoading(false);
+          setLoadingQuestions(true);
+        } else {
+          // Phase 1: Fetch result document from Supabase
+          const { data, error: getResultError } = await supabase
+            .from('results')
+            .select('*')
+            .eq('id', resultId)
+            .single();
+          if (getResultError) throw getResultError;
 
-        if (examError) throw examError;
+          resDoc = data;
+          setResult(resDoc);
+          setUserId(resDoc.userId || null);
+          setLoading(false);
+          setLoadingQuestions(true);
 
-        if (examDocs && examDocs.length > 0) {
-          const examDoc = examDocs[0];
+          // Phase 2: Fetch exam details from Supabase
+          const { data: examDocs, error: examError } = await supabase
+            .from('exams')
+            .select('generatedExam, ExamPlan, subjects, totalTime, totalMarks, correct_marks, negative_marks')
+            .eq('id', resDoc.examId)
+            .limit(1);
 
+          if (examError) throw examError;
+
+          if (examDocs && examDocs.length > 0) {
+            examDoc = examDocs[0];
+            await idbSet(cacheKey, { resDoc, examDoc });
+          }
+        }
+
+        if (examDoc) {
           // Set subjects column if exists (contains chapter info)
           let subjectsParsed: any[] = [];
           if (examDoc.subjects) {
@@ -261,10 +355,26 @@ export default function ResultDetails() {
             setQuestions(allQuestions);
             setSubjectQuestionCounts(counts);
           }
+
           // Set ExamPlan if exists
           if (examDoc.ExamPlan) {
             const planParsed = parseStoredValue(examDoc.ExamPlan, null);
             setExamPlan(planParsed);
+          }
+        }
+
+        // Live check for revision (never cached)
+        if (resDoc) {
+          try {
+            const { data: existingRev } = await supabase
+              .from('revision')
+              .select('id')
+              .eq('userID', resDoc.userId)
+              .eq('examID', resDoc.examId)
+              .maybeSingle();
+            setHasRevisionLog(!!existingRev);
+          } catch (e) {
+            console.error('Error checking revision:', e);
           }
         }
       } catch (err) {
@@ -425,9 +535,8 @@ export default function ResultDetails() {
   if (!loading && !result) {
     return (
       <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6">
-
         <h2 style={{ fontSize: fontSize.sm }}>Result Not Found</h2>
-        <button onClick={() => navigate('/exam')} className="mt-6 px-4 py-2 bg-blue-600 rounded-xl" style={{ fontSize: fontSize.sm }}>Back to Results</button>
+        <button onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/results'); } }} className="mt-6 px-4 py-2 bg-blue-600 rounded-xl" style={{ fontSize: fontSize.sm }}>Back to Results</button>
       </div>
     );
   }
@@ -445,20 +554,45 @@ export default function ResultDetails() {
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white">
       <header className="p-2 flex items-center justify-between border-b border-gray-900 bg-zinc-50/50 dark:bg-black/50 backdrop-blur-md sticky top-0 z-10">
         <div className="flex items-center gap-2">
-          <button onClick={() => navigate('/exam')} className="p-2 hover:bg-white dark:hover:bg-gray-900 rounded-full transition-colors">
+          <button onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/results'); } }} className="p-2 hover:bg-white dark:hover:bg-gray-900 rounded-full transition-colors">
             <ChevronLeft className="w-6 h-6 text-zinc-900 dark:text-white" />
           </button>
-          <h1 className="sm:text-lg font-medium text-zinc-900 dark:text-white truncate max-w-[200px] sm:max-w-[300px]" style={{ fontSize: fontSize.base }}>
+          <h1 className="sm:text-lg font-medium text-zinc-900 dark:text-white truncate max-w-[120px] sm:max-w-[200px]" style={{ fontSize: fontSize.base }}>
             {result.examName || 'Results'}
           </h1>
         </div>
-        <button
-          onClick={() => setShowPrintPreview(true)}
-          className="px-3.5 py-1.5 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 hover:bg-zinc-100 dark:hover:bg-gray-800 text-zinc-900 dark:text-white rounded-xl text-xs font-medium shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer mr-2"
-        >
-          <Printer className="w-3.5 h-3.5" />
-          Print Exam
-        </button>
+        <div className="flex items-center gap-1.5 sm:gap-2 mr-2">
+          <button
+            onClick={createRevisionLog}
+            disabled={hasRevisionLog || isCreatingRevision}
+            className="px-2.5 sm:px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 dark:disabled:bg-gray-800 text-white disabled:text-zinc-500 dark:disabled:text-gray-400 rounded-xl text-[10px] sm:text-xs font-semibold shadow-sm hover:shadow-md disabled:shadow-none transition-all flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
+          >
+            {isCreatingRevision ? (
+              <>
+                <Loader2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 animate-spin" />
+                <span className="hidden sm:inline">Creating...</span>
+                <span className="sm:hidden">Creating</span>
+              </>
+            ) : hasRevisionLog ? (
+              <>
+                <span className="hidden sm:inline">Revision Log Created</span>
+                <span className="sm:hidden">Created</span>
+              </>
+            ) : (
+              <>
+                <span className="hidden sm:inline">Create Revision Log</span>
+                <span className="sm:hidden">Create Revision</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => setShowPrintPreview(true)}
+            className="px-2.5 sm:px-3.5 py-1.5 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 hover:bg-zinc-100 dark:hover:bg-gray-800 text-zinc-900 dark:text-white rounded-xl text-[10px] sm:text-xs font-medium shadow-sm hover:shadow-md transition-all flex items-center gap-1 cursor-pointer"
+          >
+            <Printer className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+            <span className="hidden sm:inline">Print Exam</span>
+          </button>
+        </div>
       </header>
 
       <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full space-y-12">

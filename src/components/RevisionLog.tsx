@@ -1,11 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useUserProfile } from '../lib/UserContext';
 import MathText from '../ui/MathText';
-import { ArrowLeft, BookOpen, AlertCircle, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, AlertCircle, RotateCcw, Loader2, Filter, Check, BarChart3, Brain } from 'lucide-react';
 import ConceptCards from './ConceptCards';
 import Notification from '../ui/Notification';
+import Footer from './Footer';
+import { fontSize } from '../lib/utils';
+import { idbGet, idbSet } from '../lib/idb';
+
+import RevisionLogList from './revision/RevisionLogList';
+import RevisionQuestionsList from './revision/RevisionQuestionsList';
+import RevisionRetryModal from './revision/RevisionRetryModal';
 
 interface RevisionLogData {
   questions: Array<{
@@ -17,45 +24,108 @@ interface RevisionLogData {
   }>;
 }
 
-// Renders text with basic markdown to HTML (MathJax handles LaTeX automatically)
-function renderMathMarkdown(text: string): string {
-  if (!text || typeof text !== 'string') return '';
-  // MathJax will handle $...$ and $$...$$ automatically
-  let result = text;
-  result = result
-    .replace(/^### (.+)$/gm, '<div style="font-size:11px;color:#e5e7eb;font-weight:600;margin:10px 0 4px">$1</div>')
-    .replace(/^## (.+)$/gm, '<div style="font-size:12px;color:#fff;font-weight:600;margin:12px 0 4px">$1</div>')
-    .replace(/^# (.+)$/gm, '<div style="font-size:14px;color:#fff;font-weight:700;margin:14px 0 6px">$1</div>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#fff;font-weight:600">$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em style="color:#d1d5db;font-style:italic">$1</em>')
-    .replace(/`([^`]+)`/g, '<code style="background:#1f2937;padding:1px 4px;border-radius:4px;color:#60a5fa;font-size:11px">$1</code>')
-    .replace(/^- (.+)$/gm, '<div style="display:flex;gap:6px;margin:2px 0"><span style="color:#6b7280">•</span><span>$1</span></div>')
-    .replace(/^\d+\. (.+)$/gm, '<div style="margin:2px 0 2px 12px">$1</div>');
-  return result;
-}
+const resolveConceptsFromPlan = (questions: any[], planData: any) => {
+  const planSubjects = Array.isArray(planData) ? planData : (planData?.subjects || []);
+  
+  return questions.map((q: any, qIdx: number) => {
+    if (q.chapter || q.concept) return { ...q, concept: q.chapter || q.concept };
 
-interface ConceptCardsProps {
-  onClose: () => void;
-  examQuestions?: any[];
-  subtopics?: string[];
-  cardCount?: number;
-}
+    const targetSubject = planSubjects?.find((sub: any) => 
+      sub.name?.toLowerCase() === q.subject?.toLowerCase() ||
+      sub.subject?.toLowerCase() === q.subject?.toLowerCase()
+    );
+
+    const segments = targetSubject?.planSubject?.segments || targetSubject?.segments;
+
+    let resolvedTopic = '';
+    if (Array.isArray(segments)) {
+      const qNum = (typeof q.originalIndex === 'number' ? q.originalIndex : qIdx) + 1;
+      for (const segment of segments) {
+        if (!segment.range) continue;
+        const [start, end] = segment.range.split('-').map(Number);
+        if (qNum >= start && qNum <= (end || start)) {
+          if (Array.isArray(segment.topics)) {
+            resolvedTopic = segment.topics.join(', ');
+          } else {
+            resolvedTopic = segment.topics || '';
+          }
+          break;
+        }
+      }
+    }
+
+    return {
+      ...q,
+      concept: resolvedTopic || 'Review Topic'
+    };
+  });
+};
 
 export default function RevisionLog() {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
-  const { userProfile, refreshProfile } = useUserProfile();
+  const { userProfile } = useUserProfile();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [logData, setLogData] = useState<RevisionLogData | null>(null);
   const [showConceptCards, setShowConceptCards] = useState(false);
+  const [conceptCards, setConceptCards] = useState<Array<{ front: string; back: string }>>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [revisionList, setRevisionList] = useState<any[]>([]);
+  const [extraRevisionLogs, setExtraRevisionLogs] = useState<any[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const [examTypes, setExamTypes] = useState<any[]>([]);
+  const [selectedExamTypeId, setSelectedExamTypeId] = useState<string | null>(null);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [matchingExamIds, setMatchingExamIds] = useState<string[] | null>(null);
+
+  // Fetch exam types for filtering
+  useEffect(() => {
+    if (!userProfile?.id) return;
+    const fetchExamTypes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('examtypes')
+          .select('id, name')
+          .eq('userId', userProfile.id)
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+        setExamTypes(data || []);
+      } catch (err) {
+        console.error('Error fetching exam types:', err);
+      }
+    };
+    fetchExamTypes();
+  }, [userProfile?.id]);
+
+  // Fetch matching exam IDs when category changes
+  useEffect(() => {
+    if (!selectedExamTypeId) {
+      setMatchingExamIds(null);
+      return;
+    }
+    const fetchMatchingExams = async () => {
+      try {
+        const { data } = await supabase
+          .from('exams')
+          .select('id')
+          .eq('categoryId', selectedExamTypeId);
+        setMatchingExamIds(data?.map(e => e.id) || []);
+      } catch (err) {
+        console.error('Error fetching matching exams:', err);
+      }
+    };
+    fetchMatchingExams();
+  }, [selectedExamTypeId]);
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
   };
   const [examQuestions, setExamQuestions] = useState<any[]>([]);
   const [subtopics, setSubtopics] = useState<string[]>([]);
+  const [resultId, setResultId] = useState<string | null>(null);
   const [cardCount, setCardCount] = useState(5);
   const [generatingCards, setGeneratingCards] = useState(false);
   const [showRetry, setShowRetry] = useState(false);
@@ -111,106 +181,65 @@ export default function RevisionLog() {
     }
   };
 
-  const handleAICheck = async (questionId: string) => {
-    const question = retryData.find((q: any) => q.id === questionId);
-    if (!question || !userProfile) return;
-
-    const userAnswer = retryAnswers[questionId];
-    if (!userAnswer) {
-      showNotification('error', 'Please enter your answer first');
-      return;
-    }
-
-    // Check credits (1 credit per LAQ check)
-    if ((userProfile.credits || 0) < 1) {
-      showNotification('error', 'Insufficient credits. You need 1 credit for AI check.');
-      return;
-    }
-
+  const handleAISelfCheck = async (questionId: string, answer: string) => {
+    setCheckingAI(prev => ({ ...prev, [questionId]: true }));
     try {
-      setCheckingAI(prev => ({ ...prev, [questionId]: true }));
+      const question = retryData.find((q: any) => q.id === questionId);
+      if (!question) return;
 
-      // Use server-side API endpoint for security
-      const response = await fetch('/api/evaluate-text-answers.mjs', {
+      const response = await fetch('/api/ask-question', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: question.text,
-          userAnswer: userAnswer,
           correctAnswer: question.correctAnswer,
-          marks: 4,
-          negativeMarks: -1
+          userAnswer: answer,
+          options: question.options,
+          useOwnKey: localStorage.getItem('use_own_key') === 'true',
+          apiKey: localStorage.getItem('use_own_key') === 'true' ? localStorage.getItem('mesh_api_key') : undefined
         })
       });
 
-      if (!response.ok) {
-        throw new Error('AI check failed');
-      }
-
       const data = await response.json();
-      const aiResponse = data.candidates[0]?.content?.parts[0]?.text || 'Failed to get response';
+      if (!response.ok) throw new Error(data.error || 'Failed to check answer');
 
-      // Deduct credit
-      const { error: creditsError } = await supabase
-        .from('profiles')
-        .update({ credits: (userProfile.credits || 0) - 1 })
-        .eq('id', userProfile.id);
-      if (creditsError) throw creditsError;
-      await refreshProfile();
-
+      const isCorrect = data.reply.toLowerCase().includes('correct') && !data.reply.toLowerCase().includes('incorrect');
       setRetryResults(prev => ({
         ...prev,
-        [questionId]: {
-          isCorrect: aiResponse.includes('4/4') || aiResponse.includes('full marks'),
-          explanation: aiResponse
-        }
+        [questionId]: { isCorrect, explanation: data.reply }
       }));
-    } catch (err) {
-      console.error('AI check error:', err);
-      showNotification('error', 'AI check failed. Please try again.');
+    } catch (err: any) {
+      console.error(err);
+      showNotification('error', err.message || 'AI evaluation failed');
     } finally {
       setCheckingAI(prev => ({ ...prev, [questionId]: false }));
     }
   };
 
-  const generateWrongAnswer = (correctAnswer: string): string => {
-    // Simple wrong answer generation (placeholder)
-    // In production, you might want to use AI for this
-    const wrongOptions = [
-      "None of the above",
-      "The opposite is true",
-      "This is incorrect",
-      "Data insufficient"
-    ];
-    return wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
-  };
-
-  const handleGenerateConceptCards = async () => {
-    if (!userProfile) return;
-
-    // Calculate credits needed: cardCount / 2 (every 2 cards = 1 credit)
-    const creditsNeeded = Math.ceil(cardCount / 2);
-
-    // Check if user has enough credits
-    if ((userProfile.credits || 0) < creditsNeeded) {
-      showNotification('error', `Insufficient credits. You need ${creditsNeeded} credits to generate ${cardCount} concept cards.`);
-      return;
-    }
-
+  const generateConceptCards = async () => {
+    if (examQuestions.length === 0 || generatingCards) return;
+    setGeneratingCards(true);
     try {
-      setGeneratingCards(true);
+      const response = await fetch('/api/ask-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: `Given these concepts that I failed: ${subtopics.join(', ')}. Generate ${cardCount} revision flashcards. For each flashcard, provide a "front" (a conceptual question or formula prompt) and a "back" (the concise answer or explanation). Return only a valid JSON array format: [{"front": "...", "back": "..."}]`,
+          correctAnswer: '',
+          userAnswer: '',
+          useOwnKey: localStorage.getItem('use_own_key') === 'true',
+          apiKey: localStorage.getItem('use_own_key') === 'true' ? localStorage.getItem('mesh_api_key') : undefined
+        })
+      });
 
-      // Deduct credits
-      const { error: creditsError } = await supabase
-        .from('profiles')
-        .update({ credits: (userProfile.credits || 0) - creditsNeeded })
-        .eq('id', userProfile.id);
-      if (creditsError) throw creditsError;
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate flashcards');
 
-      // Refresh user profile
-      await refreshProfile();
-
-      // Show concept cards
+      let replyText = data.reply || '[]';
+      replyText = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
+      const cards = JSON.parse(replyText);
+      
+      setConceptCards(cards);
       setShowConceptCards(true);
     } catch (err) {
       console.error('Error generating concept cards:', err);
@@ -220,31 +249,96 @@ export default function RevisionLog() {
     }
   };
 
+  const generateWrongAnswer = (correctAnswer: string): string => {
+    const wrongOptions = [
+      "None of the above",
+      "The opposite is true",
+      "Insufficient parameters provided",
+      "Data is inconclusive"
+    ];
+    return wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+  };
+
   useEffect(() => {
-    if (!examId || !userProfile?.$id) return;
+    if (!userProfile?.id) return;
+
+    if (!examId) {
+      const fetchAllRevisionLogs = async () => {
+        try {
+          setLoading(true);
+          const { data, error } = await supabase
+            .from('revision')
+            .select('id, examID, created_at, question_count')
+            .eq('userID', userProfile.id)
+            .order('created_at', { ascending: false })
+            .range(0, 9);
+
+          if (error) throw error;
+
+          if (data && data.length > 0) {
+            const examIds = data.map(r => r.examID).filter((id): id is string => !!id);
+            const { data: examsData } = await supabase
+              .from('exams')
+              .select('id, examName')
+              .in('id', examIds);
+
+            const examNameMap = new Map(examsData?.map(e => [e.id, e.examName]) || []);
+            const mapped = data.map(r => ({
+              ...r,
+              exams: r.examID ? { examName: examNameMap.get(r.examID) || 'Exam' } : null
+            }));
+            setRevisionList(mapped);
+          } else {
+            setRevisionList([]);
+          }
+        } catch (err) {
+          console.error('Error fetching revision list:', err);
+          setError('Failed to load revision list');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchAllRevisionLogs();
+      return;
+    }
 
     const fetchRevisionLog = async () => {
       try {
         setLoading(true);
+        setLogData(null);
+        setExamQuestions([]);
+        setSubtopics([]);
+        setResultId(null);
 
-        // Check IndexedDB first
+        // Check IndexedDB cache first
         const cacheKey = `revision_${examId}`;
-        const cachedData = localStorage.getItem(cacheKey);
+        const cachedData = await idbGet(cacheKey);
 
         if (cachedData) {
           try {
-            const parsedCache = JSON.parse(cachedData);
-            const questionsData = JSON.parse(parsedCache.questions);
-            const examLogsData = JSON.parse(parsedCache.examLogs);
+            const questionsData = JSON.parse(cachedData.questions);
+            const examLogsData = JSON.parse(cachedData.examLogs);
+            
+            let loadedResultId = cachedData.resultId;
+            if (!loadedResultId) {
+              const { data: resultDocs } = await supabase
+                .from('results')
+                .select('id')
+                .eq('examId', examId)
+                .eq('userId', userProfile.id)
+                .limit(1);
+              if (resultDocs && resultDocs.length > 0) {
+                loadedResultId = resultDocs[0].id;
+                await idbSet(cacheKey, {
+                  questions: cachedData.questions,
+                  examLogs: cachedData.examLogs,
+                  resultId: loadedResultId
+                });
+              }
+            }
+            setResultId(loadedResultId || null);
 
-            // Merge original questions data with AI concept data
-            const mergedQuestions = questionsData.map((q: any) => {
-              const aiQuestion = examLogsData.questions?.find((aq: any) => aq.id === q.id);
-              return {
-                ...q,
-                concept: aiQuestion?.concept || ''
-              };
-            });
+            const mergedQuestions = resolveConceptsFromPlan(questionsData, examLogsData);
 
             setLogData({ questions: mergedQuestions });
             setExamQuestions(mergedQuestions);
@@ -288,20 +382,31 @@ export default function RevisionLog() {
           const questionsData = JSON.parse(doc.questions as string);
           const examLogsData = JSON.parse(doc.examLogs as string);
 
-          // Save to IndexedDB (localStorage as fallback)
-          localStorage.setItem(cacheKey, JSON.stringify({
-            questions: doc.questions,
-            examLogs: doc.examLogs
-          }));
+          // Fetch the matching resultId corresponding to this examId
+          let fetchedResultId = null;
+          try {
+            const { data: resultDocs } = await supabase
+              .from('results')
+              .select('id')
+              .eq('examId', examId)
+              .eq('userId', userProfile.id)
+              .limit(1);
+            if (resultDocs && resultDocs.length > 0) {
+              fetchedResultId = resultDocs[0].id;
+              setResultId(fetchedResultId);
+            }
+          } catch (resErr) {
+            console.error('Error fetching associated resultId:', resErr);
+          }
 
-          // Merge original questions data with AI concept data
-          const mergedQuestions = questionsData.map((q: any) => {
-            const aiQuestion = examLogsData.questions?.find((aq: any) => aq.id === q.id);
-            return {
-              ...q,
-              concept: aiQuestion?.concept || ''
-            };
+          // Save to IndexedDB
+          await idbSet(cacheKey, {
+            questions: doc.questions,
+            examLogs: doc.examLogs,
+            resultId: fetchedResultId
           });
+
+          const mergedQuestions = resolveConceptsFromPlan(questionsData, examLogsData);
 
           setLogData({ questions: mergedQuestions });
           setExamQuestions(mergedQuestions);
@@ -335,307 +440,255 @@ export default function RevisionLog() {
     };
 
     fetchRevisionLog();
-  }, [examId, userProfile?.$id]);
+  }, [examId, userProfile?.id]);
+
+  const displayListAll = [...revisionList, ...extraRevisionLogs];
+  const displayList = matchingExamIds
+    ? displayListAll.filter(log => matchingExamIds.includes(log.examID))
+    : displayListAll;
+
+  const hasMore = revisionList.length === 10 || (extraRevisionLogs.length > 0 && extraRevisionLogs.length % 10 === 0);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore || !userProfile?.id) return;
+    setLoadingMore(true);
+    try {
+      const offset = revisionList.length + extraRevisionLogs.length;
+      const { data, error } = await supabase
+        .from('revision')
+        .select('id, examID, created_at, question_count')
+        .eq('userID', userProfile.id)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + 9);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const examIds = data.map(r => r.examID).filter((id): id is string => !!id);
+        const { data: examsData } = await supabase
+          .from('exams')
+          .select('id, examName')
+          .in('id', examIds);
+
+        const examNameMap = new Map(examsData?.map(e => [e.id, e.examName]) || []);
+        const mapped = data.map(r => ({
+          ...r,
+          exams: r.examID ? { examName: examNameMap.get(r.examID) || 'Exam' } : null
+        }));
+        setExtraRevisionLogs(prev => [...prev, ...mapped]);
+      }
+    } catch (err) {
+      console.error('Error loading more revision logs:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!hasMore || loadingMore || examId) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMore();
+      }
+    }, { rootMargin: '200px' });
+
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) {
+        observer.unobserve(currentSentinel);
+      }
+    };
+  }, [hasMore, loadingMore, displayListAll.length, examId]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-gray-400">Loading revision log...</div>
+      <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6 font-sans antialiased select-none">
+        <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+        <p className="mt-2 text-zinc-400 text-xs font-semibold uppercase tracking-wider">Loading Revision Log</p>
       </div>
     );
   }
 
-  if (error || !logData) {
+  if (error) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-red-400">{error || 'No revision log found'}</div>
+      <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6 font-sans antialiased select-none">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 w-full max-w-md text-center space-y-4 shadow-xl">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+          <h3 className="text-base font-bold text-zinc-800 dark:text-white">Error Loading Revision Log</h3>
+          <p className="text-zinc-500 dark:text-gray-400 text-xs">{error}</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer"
+          >
+            Go Back
+          </button>
+        </div>
       </div>
     );
   }
+
+  const headerContent = (
+    <header className="sticky top-0 z-40 w-full px-6 py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-800 flex items-center justify-between transition-colors duration-300">
+      {examId ? (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-1 hover:bg-zinc-150 dark:hover:bg-zinc-900 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>Revision Log</h1>
+        </div>
+      ) : (
+        <>
+          <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>Revision Logs</h1>
+          <div className="relative">
+            <button
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 cursor-pointer flex items-center gap-1"
+            >
+              <Filter className="w-4 h-4" />
+            </button>
+
+            {showFilterDropdown && (
+              <>
+                <div 
+                  className="fixed inset-0 z-40 cursor-default" 
+                  onClick={() => setShowFilterDropdown(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 px-3 py-1.5 uppercase tracking-wider">
+                    Filter by Exam Type
+                  </div>
+                  <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                    <button
+                      onClick={() => {
+                        setSelectedExamTypeId(null);
+                        setShowFilterDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
+                        !selectedExamTypeId
+                          ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
+                          : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                      }`}
+                    >
+                      <span>All Exam Types</span>
+                      {!selectedExamTypeId && <Check className="w-3.5 h-3.5" />}
+                    </button>
+
+                    {examTypes.map((type) => (
+                      <button
+                        key={type.id}
+                        onClick={() => {
+                          setSelectedExamTypeId(type.id);
+                          setShowFilterDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
+                          selectedExamTypeId === type.id
+                            ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
+                            : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                        }`}
+                      >
+                        <span className="truncate">{type.name}</span>
+                        {selectedExamTypeId === type.id && <Check className="w-3.5 h-3.5" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </header>
+  );
+
+  if (!examId) {
+    return (
+      <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white font-sans antialiased select-none pb-24">
+        {headerContent}
+        <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-5">
+          <RevisionLogList
+            revisionList={displayList}
+            onSelectLog={(examID) => navigate(`/revision/${examID}`)}
+          />
+          {hasMore && (
+            <div ref={sentinelRef} className="flex justify-center py-4">
+              {loadingMore && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
+            </div>
+          )}
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!logData) return null;
 
   return (
-    <div className="min-h-screen bg-black p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-all"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back
-        </button>
+    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white font-sans antialiased select-none pb-24">
+      {headerContent}
+      <main className="flex-grow max-w-4xl w-full mx-auto p-4 sm:p-5 space-y-6">
+        <RevisionQuestionsList questions={logData.questions} />
 
-        
-
-        {/* Questions Section */}
-        <div className="space-y-6">
-          {logData.questions.map((question, idx) => (
-            <div key={question.id} className="bg-gray-900/40 border border-gray-800 rounded-3xl p-6 space-y-4">
-              <div className="flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-xs text-blue-400 flex-shrink-0">
-                  {idx + 1}
-                </div>
-                <div className="flex-1">
-                  <div className="text-sm text-white mb-3 leading-relaxed">
-                    <MathText text={question.text} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-xs mb-4">
-                    <div>
-                      <span className="text-gray-500">Your Answer:</span>
-                      <span className="text-white ml-2">
-                        {question.userAnswer ? <MathText text={question.userAnswer} /> : 'Skipped'}
-                      </span>
-                    </div>
-                    {question.correctAnswer && (
-                      <div>
-                        <span className="text-gray-500">Correct Answer:</span>
-                        <span className="text-white ml-2">
-                          <MathText text={question.correctAnswer} />
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="border-t border-gray-800 pt-4">
-                    {question.concept && (
-                      <div>
-                        <div className="text-[10px] text-gray-500 mb-2 flex items-center gap-2">
-                          <BookOpen className="w-3 h-3" />
-                          Subtopic & Concept
-                        </div>
-                        <div
-                          className="text-xs text-white font-medium leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: renderMathMarkdown(question.concept) }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Concept Cards Button */}
-        <div className="mt-8">
+        {/* Revision Options Row */}
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* View Result */}
           <button
-            onClick={handleGenerateConceptCards}
+            onClick={() => resultId && navigate(`/results/${resultId}`)}
+            disabled={!resultId}
+            className="py-2.5 px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60 border border-zinc-250 dark:border-zinc-800 rounded-2xl text-xs font-semibold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            View Result
+          </button>
+
+          {/* Generate Concept Cards */}
+          <button
+            onClick={generateConceptCards}
             disabled={generatingCards}
-            className="w-full py-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-3xl text-sm text-blue-400 hover:bg-blue-500/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="py-2.5 px-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-2xl text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {generatingCards ? (
               <>
-                <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                <Loader2 className="w-4 h-4 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin mr-2" />
                 Generating...
               </>
             ) : (
               <>
-                Generate Concept Cards ({cardCount} cards · {Math.ceil(cardCount / 2)} credits)
+                Concept Cards ({cardCount})
               </>
             )}
           </button>
-        </div>
 
-        {/* Retry Questions Button */}
-        <div className="mt-4">
+          {/* Retry Questions */}
           <button
             onClick={handleRetry}
-            className="w-full py-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-3xl text-sm text-green-400 hover:bg-green-500/20 transition-all flex items-center justify-center gap-3"
+            className="py-2.5 px-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl text-xs font-semibold text-green-600 dark:text-green-400 hover:bg-green-500/20 transition-all flex items-center justify-center cursor-pointer"
           >
-            <RotateCcw className="w-5 h-5" />
-            Retry the Questions (Free)
+            Retry Questions
           </button>
         </div>
-      </div>
+      </main>
 
-      {showConceptCards && <ConceptCards onClose={() => setShowConceptCards(false)} examQuestions={examQuestions} subtopics={subtopics} cardCount={cardCount} />}
-
-      {showRetry && retryData.length > 0 && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <RotateCcw className="w-5 h-5 text-green-400" />
-                Retry Questions
-              </h3>
-            </div>
-
-            {/* Progress indicator */}
-            <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>Question {currentRetryIndex + 1} of {retryData.length}</span>
-              <span>Original time: {retryData[currentRetryIndex]?.timeSpent || 0}s</span>
-            </div>
-
-            {/* Single question view */}
-            {(() => {
-              const question = retryData[currentRetryIndex];
-              const result = retryResults[question.id];
-              const answer = retryAnswers[question.id];
-              const isMCQ = question.questionType === 'mcq';
-              const isInteger = question.questionType === 'integer';
-              const isTrueFalse = question.questionType === 'true-false';
-              const isLAQ = question.questionType === 'long-answer' || question.questionType === 'laq' || !isMCQ && !isInteger && !isTrueFalse;
-
-              return (
-                <div className="bg-gray-800/50 rounded-2xl p-4 space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center text-xs text-green-400 flex-shrink-0">
-                      {currentRetryIndex + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-xs text-white mb-3 leading-relaxed">
-                        <MathText text={question.text} />
-                      </div>
-
-                      {/* MCQ, Integer, True-False: Show options */}
-                      {(isMCQ || isInteger || isTrueFalse) && question.shuffledOptions && question.shuffledOptions.length > 0 ? (
-                        <div className="space-y-2">
-                          {question.shuffledOptions.map((option: string, optIdx: number) => (
-                            <button
-                              key={optIdx}
-                              onClick={() => !result && handleRetryAnswer(question.id, option)}
-                              disabled={!!result}
-                              className={`w-full p-3 rounded-xl border text-left text-xs text-white transition-all ${
-                                result
-                                  ? result.isCorrect && option === question.correctAnswer
-                                    ? 'bg-green-500/20 border-green-500/50 text-green-400'
-                                    : answer === option && !result.isCorrect
-                                    ? 'bg-red-500/20 border-red-500/50 text-red-400'
-                                    : 'bg-gray-800/30 border-gray-700/50 opacity-50'
-                                  : answer === option
-                                  ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
-                                  : 'bg-gray-800/30 border-gray-700/50 hover:border-gray-600 hover:bg-gray-700/30'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="w-5 h-5 rounded-full bg-gray-700 flex items-center justify-center text-[10px]">
-                                  {String.fromCharCode(65 + optIdx)}
-                                </span>
-                                <span><MathText text={option} /></span>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        /* LAQ: Show text input */
-                        <div className="space-y-3">
-                          <textarea
-                            value={answer || ''}
-                            onChange={(e) => !result && setRetryAnswers(prev => ({ ...prev, [question.id]: e.target.value }))}
-                            disabled={!!result}
-                            placeholder="Type your answer here..."
-                            className="w-full p-3 rounded-xl border border-gray-700/50 bg-gray-800/30 text-xs text-white placeholder-gray-500 resize-none h-24 disabled:opacity-50"
-                          />
-                          {!result && (
-                            <button
-                              onClick={() => handleAICheck(question.id)}
-                              disabled={checkingAI[question.id] || !answer}
-                              className="w-full py-2 bg-blue-500/20 border border-blue-500/30 rounded-xl text-xs text-blue-400 hover:bg-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                              {checkingAI[question.id] ? (
-                                <>
-                                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                                  Checking...
-                                </>
-                              ) : (
-                                <>
-                                  AI Check (1 Credit)
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Result display */}
-                      {result && (
-                        <div className={`mt-3 p-3 rounded-xl text-xs ${
-                          result.isCorrect
-                            ? 'bg-green-500/20 border border-green-500/30 text-green-400'
-                            : 'bg-red-500/20 border border-red-500/30 text-red-400'
-                        }`}>
-                          {result.isCorrect ? 'Correct!' : 'Incorrect'}
-                          {result.explanation && (
-                            <div className="mt-2 text-white/80 whitespace-pre-wrap">{result.explanation}</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Results summary when all questions answered */}
-            {Object.keys(retryResults).length === retryData.length && retryData.length > 0 && (
-              <div className="bg-gray-800/50 rounded-2xl p-6 space-y-4">
-                <h4 className="text-lg font-semibold text-white">Retry Results</h4>
-                <div className="text-sm text-gray-300">
-                  {(() => {
-                    const correctCount = Object.values(retryResults).filter(r => r.isCorrect).length;
-                    const totalCount = retryData.length;
-                    const percentage = (correctCount / totalCount) * 100;
-
-                    let message = '';
-                    let messageColor = '';
-
-                    if (percentage < 50) {
-                      message = 'Hmm these questions still need revisions';
-                      messageColor = 'text-orange-400';
-                    } else if (percentage < 70) {
-                      message = 'Moderate performance';
-                      messageColor = 'text-yellow-400';
-                    } else if (percentage < 80) {
-                      message = 'Good';
-                      messageColor = 'text-green-400';
-                    } else if (percentage < 90) {
-                      message = 'Great';
-                      messageColor = 'text-green-300';
-                    } else {
-                      message = 'This concepts are properly revised';
-                      messageColor = 'text-green-200';
-                    }
-
-                    return (
-                      <div>
-                        <div className="text-2xl font-bold text-white mb-2">
-                          {correctCount} / {totalCount} correct ({Math.round(percentage)}%)
-                        </div>
-                        <div className={`text-sm ${messageColor} mb-4`}>{message}</div>
-                        <button
-                          onClick={() => setShowRetry(false)}
-                          className="w-full py-3 bg-blue-500 rounded-xl text-sm text-white hover:bg-blue-600 transition-all"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {/* Navigation buttons - hide when all answered */}
-            {Object.keys(retryResults).length !== retryData.length && (
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setCurrentRetryIndex(prev => Math.max(0, prev - 1))}
-                  disabled={currentRetryIndex === 0}
-                  className="flex-1 py-3 bg-gray-800 rounded-xl text-xs text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-700 transition-all"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setCurrentRetryIndex(prev => Math.min(retryData.length - 1, prev + 1))}
-                  disabled={currentRetryIndex === retryData.length - 1}
-                  className="flex-1 py-3 bg-blue-500 rounded-xl text-xs text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-all"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {showConceptCards && <ConceptCards onClose={() => setShowConceptCards(false)} cards={conceptCards} />}
+      <RevisionRetryModal
+        isOpen={showRetry}
+        onClose={() => setShowRetry(false)}
+        retryData={retryData}
+        currentRetryIndex={currentRetryIndex}
+        setCurrentRetryIndex={setCurrentRetryIndex}
+        retryAnswers={retryAnswers}
+        setRetryAnswers={setRetryAnswers}
+        retryResults={retryResults}
+        handleRetryAnswer={handleRetryAnswer}
+        handleAISelfCheck={handleAISelfCheck}
+        checkingAI={checkingAI}
+      />
 
       {notification && (
         <Notification
@@ -644,6 +697,7 @@ export default function RevisionLog() {
           onClose={() => setNotification(null)}
         />
       )}
+      <Footer />
     </div>
   );
 }

@@ -17,11 +17,13 @@ interface FinalizeExamProps {
     examType?: 'practice' | 'casual';
     accessType?: 'anytime' | 'specific';
     isPublic?: boolean;
+    language?: string;
     startDateTime?: string;
     endDateTime?: string;
     categoryId?: string;
     defaultCorrectMarks?: number;
     defaultNegativeMarks?: number;
+    academicLevel?: string;
   };
   userId: string;
 }
@@ -142,6 +144,8 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
           subjects: examData.subjects,
           examName: examData.examName,
           difficulty: examData.difficulty,
+          academicLevel: examData.academicLevel || '',
+          language: examData.language || 'English',
           userId,
           authToken,
           apiKey: apiKey || undefined,
@@ -261,12 +265,14 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             subjectIndex,
             questionTypes,
             difficulty: examData.difficulty,
+            academicLevel: examData.subjects.find((s: any) => s.name === subject.name)?.academicLevel || examData.academicLevel || '',
+            language: examData.language || 'English',
             userId,
             authToken,
             apiKey: apiKey || undefined,
             provider,
             model: model || undefined,
-            creditsPreReserved: true // Credits already reserved upfront
+            creditsPreReserved: true
           }),
         });
 
@@ -307,6 +313,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     const examDocument = {
       examName: examData.examName,
       examType: examData.examType || 'practice',
+      language: examData.language || 'English',
       isPublic: examData.isPublic !== undefined ? examData.isPublic : true,
       createdBy: userId,
       accessIds: [userId],

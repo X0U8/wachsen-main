@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { segment, subjectName, questionTypes, difficulty, userId, authToken, apiKey: userKey, provider, model, creditsPreReserved } = req.body;
+    const { segment, subjectName, questionTypes, difficulty, academicLevel, language, userId, authToken, apiKey: userKey, provider, model, creditsPreReserved } = req.body;
     const isByok = !!(userKey && userKey.trim());
     const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
@@ -104,6 +104,7 @@ export default async function handler(req, res) {
     }
 
     rules.push(`${ruleIdx++}. Set the 'difficulty' field for every question: at least 80% of the questions generated must have a 'difficulty' value matching '${difficulty.toLowerCase()}', and the remaining questions should have other difficulty levels ('easy', 'medium', 'hard', or 'advance') to create a natural spread.`);
+    rules.push(`${ruleIdx++}. LANGUAGE: Write all question text, options, and any textual content in ${language || 'English'}. Numbers and mathematical expressions must remain in English (e.g., use Arabic numerals "1, 2, 3" not digits from other scripts, and keep LaTeX math notation in English).`);
 
     const exampleQuestions = [];
     if (hasMcq) {
@@ -162,6 +163,7 @@ export default async function handler(req, res) {
     const prompt = `Generate JSON questions for this exam segment.
 
 Subject: ${subjectName}
+Academic Level: ${academicLevel || 'Not specified'}
 Difficulty Level: ${difficulty.toUpperCase()}
 Question Range: ${segment.range} (generate exactly ${questionCount} questions)
 Topics: ${segment.topics.join(', ')}
@@ -189,7 +191,7 @@ ${formatExample}`;
       body: JSON.stringify({
         model: activeModel,
         messages: [
-          { role: 'system', content: 'You are an exam question generator. Return only valid JSON. For any math content, wrap LaTeX expressions in $...$ delimiters. Ensure all backslashes in LaTeX commands are properly escaped for JSON (e.g. a single backslash becomes \\\\).' },
+          { role: 'system', content: `You are an exam question generator. Return only valid JSON. For any math content, wrap LaTeX expressions in $...$ delimiters. Ensure all backslashes in LaTeX commands are properly escaped for JSON (e.g. a single backslash becomes \\\\). Write all content in ${language || 'English'}. Numbers and mathematical expressions must remain in English.` },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,

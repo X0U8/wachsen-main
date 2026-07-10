@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
-import { Loader2, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronRight, Filter, Check } from 'lucide-react';
 import Footer from '../Footer';
 import { useQuery } from '@tanstack/react-query';
 import { fontSize } from '../../lib/utils';
@@ -12,18 +12,58 @@ export default function Results() {
   const { userProfile } = useUserProfile();
   const [loadingMore, setLoadingMore] = useState(false);
   const [extraResults, setExtraResults] = useState<any[]>([]);
+  const [examTypes, setExamTypes] = useState<any[]>([]);
+  const [selectedExamTypeId, setSelectedExamTypeId] = useState<string | null>(null);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const userId = userProfile?.id || null;
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  // Fetch exam types for filtering
+  useEffect(() => {
+    if (!userId) return;
+    const fetchExamTypes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('examtypes')
+          .select('id, name')
+          .eq('userId', userId)
+          .order('created_at', { ascending: true });
+        if (error) throw error;
+        setExamTypes(data || []);
+      } catch (err) {
+        console.error('Error fetching exam types:', err);
+      }
+    };
+    fetchExamTypes();
+  }, [userId]);
+
   const { data: initialResults = [], isLoading: loading } = useQuery({
-    queryKey: ['results', userId],
+    queryKey: ['results', userId, selectedExamTypeId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('results')
         .select('*')
         .eq('userId', userId!)
-        .order('created_at', { ascending: false })
-        .range(0, 9);
+        .order('created_at', { ascending: false });
+
+      if (selectedExamTypeId) {
+        // Fetch exams belonging to this category
+        const { data: exams, error: examsError } = await supabase
+          .from('exams')
+          .select('id')
+          .eq('categoryId', selectedExamTypeId);
+
+        if (examsError) throw examsError;
+
+        const examIds = exams?.map(e => e.id) || [];
+        if (examIds.length === 0) {
+          return [];
+        }
+
+        query = query.in('examId', examIds);
+      }
+
+      const { data, error } = await query.range(0, 9);
       if (error) throw error;
       return data || [];
     },
@@ -41,12 +81,26 @@ export default function Results() {
     setLoadingMore(true);
     try {
       const offset = results.length;
-      const { data, error } = await supabase
+      let query = supabase
         .from('results')
         .select('*')
         .eq('userId', userId)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + 9);
+        .order('created_at', { ascending: false });
+
+      if (selectedExamTypeId) {
+        const { data: exams } = await supabase
+          .from('exams')
+          .select('id')
+          .eq('categoryId', selectedExamTypeId);
+        const examIds = exams?.map(e => e.id) || [];
+        if (examIds.length === 0) {
+          setLoadingMore(false);
+          return;
+        }
+        query = query.in('examId', examIds);
+      }
+
+      const { data, error } = await query.range(offset, offset + 9);
       if (error) throw error;
       if (data) setExtraResults(prev => [...prev, ...data]);
     } catch (err) {
@@ -90,6 +144,64 @@ export default function Results() {
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white font-sans antialiased select-none">
       <header className="sticky top-0 z-40 w-full px-6 py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-800 flex items-center justify-between transition-colors duration-300">
         <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>Results</h1>
+        <div className="relative">
+          <button
+            onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer flex items-center gap-1"
+          >
+            <Filter className="w-4 h-4" />
+          </button>
+
+          {showFilterDropdown && (
+            <>
+              <div 
+                className="fixed inset-0 z-40 cursor-default" 
+                onClick={() => setShowFilterDropdown(false)}
+              />
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 px-3 py-1.5 uppercase tracking-wider">
+                  Filter by Exam Type
+                </div>
+                <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                  <button
+                    onClick={() => {
+                      setSelectedExamTypeId(null);
+                      setExtraResults([]);
+                      setShowFilterDropdown(false);
+                    }}
+                    className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
+                      !selectedExamTypeId
+                        ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
+                        : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                    }`}
+                  >
+                    <span>All Exam Types</span>
+                    {!selectedExamTypeId && <Check className="w-3.5 h-3.5" />}
+                  </button>
+
+                  {examTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => {
+                        setSelectedExamTypeId(type.id);
+                        setExtraResults([]);
+                        setShowFilterDropdown(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
+                        selectedExamTypeId === type.id
+                          ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
+                          : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                      }`}
+                    >
+                      <span className="truncate">{type.name}</span>
+                      {selectedExamTypeId === type.id && <Check className="w-3.5 h-3.5" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-5 pb-28 flex flex-col gap-3">

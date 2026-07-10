@@ -23,6 +23,50 @@ export default function PrintQuestion({
   questions,
   examMeta
 }: PrintQuestionProps) {
+  const [progress, setProgress] = React.useState(0);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const previewContainerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    setIsLoading(true);
+    setProgress(0);
+
+    // 1. Progress timer up to 90%
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) return 90;
+        return prev + 6;
+      });
+    }, 45);
+
+    // 2. Wait for React render + MathJax typesetting
+    const triggerTypeset = async () => {
+      // Let React render components
+      await new Promise(resolve => setTimeout(resolve, 400));
+
+      if (window.MathJax?.typesetPromise && previewContainerRef.current) {
+        try {
+          await window.MathJax.typesetPromise([previewContainerRef.current]);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // Finish loading
+      setProgress(100);
+      clearInterval(interval);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 150);
+    };
+
+    triggerTypeset();
+
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const triggerPrint = () => {
@@ -41,7 +85,8 @@ export default function PrintQuestion({
           <div className="flex items-center gap-2">
             <button
               onClick={triggerPrint}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
+              disabled={isLoading}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-250 dark:disabled:bg-gray-800 disabled:text-zinc-500 text-white rounded-xl text-xs font-medium shadow-md hover:shadow-lg disabled:shadow-none transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
             >
               <Printer className="w-3.5 h-3.5" />
               Print Exam
@@ -56,8 +101,26 @@ export default function PrintQuestion({
         </div>
 
         {/* Scrollable Preview Screen Container */}
-        <div className="flex-grow p-6 overflow-y-auto bg-zinc-50 dark:bg-gray-950 flex justify-center">
-          <div className="w-full max-w-3xl text-zinc-900 dark:text-zinc-100 p-4 font-sans">
+        <div className="relative flex-grow p-6 overflow-y-auto bg-zinc-50 dark:bg-gray-950 flex justify-center items-start">
+          {isLoading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-50/90 dark:bg-gray-950/90 backdrop-blur-xs z-10 gap-2 pointer-events-none animate-in fade-in duration-200">
+              <div className="w-64 flex flex-col items-center gap-2">
+                <div className="w-full bg-zinc-250 dark:bg-gray-800 h-1 rounded-full overflow-hidden">
+                  <div
+                    className="bg-blue-600 h-full rounded-full transition-all duration-100 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-zinc-500 dark:text-gray-400 font-semibold">Preparing  {progress}%</span>
+              </div>
+            </div>
+          )}
+
+          <div
+            ref={previewContainerRef}
+            className={`w-full max-w-3xl text-zinc-900 dark:text-zinc-100 p-4 font-sans transition-all duration-350 ${isLoading ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100'
+              }`}
+          >
 
             {/* Question Sheet Section */}
             <div>
@@ -151,13 +214,11 @@ export default function PrintQuestion({
                   </div>
                 ))}
               </div>
-
               {/* Printable footer */}
               <div className="mt-12 pt-4 border-t border-zinc-200 dark:border-gray-850 text-center text-[9px] text-zinc-450 italic">
                 This Question & answers are generated in wachsen AI. AI can make mistakes.
               </div>
             </div>
-
           </div>
         </div>
       </div>

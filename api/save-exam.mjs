@@ -17,6 +17,7 @@ export default async function handler(req, res) {
     const { data, error } = await supabase.from('exams').insert({
       examName: examData.examName,
       examType: examData.examType || 'practice',
+      language: examData.language || 'English',
       isPublic: examData.isPublic !== undefined ? examData.isPublic : true,
       createdBy: examData.createdBy,
       accessIds: examData.accessIds?.length > 0 ? examData.accessIds : [examData.createdBy],

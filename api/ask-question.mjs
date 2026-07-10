@@ -25,7 +25,8 @@ export default async function handler(req, res) {
       apiKey: userKey, 
       useOwnKey,
       provider, 
-      model 
+      model,
+      language
     } = req.body;
 
     const isByok = !!(useOwnKey && userKey && userKey.trim());
@@ -69,6 +70,8 @@ export default async function handler(req, res) {
 Do NOT use raw markdown formatting symbols like headers (###), markdown bolding (**), bullet lists with dashes, or dividers (---). Instead, format your output into separate, clean paragraphs. Start a new line whenever a new step, equation, or part of the explanation begins (e.g. after full stops, colons, or semicolons where appropriate) to make the text clean, readable, and well-spaced.
 
 Wrap any math content, variables, formulas, or equations in single $...$ delimiters for inline LaTeX (e.g. $E = mc^2$).
+
+Respond in ${language || 'English'}. Numbers and mathematical expressions must remain in English (e.g., use Arabic numerals "1, 2, 3" not digits from other scripts, and keep LaTeX math notation in English).
 
 Context of the question under discussion:
 Question: "${question}"

@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { subjects, examName, difficulty, userId, authToken, apiKey: userKey, provider, model } = req.body;
+    const { subjects, examName, difficulty, academicLevel, language, userId, authToken, apiKey: userKey, provider, model } = req.body;
     const isByok = !!(userKey && userKey.trim());
     const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
@@ -72,6 +72,7 @@ export default async function handler(req, res) {
 
 Exam Name: ${examName}
 Difficulty: ${difficulty}
+Academic Level: ${academicLevel || 'Not specified'}
 Total Questions: ${totalQuestions}
 
 Subjects and Question Distribution:
@@ -90,6 +91,7 @@ CRITICAL INSTRUCTIONS:
 2. Generate specific subtopics for each subject based on the chapters/topics provided
 3. Distribute questions logically across subtopics
 4. Each segment in the "segments" list MUST contain exactly 5 questions (e.g., "1-5", "6-10", "11-15") and must be assigned exactly ONE question type ('mcq', 'integer', or 'true_false') from the requested distribution for that subject. For example, if a subject has 10 mcq and 5 integer questions, you should have 3 segments in total: 2 segments assigned 'mcq' type and 1 segment assigned 'integer' type.
+5. LANGUAGE: Write all subtopics, topics, names, and any textual content in ${language || 'English'}. Numbers and mathematical expressions must remain in English (e.g., use Arabic numerals "1, 2, 3" not digits from other scripts, and keep LaTeX math notation in English).
 
 Return the response in this JSON format:
 {
@@ -120,7 +122,7 @@ Return ONLY valid JSON — no markdown, no code fences, no \`\`\`json, just the 
       body: JSON.stringify({
         model: activeModel,
         messages: [
-          { role: 'system', content: 'You are an exam generator. Return only valid JSON. For any math content, wrap LaTeX expressions in $...$ delimiters. Ensure all backslashes in LaTeX commands are properly escaped for JSON (e.g. a single backslash becomes \\\\).' },
+          { role: 'system', content: `You are an exam generator. Return only valid JSON. For any math content, wrap LaTeX expressions in $...$ delimiters. Ensure all backslashes in LaTeX commands are properly escaped for JSON (e.g. a single backslash becomes \\\\). Write all content in ${language || 'English'}. Numbers and mathematical expressions must remain in English.` },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,

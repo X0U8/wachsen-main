@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { fontSize } from '../../../lib/utils';
 import { idbGet, idbSet } from '../../../lib/idb';
 import { TrendingUp, Loader2 } from 'lucide-react';
 
@@ -118,13 +119,12 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
           </span>
         </div>
 
-        <div className="text-center md:text-left space-y-1.5">
-          <h4 className="text-sm font-bold text-zinc-850 dark:text-white flex items-center gap-1.5 justify-center md:justify-start">
-            <TrendingUp className="w-4 h-4 text-blue-500" />
-            Syllabus Completion
+        <div className="text-center md:text-left space-y-1">
+          <h4 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+            Syllabus completion
           </h4>
-          <p className="text-zinc-500 dark:text-gray-400 text-xs leading-relaxed">
-            You have completed <strong className="text-zinc-700 dark:text-white">{completedCount}</strong> out of <strong className="text-zinc-700 dark:text-white">{totalChaptersCount}</strong> chapters. Tick off items below as you study them!
+          <p className="text-zinc-550 dark:text-zinc-400 font-semibold" style={{ fontSize: fontSize.sm }}>
+            {completedCount}/{totalChaptersCount}
           </p>
         </div>
       </div>

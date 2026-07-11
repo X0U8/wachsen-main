@@ -15,7 +15,7 @@ export default function SubscriptionModal({ name, onClose }: SubscriptionModalPr
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-gray-800 rounded-2xl p-6 w-full max-w-sm space-y-5 shadow-xl relative">
+      <div className="bg-white dark:bg-zinc-950 border border-black/15 dark:border-white/20 rounded-2xl p-6 w-full max-w-sm space-y-5 shadow-xl relative">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1 rounded-lg text-zinc-400 dark:text-gray-500 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"

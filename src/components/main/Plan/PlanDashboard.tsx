@@ -57,99 +57,47 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl backdrop-blur-[2px] space-y-6 shadow-sm animate-fadeIn relative">
-      {/* Target Exam Header */}
-      <div className="flex items-start justify-between border-b border-zinc-250/60 dark:border-gray-800/80 pb-4 gap-4">
-        <div>
-          <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2.5 py-1 rounded-lg">
-            Active Study Roadmap
-          </span>
-          <h2 className="text-xl font-extrabold text-zinc-800 dark:text-white mt-2.5 uppercase tracking-wide">
-            {plan.exam_name} Preparation
-          </h2>
-          <p className="text-[11px] text-zinc-400 mt-1">
-            Started on {createdDate.toLocaleDateString(undefined, { dateStyle: 'medium' })}
-          </p>
-        </div>
-
-        {/* Delete button only visible on the day the plan was created */}
+    <div className="max-w-xl mx-auto bg-white dark:bg-zinc-900/40 border border-black/15 dark:border-white/20 p-6 rounded-3xl space-y-6 shadow-sm animate-fadeIn relative">
+      <div className="flex items-center justify-between border-b border-black/15 dark:border-white/20 pb-4 gap-4">
+        <div className="w-8" />
+        <h2 className="font-semibold text-zinc-900 dark:text-white text-center flex-1" style={{ fontSize: fontSize.base }}>
+          {plan.exam_name} preparation
+        </h2>
         {createdDate.getDate() === currentDate.getDate() &&
          createdDate.getMonth() === currentDate.getMonth() &&
-         createdDate.getFullYear() === currentDate.getFullYear() && (
+         createdDate.getFullYear() === currentDate.getFullYear() ? (
           <button
             onClick={handleOpenDeleteConfirm}
             disabled={isDeleting}
-            className="p-2.5 hover:bg-red-500/10 text-zinc-400 hover:text-red-500 rounded-xl transition-all cursor-pointer border border-transparent hover:border-red-500/20 disabled:opacity-40 shrink-0"
+            className="p-1.5 hover:bg-red-500/10 text-zinc-400 hover:text-red-500 rounded-xl transition-all cursor-pointer disabled:opacity-40 shrink-0"
             title="Reset study plan"
           >
-            <Trash2 className="w-4.5 h-4.5" />
+            <Trash2 className="w-4 h-4" />
           </button>
+        ) : (
+          <div className="w-8" />
         )}
       </div>
 
-      {/* Progress Section */}
-      <div className="space-y-3">
-        <div className="flex justify-between items-baseline">
-          <span className="text-xs font-semibold text-zinc-650 dark:text-gray-400">
-            Timeline Progress
-          </span>
-          <span className="font-mono text-lg font-black text-blue-500">
-            DAY {x} <span className="text-xs text-zinc-400 font-semibold">/ {plan.days}</span>
-          </span>
+      <div className="space-y-4 py-2">
+        <div className="text-center font-bold text-blue-500 font-mono tracking-tight" style={{ fontSize: fontSize.xl }}>
+          DAY {x}/{plan.days}
         </div>
 
-        {/* Premium Progress Bar */}
-        <div className="w-full h-3 bg-zinc-200 dark:bg-gray-800 rounded-full overflow-hidden relative">
+        <div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden relative">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-
-        <div className="flex justify-between text-[9px] text-zinc-400 font-bold uppercase tracking-wider">
-          <span>{x} days elapsed</span>
-          <span>{Math.max(0, plan.days - x)} days remaining</span>
-        </div>
       </div>
 
-      {/* Subjects overview */}
-      <div className="space-y-2">
-        <h4 className="text-xs font-bold text-zinc-700 dark:text-gray-300 flex items-center gap-1.5">
-          <BookOpen className="w-3.5 h-3.5 text-zinc-400" />
-          Enrolled Subjects ({parsedSubjects.length})
-        </h4>
-        <div className="flex flex-wrap gap-2">
-          {parsedSubjects.map((sub: any, idx: number) => (
-            <div
-              key={idx}
-              className="px-3 py-1.5 bg-zinc-50 dark:bg-gray-950/40 border border-zinc-200 dark:border-gray-800 rounded-xl text-[11px] font-semibold text-zinc-700 dark:text-gray-300"
-            >
-              {sub.name}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Expiry Warning or Congrats */}
-      {x >= plan.days && (
-        <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl flex items-start gap-2.5">
-          <Award className="w-5 h-5 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <h5 className="font-bold text-xs">Roadmap Complete!</h5>
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 leading-relaxed">
-              Congratulations, you have reached the final day of your target preparation timeframe!
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Action Footer */}
       <button
         onClick={onContinue}
-        className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition-all shadow-lg shadow-blue-500/10 cursor-pointer flex items-center justify-center gap-2 text-xs"
+        className="w-full py-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white font-semibold rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+        style={{ fontSize: fontSize.xs }}
       >
-        Continue to Roadmap
-        <ArrowRight className="w-4 h-4" />
+        Continue
       </button>
 
       {/* 15-SEC WAIT DELETE CONFIRMATION MODAL OVERLAY */}

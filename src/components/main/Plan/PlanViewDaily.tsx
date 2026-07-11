@@ -267,7 +267,7 @@ export default function PlanViewDaily({
         </div>
       ) : (
         // Empty State: Generate detailed tasks for this month
-        <div className="border border-zinc-300 dark:border-gray-855 rounded-3xl p-10 text-center flex flex-col items-center gap-4 bg-white/20 dark:bg-gray-900/20 backdrop-blur-[2px]">
+        <div className="border border-dashed border-black/15 dark:border-white/20 rounded-3xl p-8 text-center flex flex-col items-center gap-4 bg-white dark:bg-zinc-900/40">
           {generatingDetails ? (
             <div className="space-y-4 py-4 flex flex-col items-center">
               <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
@@ -278,13 +278,12 @@ export default function PlanViewDaily({
             </div>
           ) : (
             <>
-              <div className="p-4 bg-blue-500/10 text-blue-500 rounded-full border border-blue-500/20">
-                <Sparkles className="w-7 h-7" />
-              </div>
               <div className="space-y-1.5 max-w-sm">
-                <h4 className="font-bold text-zinc-800 dark:text-gray-250 text-sm">Generate Detailed 2-Day Tasks</h4>
-                <p className="text-zinc-500 dark:text-gray-400 text-xs leading-relaxed">
-                  Generate tasks for the month of <strong className="text-zinc-705 dark:text-white">{getMonthDateRange(createdAt, selectedMonthNum)}</strong>.
+                <h4 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+                  Generate tasks for Month {selectedMonthNum}
+                </h4>
+                <p className="text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                  {getMonthDateRange(createdAt, selectedMonthNum)}
                 </p>
                 {selectedMonthNum !== currentActiveMonth && (
                   <p className="text-xs text-red-500 font-semibold bg-red-500/10 p-2.5 rounded-xl border border-red-500/20 mt-3.5">
@@ -292,17 +291,17 @@ export default function PlanViewDaily({
                   </p>
                 )}
               </div>
-
-              <div className="p-3 bg-blue-500/5 border border-blue-500/10 rounded-2xl text-[10px] text-zinc-500 dark:text-gray-450 max-w-xs text-center leading-relaxed">
-                Costs exactly <strong className="text-blue-500">15 credits</strong>.
+ 
+              <div className="text-zinc-550 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                planning cost: <strong className="text-blue-600 dark:text-blue-400 font-bold">15 credits</strong>
               </div>
-
+ 
               <button
                 onClick={handleGenerateDetailedTasks}
                 disabled={selectedMonthNum !== currentActiveMonth}
-                className="px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 disabled:border-transparent text-white font-bold rounded-2xl transition-all shadow-md shadow-blue-500/10 cursor-pointer text-xs flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-550 disabled:border-transparent text-white font-bold rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ fontSize: fontSize.xs }}
               >
-                <Sparkles className="w-4 h-4" />
                 Generate Tasks
               </button>
             </>

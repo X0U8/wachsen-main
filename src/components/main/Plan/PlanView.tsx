@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { fontSize } from '../../../lib/utils';
 import { ChevronLeft, Calendar, ListTodo, CheckSquare, BrainCircuit, X } from 'lucide-react';
 import PlanViewMonthly from './PlanViewMonthly';
 import PlanViewDaily from './PlanViewDaily';
@@ -57,24 +58,23 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
         )}
 
         {/* Top bar header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-gray-800 pb-4 gap-4">
+        <div className="flex items-center justify-between border-b border-black/15 dark:border-white/20 pb-4 gap-4">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-150 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-gray-800 border border-zinc-250 dark:border-gray-800 rounded-xl text-zinc-650 dark:text-gray-300 font-semibold transition-all cursor-pointer text-xs"
+            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-zinc-550 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Dashboard
+            <ChevronLeft className="w-5 h-5" />
           </button>
-
-          <h3 className="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">
+ 
+          <h2 className="font-semibold text-zinc-800 dark:text-white" style={{ fontSize: fontSize.base }}>
             {examName} roadmap
-          </h3>
+          </h2>
           
-          <div className="w-16" />
+          <div className="w-10" />
         </div>
 
         {/* Navigation Tabs bar - Supports mobile hiding of full text */}
-        <div className="flex bg-zinc-155 dark:bg-gray-900/60 p-1.5 rounded-2xl border border-zinc-200 dark:border-gray-850/80 gap-1">
+        <div className="flex bg-zinc-100 dark:bg-gray-900/80 p-1.5 rounded-2xl gap-1">
           <button
             onClick={() => setActiveTab('monthly')}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${

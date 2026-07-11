@@ -1,23 +1,32 @@
 import { useRef, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUserProfile } from '../lib/UserContext.tsx';
+import { useTheme } from '../lib/ThemeContext.tsx';
 import { FilePenLineIcon } from '../icons/FilePenLineIcon';
 import { HistoryIcon } from '../icons/HistoryIcon';
 import { UsersIcon } from '../icons/UsersIcon';
 import { TelescopeIcon } from '../icons/TelescopeIcon';
 import { fontSize } from '../lib/utils';
 import ProfileCard from './profile/ProfileCard';
-
+ 
 export default function Footer() {
   const location = useLocation();
   const { userProfile } = useUserProfile();
+  const { fontSizeLevel } = useTheme();
   const [showProfile, setShowProfile] = useState(false);
-
+ 
   const examRef = useRef<any>(null);
   const resultsRef = useRef<any>(null);
   const groupsRef = useRef<any>(null);
   const revisionRef = useRef<any>(null);
-
+ 
+  const getIconSize = () => {
+    if (fontSizeLevel === 'small') return 18;
+    if (fontSizeLevel === 'large') return 24;
+    return 20;
+  };
+  const iconSize = getIconSize();
+ 
   useEffect(() => {
     const interval = setInterval(() => {
       [examRef, resultsRef, groupsRef, revisionRef]
@@ -29,10 +38,10 @@ export default function Footer() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
+ 
   const isActive = (path: string) => location.pathname === path;
   const isProfileActive = isActive('/profile');
-
+ 
   const NavLink = ({ to, icon }: { to: string; icon: React.ReactNode }) => (
     <Link
       to={to}
@@ -42,21 +51,21 @@ export default function Footer() {
         className={`flex items-center justify-center transition-all duration-200
           ${isActive(to)
             ? 'text-blue-600 dark:text-blue-400 scale-110 drop-shadow-[0_2px_8px_rgba(37,99,235,0.2)]'
-            : 'text-zinc-450 dark:text-gray-500 hover:text-zinc-700 dark:hover:text-gray-100'
+            : 'text-zinc-450 dark:text-gray-550 hover:text-zinc-700 dark:hover:text-gray-100'
           }`}
       >
         {icon}
       </div>
     </Link>
   );
-
+ 
   return (
     <>
       <footer className="fixed bottom-0 left-0 w-full bg-white/80 dark:bg-black border-t border-zinc-200 dark:border-gray-900 shadow-[0_-8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-colors duration-300 z-50">
         <div className="w-full max-w-5xl mx-auto flex items-center justify-between h-14 sm:h-16 px-2">
-          <NavLink to="/exam" icon={<FilePenLineIcon ref={examRef} size={20} />} />
-          <NavLink to="/results" icon={<HistoryIcon ref={resultsRef} size={20} />} />
-
+          <NavLink to="/exam" icon={<FilePenLineIcon ref={examRef} size={iconSize} />} />
+          <NavLink to="/results" icon={<HistoryIcon ref={resultsRef} size={iconSize} />} />
+ 
           <button
             onClick={() => setShowProfile(true)}
             className="flex-1 flex items-center justify-center h-full group cursor-pointer"
@@ -89,9 +98,9 @@ export default function Footer() {
               />
             )}
           </button>
-
-          <NavLink to="/friends" icon={<UsersIcon ref={groupsRef} size={20} />} />
-          <NavLink to="/revision" icon={<TelescopeIcon ref={revisionRef} size={20} />} />
+ 
+          <NavLink to="/friends" icon={<UsersIcon ref={groupsRef} size={iconSize} />} />
+          <NavLink to="/revision" icon={<TelescopeIcon ref={revisionRef} size={iconSize} />} />
         </div>
       </footer>
 

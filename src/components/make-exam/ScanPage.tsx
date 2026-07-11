@@ -499,16 +499,14 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
   };
 
   const extraCreditsCost = Math.ceil(totalPages / 2);
+  const useOwnKey = localStorage.getItem('use_own_key') === 'true';
   const currentCropItem = cropQueue[cropIndex];
 
   return (
-    <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-3xl p-5 space-y-4 transition-all">
+    <div className="bg-white/40 dark:bg-gray-900/40 border border-black/15 dark:border-white/20 p-5 space-y-4 transition-all">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ImageIcon className="w-4 h-4 text-blue-500" />
-          <h4 className="font-semibold text-zinc-800 dark:text-gray-250" style={{ fontSize: fontSize.xs }}>Document & Image Scanner</h4>
-        </div>
-        <span className="text-zinc-400 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>
+        <h4 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Upload the study material</h4>
+        <span className="text-zinc-450 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>
           {totalPages}/{scanLimit} pages
         </span>
       </div>
@@ -527,16 +525,16 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
 
       {/* Interactive Drag/Zoom Image Cropper overlay */}
       {currentCropItem && (
-        <div className="relative border border-zinc-200 dark:border-gray-800 rounded-2xl bg-zinc-950 flex flex-col items-center p-4 gap-4">
+        <div className="relative border border-black/15 dark:border-white/20 rounded-2xl bg-zinc-950 flex flex-col items-center p-4 gap-4">
           <div className="flex items-center justify-between w-full">
             <p className="text-white font-semibold" style={{ fontSize: fontSize.xs }}>
-              Reposition Crop Area ({cropIndex + 1}/{cropQueue.length})
+              crop
             </p>
             <button type="button" onClick={cancelCrop} className="text-zinc-400 hover:text-white transition-all cursor-pointer">
               <X className="w-4 h-4" />
             </button>
           </div>
-
+ 
           {/* Interactive Pan and Zoom square boundary */}
           <div 
             className="relative w-full max-w-[256px] aspect-square rounded-xl overflow-hidden bg-black border border-zinc-800 cursor-move select-none"
@@ -566,13 +564,9 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
               }}
             />
             {/* Guide crosshair */}
-            <div className="absolute inset-0 border-2 border-dashed border-blue-500/50 rounded-xl pointer-events-none flex items-center justify-center">
-              <div className="text-white/40 text-[9px] bg-black/40 px-1.5 py-0.5 rounded">
-                512 x 512 Capture
-              </div>
-            </div>
+            <div className="absolute inset-0 border-2 border-dashed border-blue-500/50 rounded-xl pointer-events-none flex items-center justify-center" />
           </div>
-
+ 
           {/* Zoom Slider Controls */}
           <div className="w-full max-w-[256px] space-y-1">
             <div className="flex justify-between text-zinc-400" style={{ fontSize: '0.65rem' }}>
@@ -589,14 +583,14 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
               className="w-full accent-blue-500 cursor-pointer"
             />
           </div>
-
+ 
           <button
             type="button"
             onClick={cropImage}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all cursor-pointer"
+            className="px-6 py-2 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-xl font-semibold transition-all cursor-pointer mx-auto block w-fit"
             style={{ fontSize: fontSize.xs }}
           >
-            Apply 1:1 Crop
+            Apply Crop
           </button>
         </div>
       )}
@@ -826,17 +820,8 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
             </div>
           )}
 
-          {/* Dynamic Credit Cost Indicator */}
-          <div className="flex items-start gap-2.5 p-3 bg-blue-500/5 border border-blue-500/10 rounded-xl">
-            <Sparkles className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-blue-500" style={{ fontSize: fontSize.xs }}>
-                Scan Credit Plan Increase
-              </p>
-              <p className="text-zinc-500 dark:text-gray-400 mt-0.5 leading-relaxed" style={{ fontSize: '0.68rem' }}>
-                Scanning {totalPages} pages will add <strong className="text-blue-500 font-bold">+{extraCreditsCost} credits</strong> to the total generation cost (1 credit per 2 pages scanned).
-              </p>
-            </div>
+          <div className="text-center text-zinc-400 dark:text-zinc-500 font-medium py-1" style={{ fontSize: fontSize.xs }}>
+            every 2 pages will increase 1 credit , +{extraCreditsCost} credits will increase {useOwnKey && '(ignore if using own key)'}
           </div>
         </div>
       )}

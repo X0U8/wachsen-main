@@ -89,7 +89,7 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
           <X className="w-4 h-4 text-zinc-400" />
         </button>
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-full bg-zinc-200 dark:bg-gray-800 overflow-hidden flex items-center justify-center text-zinc-500 dark:text-gray-400 font-semibold shrink-0" style={{ fontSize: fontSize.sm }}>
+          <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-gray-800 overflow-hidden flex items-center justify-center text-zinc-500 dark:text-gray-400 font-semibold shrink-0" style={{ fontSize: fontSize.base }}>
             {userProfile?.profile_picture
               ? <img src={userProfile.profile_picture} alt="" className="w-full h-full object-cover" />
               : (userProfile?.name?.charAt(0)?.toUpperCase() || '?')}

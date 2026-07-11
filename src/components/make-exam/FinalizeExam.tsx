@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Notification from '../../ui/Notification';
 import { useUserProfile } from '../../lib/UserContext';
@@ -56,6 +56,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
   const generationIdRef = useRef(0);
   const hasStartedBlueprintRef = useRef(false);
   const hasStartedQuestionsRef = useRef(false);
+  const hasSavedRef = useRef(false);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       generationIdRef.current++; // Invalidate any in-flight async operations
       hasStartedBlueprintRef.current = false;
       hasStartedQuestionsRef.current = false;
+      hasSavedRef.current = false;
       if (reservedCredits > 0) {
         refundAllCredits(reservedCredits);
       }
@@ -450,23 +452,28 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     }
   }, [examBlueprint, status]);
 
+  // (auto-save removed — generation pipeline calls handleSaveExam directly)
+
   // ── PHASE 3: Save Exam ──
   const handleSaveExam = async (questionsOverride?: any[] | React.MouseEvent) => {
-    if (isSaving) return;
+    if (isSaving || hasSavedRef.current) return;
+    hasSavedRef.current = true;
     setIsSaving(true);
-
+ 
+    const authToken = await getAuthToken();
+ 
     let totalQuestions = 0;
     let totalMarks = 0;
-
+ 
     examData.subjects.forEach((subject: any) => {
       subject.questionTypes.forEach((q: any) => {
         totalQuestions += q.count;
         totalMarks += q.count * q.correctMarks;
       });
     });
-
+ 
     const targetQuestions = Array.isArray(questionsOverride) ? questionsOverride : generatedQuestions;
-
+ 
     const examDocument = {
       examName: examData.examName,
       examType: examData.examType || 'practice',
@@ -487,7 +494,8 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       correct_marks: examData.defaultCorrectMarks ?? 4,
       negative_marks: examData.defaultNegativeMarks ?? 0,
       generatedExam: JSON.stringify(targetQuestions.map((q: any, i: number) => ({ ...q, id: i + 1 }))),
-      ExamPlan: JSON.stringify(examBlueprint)
+      ExamPlan: JSON.stringify(examBlueprint),
+      authToken
     };
 
     try {
@@ -570,7 +578,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
           {/* Planning phase */}
           {status === 'planning' && !examBlueprint && (
             <div className="flex flex-col items-center justify-center h-full">
-              <RefreshCw className="w-10 h-10 text-blue-500 dark:text-blue-400 animate-spin mb-4" />
+              <Loader2 className="w-10 h-10 text-blue-500 dark:text-blue-400 animate-spin mb-4" />
               <p className="text-zinc-900 dark:text-gray-100 font-medium">Generating exam plan</p>
             </div>
           )}
@@ -599,10 +607,10 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
               {/* Progress bar */}
               <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-blue-500 dark:text-blue-400 font-medium" style={{ fontSize: fontSize.sm }}>
+                  <h4 className="text-blue-500 dark:text-blue-400 font-medium" style={{ fontSize: fontSize.xs }}>
                     {segmentCountdown !== null
-                      ? `Thinking, generating next segment in ${segmentCountdown}s`
-                      : (status === 'generating' ? 'Generating Questions...' : 'Generation Complete')}
+                      ? `thinking, generating in ${segmentCountdown}s`
+                      : (status === 'generating' ? 'generating questions' : 'generation complete')}
                   </h4>
                   <span className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>
                     {completedSegments.size}/{totalSegments} segments
@@ -633,7 +641,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
                               <div className="text-amber-500 dark:text-amber-400 font-medium" style={{ fontSize: fontSize.xs }}>Questions {seg.range}</div>
                               <div className="flex items-center gap-1">
                                 {isCompleted && <CheckCircle2 className="w-3 h-3 text-green-500 dark:text-green-400" />}
-                                {isCurrentSegment && <RefreshCw className="w-3 h-3 text-blue-500 dark:text-blue-400 animate-spin" />}
+                                {isCurrentSegment && <Loader2 className="w-3 h-3 text-blue-500 dark:text-blue-400 animate-spin" />}
                                 {isWaiting && <div className="w-3 h-3 rounded-full border border-zinc-400 dark:border-gray-600" />}
                                 <span className="text-[10px]">
                                   {isCompleted ? 'Done' : isCurrentSegment ? 'Generating...' : 'Waiting'}
@@ -666,7 +674,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             >
               {isSaving ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Saving...</span>
                 </>
               ) : (

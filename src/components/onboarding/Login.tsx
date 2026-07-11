@@ -144,7 +144,7 @@ export default function Login() {
 
       <div className="w-full max-w-sm relative z-10 flex flex-col items-center">
         <div className="text-center mb-10">
-          <h1 className="text-black dark:text-white tracking-normal font-normal leading-none" style={{ fontSize: fontSize['5xl'], fontFamily: '"Times New Roman", Times, serif' }}>Wachsen</h1>
+          <h2 className="text-black dark:text-white tracking-normal font-normal leading-none" style={{ fontSize: fontSize['5xl'], fontFamily: '"Times New Roman", Times, serif' }}>WACHSEN</h2>
           <p className="text-zinc-500 dark:text-zinc-400 mt-4 font-sans" style={{ fontSize: fontSize.xs }}>Plan . Execute . Revise all in one place</p>
         </div>
 

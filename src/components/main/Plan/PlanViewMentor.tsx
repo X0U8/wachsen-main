@@ -295,31 +295,16 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
   }
 
   return (
-    <div className="border border-zinc-200 dark:border-gray-850 bg-white/40 dark:bg-gray-900/40 rounded-3xl overflow-hidden flex flex-col h-[500px] shadow-sm animate-fadeIn relative">
+    <div className="border border-black/15 dark:border-white/20 bg-white dark:bg-zinc-900/40 rounded-3xl overflow-hidden flex flex-col h-[600px] shadow-sm animate-fadeIn relative">
       
-      {/* Mentor Chat Header */}
-      <div className="px-4 py-3 bg-zinc-50/50 dark:bg-zinc-950/40 border-b border-zinc-200 dark:border-gray-850/80 flex items-center justify-between gap-4 shrink-0">
+      <div className="px-4 py-3 bg-zinc-50/50 dark:bg-zinc-950/40 border-b border-black/15 dark:border-white/20 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <h4 className="text-xs font-bold text-zinc-700 dark:text-gray-300">
-            Mentor AI <span className="text-[10px] text-zinc-400 font-medium">({selectedCatName})</span>
+          <h4 className="font-semibold text-zinc-700 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>
+            Mentor AI
           </h4>
         </div>
-        <button
-          onClick={handleUnlinkCategory}
-          className="text-[9px] font-bold text-zinc-400 hover:text-red-500 border border-zinc-200 dark:border-gray-800 hover:border-red-500/20 px-2 py-1 rounded-lg transition-colors cursor-pointer"
-        >
-          Change Category
-        </button>
       </div>
 
-      {/* Local storage / sync device warning */}
-      <div className="px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-semibold flex items-center gap-2 shrink-0 leading-relaxed">
-        <Info className="w-3.5 h-3.5 shrink-0" />
-        <span>Chats are saved locally in IndexedDB. Moving to a new device will hide previous conversations.</span>
-      </div>
-
-      {/* Messages area */}
       <div 
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 bg-zinc-50/20 dark:bg-gray-950/10"
@@ -327,7 +312,8 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
         {showLoadOlder && (
           <button
             onClick={handleLoadOlder}
-            className="w-full py-2 text-[10px] text-blue-500 hover:underline font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full py-2 text-blue-500 hover:underline font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
+            style={{ fontSize: fontSize.xs }}
           >
             <RefreshCw className="w-3 h-3 animate-spin-reverse" />
             Load older messages...
@@ -336,13 +322,9 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
 
         {visibleMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-bold text-zinc-700 dark:text-gray-300">Start prep conversation</p>
-              <p className="text-[10px] text-zinc-450 dark:text-gray-500 max-w-xs">Ask Mentor AI for revision advice, test performance insights, or study scheduling help.</p>
-            </div>
+            <p className="text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+              start prep related conversation
+            </p>
           </div>
         ) : (
           visibleMessages.map((msg) => (
@@ -351,11 +333,12 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
               className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-xs font-medium leading-relaxed ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 font-medium leading-relaxed ${
                   msg.sender === 'user'
                     ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
-                    : 'bg-zinc-200/60 dark:bg-zinc-800 text-zinc-800 dark:text-gray-200 rounded-bl-none border border-zinc-200 dark:border-gray-700/60 shadow-xs'
+                    : 'bg-zinc-200/60 dark:bg-zinc-800 text-zinc-800 dark:text-gray-200 rounded-bl-none border border-black/15 dark:border-white/20 shadow-xs'
                 }`}
+                style={{ fontSize: fontSize.xs }}
               >
                 {msg.text}
               </div>
@@ -364,16 +347,16 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
         )}
 
         {sending && (
-          <div className="flex justify-start animate-pulse">
-            <div className="bg-zinc-150 dark:bg-zinc-800 text-zinc-400 rounded-2xl rounded-bl-none px-4 py-3 text-xs flex items-center gap-2 border border-zinc-200 dark:border-gray-700/50">
+          <div className="flex justify-start">
+            <div className="bg-zinc-150 dark:bg-zinc-800 text-zinc-400 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-2 border border-black/5 dark:border-white/8" style={{ fontSize: fontSize.xs }}>
               <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
-              <span>Mentor is analyzing context...</span>
+              <span>thinking</span>
             </div>
           </div>
         )}
 
         {errorMsg && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl text-[11px] font-semibold leading-relaxed">
+          <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl font-semibold leading-relaxed" style={{ fontSize: fontSize.xs }}>
             {errorMsg}
           </div>
         )}
@@ -381,10 +364,9 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input bar footer */}
       <form
         onSubmit={handleSendMessage}
-        className="p-3 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-gray-850 flex items-center gap-2 shrink-0"
+        className="p-3 bg-white dark:bg-zinc-950 border-t border-black/15 dark:border-white/20 flex items-center gap-2 shrink-0"
       >
         <input
           type="text"
@@ -392,7 +374,8 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
           onChange={(e) => setInputValue(e.target.value)}
           placeholder="Ask Mentor about study plan or performance..."
           disabled={sending}
-          className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-gray-800 rounded-2xl text-xs text-zinc-800 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-40"
+          className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl text-zinc-800 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-40"
+          style={{ fontSize: fontSize.xs }}
         />
         <button
           type="submit"

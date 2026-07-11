@@ -44,30 +44,6 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex border-b border-black/15 dark:border-white/20">
-        <button
-          onClick={() => setChallengeView('received')}
-          className={`flex-1 pb-2 font-semibold border-b-2 transition-all cursor-pointer ${
-            challengeView === 'received'
-              ? 'border-blue-500 text-blue-500'
-              : 'border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-650 dark:hover:text-zinc-400'
-          }`}
-          style={{ fontSize: fontSize.xs }}
-        >
-          Received
-        </button>
-        <button
-          onClick={() => setChallengeView('sent')}
-          className={`flex-1 pb-2 font-semibold border-b-2 transition-all cursor-pointer ${
-            challengeView === 'sent'
-              ? 'border-blue-500 text-blue-500'
-              : 'border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-650 dark:hover:text-zinc-400'
-          }`}
-          style={{ fontSize: fontSize.xs }}
-        >
-          Sent
-        </button>
-      </div>
 
       <div className="flex justify-between items-center text-zinc-500 dark:text-zinc-400 px-1 font-medium" style={{ fontSize: fontSize.xs }}>
         <span>
@@ -321,6 +297,30 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
           )}
         </div>
       )}
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[150] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-1 py-1 rounded-full border border-black/10 dark:border-white/10 shadow-lg flex gap-1 w-60 max-w-full">
+        <button
+          onClick={() => setChallengeView('received')}
+          className={`flex-1 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer text-center ${
+            challengeView === 'received'
+              ? 'bg-[#007AFF] text-white shadow-sm'
+              : 'text-zinc-500 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white'
+          }`}
+          style={{ fontSize: fontSize.xs }}
+        >
+          Received
+        </button>
+        <button
+          onClick={() => setChallengeView('sent')}
+          className={`flex-1 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer text-center ${
+            challengeView === 'sent'
+              ? 'bg-[#007AFF] text-white shadow-sm'
+              : 'text-zinc-500 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white'
+          }`}
+          style={{ fontSize: fontSize.xs }}
+        >
+          Sent
+        </button>
+      </div>
     </div>
   );
 };

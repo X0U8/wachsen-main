@@ -222,19 +222,14 @@ export default function PlanContainer() {
 
       {/* NO ACTIVE PLAN: INITIAL EMPTY DASHBOARD STATE */}
       {!activePlan && !showWizard && (
-        <div className="border border-dashed border-zinc-300 dark:border-gray-800 rounded-3xl p-12 text-center flex flex-col items-center gap-4 bg-white/10 dark:bg-gray-900/10 backdrop-blur-[2px]">
-          <div className="p-4 bg-blue-500/10 text-blue-500 rounded-full">
-            <Calendar className="w-8 h-8" />
-          </div>
-          <div className="space-y-1 max-w-sm">
-            <h3 className="font-bold text-zinc-800 dark:text-gray-250 text-sm">No Active Study Roadmap</h3>
-            <p className="text-zinc-500 dark:text-gray-400 mt-1" style={{ fontSize: fontSize.xs }}>
-              Create an AI-driven month-wise study roadmap custom-tailored to help you structure chapters and monitor preparation progress.
-            </p>
-          </div>
+        <div className="border border-dashed border-black/15 dark:border-white/20 rounded-3xl p-8 text-center flex flex-col items-center gap-4 bg-white dark:bg-zinc-900/40">
+          <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+            No active study roadmap
+          </h3>
           <button
             onClick={() => setShowWizard(true)}
-            className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl transition-all shadow-lg shadow-blue-500/10 cursor-pointer text-xs"
+            className="px-5 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white font-semibold rounded-xl transition-all shadow-md cursor-pointer"
+            style={{ fontSize: fontSize.xs }}
           >
             Create Study Plan
           </button>

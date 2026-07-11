@@ -106,33 +106,65 @@ export default function Exam() {
 
       if (cachedExamTypes && cachedExamTypes.length > 0) {
         const hasChallenges = cachedExamTypes.some(cat => cat.name === 'challenges');
-        if (hasChallenges) {
+        const hasOthers = cachedExamTypes.some(cat => cat.name === 'others');
+
+        if (hasChallenges && hasOthers) {
           return cachedExamTypes;
         }
 
-        try {
-          const { data, error } = await supabase
-            .from('examtypes')
-            .select('*')
-            .eq('userId', userId!)
-            .eq('name', 'challenges')
-            .maybeSingle();
+        let updated = [...cachedExamTypes];
+        let changed = false;
 
-          if (!error && data) {
-            const newCat: ExamType = {
-              id: data.id,
-              name: data.name,
-              subjects: data.subjects || [],
-              academicLevel: data.academicLevel || ''
-            };
-            const updated = [...cachedExamTypes, newCat];
-            localStorageCache.set(localStorageCache.keys.EXAM_CATEGORIES, updated);
-            return updated;
+        if (!hasChallenges) {
+          try {
+            const { data, error } = await supabase
+              .from('examtypes')
+              .select('*')
+              .eq('userId', userId!)
+              .eq('name', 'challenges')
+              .maybeSingle();
+
+            if (!error && data) {
+              updated.push({
+                id: data.id,
+                name: data.name,
+                subjects: data.subjects || [],
+                academicLevel: data.academicLevel || ''
+              });
+              changed = true;
+            }
+          } catch (e) {
+            console.error("Error loading challenges category separately:", e);
           }
-        } catch (e) {
-          console.error("Error loading challenges category separately:", e);
         }
-        return cachedExamTypes;
+
+        if (!hasOthers) {
+          try {
+            const { data, error } = await supabase
+              .from('examtypes')
+              .select('*')
+              .eq('userId', userId!)
+              .eq('name', 'others')
+              .maybeSingle();
+
+            if (!error && data) {
+              updated.push({
+                id: data.id,
+                name: data.name,
+                subjects: data.subjects || [],
+                academicLevel: data.academicLevel || ''
+              });
+              changed = true;
+            }
+          } catch (e) {
+            console.error("Error loading others category separately:", e);
+          }
+        }
+
+        if (changed) {
+          localStorageCache.set(localStorageCache.keys.EXAM_CATEGORIES, updated);
+        }
+        return updated;
       }
 
       const { data, error } = await supabase
@@ -274,8 +306,13 @@ export default function Exam() {
   };
 
   const showChallenges = localStorage.getItem('show_challenges_category') === 'true';
-  const nonChallengeExamTypes = examTypes.filter(et => et.name !== 'challenges');
-  const displayedCategories = examTypes.filter(cat => cat.name !== 'challenges' || showChallenges);
+  const showOthers = localStorage.getItem('show_others_category') === 'true';
+  const nonChallengeExamTypes = examTypes.filter(et => et.name !== 'challenges' && et.name !== 'others');
+  const displayedCategories = examTypes.filter(cat => {
+    if (cat.name === 'challenges') return showChallenges;
+    if (cat.name === 'others') return showOthers;
+    return true;
+  });
   const slotsLeft = getMaxExamTypes() - nonChallengeExamTypes.length;
 
   return (

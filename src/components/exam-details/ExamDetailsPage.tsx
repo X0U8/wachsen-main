@@ -352,7 +352,7 @@ export default function ExamDetails() {
           >
             <RefreshCw className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
           </button>
-          {examType?.name !== 'challenges' && (
+          {examType?.name !== 'challenges' && examType?.name !== 'others' && (
             <button onClick={handleOpenEditCategoryModal}
               className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors"
               title="Update Category">
@@ -478,7 +478,9 @@ export default function ExamDetails() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>No exams found for this type.</p>
-              <p className="mt-1 text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Click the plus icon to create your first exam.</p>
+              {examType?.name !== 'challenges' && examType?.name !== 'others' && (
+                <p className="mt-1 text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Click the plus icon to create your first exam.</p>
+              )}
             </div>
           )}
         </div>
@@ -493,7 +495,7 @@ export default function ExamDetails() {
       </main>
 
       {/* Floating Plus Button - Bottom Center */}
-      {examType?.name !== 'challenges' && (
+      {examType?.name !== 'challenges' && examType?.name !== 'others' && (
         <div className="fixed bottom-10 left-0 right-0 flex justify-center z-20 pointer-events-none">
           <motion.button
             whileHover={{ scale: 1.1 }}

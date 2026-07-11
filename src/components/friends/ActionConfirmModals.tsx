@@ -91,6 +91,14 @@ export const ActionConfirmModals: React.FC<ActionConfirmModalsProps> = ({
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-5 leading-relaxed font-medium">
               Accepting will copy this exam to your <strong>challenges</strong> category so you can take it. Ready?
             </p>
+
+            {challengeError && (
+              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-405 text-[10px] font-medium flex gap-1.5 text-left w-full">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
+                <span>{challengeError}</span>
+              </div>
+            )}
+
             <div className="flex gap-2.5 w-full">
               <button
                 onClick={() => setConfirmAcceptChallenge(null)}
@@ -126,6 +134,14 @@ export const ActionConfirmModals: React.FC<ActionConfirmModalsProps> = ({
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-5 leading-relaxed font-medium">
               Are you sure you want to decline this challenge? This action cannot be undone.
             </p>
+
+            {challengeError && (
+              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-405 text-[10px] font-medium flex gap-1.5 text-left w-full">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
+                <span>{challengeError}</span>
+              </div>
+            )}
+
             <div className="flex gap-2.5 w-full">
               <button
                 onClick={() => setConfirmDeclineChallengeId(null)}

@@ -129,9 +129,12 @@ function buildPlanTopicEntries(planSubject: any) {
 }
 
 export default function ResultDetails() {
-  const { resultId } = useParams<{ resultId: string }>();
+  const { resultId, viewUserId, examId } = useParams<{ resultId?: string; viewUserId?: string; examId?: string }>();
   const navigate = useNavigate();
   const { userProfile, refreshProfile, refreshCredits } = useUserProfile();
+
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [isRestrictedView, setIsRestrictedView] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
@@ -286,52 +289,112 @@ export default function ResultDetails() {
 
 
   useEffect(() => {
-    if (!resultId) return;
+    if (!resultId && (!viewUserId || !examId)) return;
+    if (!userProfile?.id) return;
 
     const fetchResult = async () => {
       try {
         setLoading(true);
-        const cacheKey = `result_details_${resultId}`;
-        const cached = await idbGet(cacheKey);
+        let resDoc: any = null;
+        let examDoc: any = null;
 
-        let resDoc: any;
-        let examDoc: any;
+        if (viewUserId && examId) {
+          // If viewUserId is different from the logged in user, we must verify the challenge link
+          if (viewUserId !== userProfile.id) {
+            setIsRestrictedView(true);
+            const { data: chCheck, error: chErr } = await supabase
+              .from('challenges')
+              .select('id')
+              .or(`and(sender_id.eq.${userProfile.id},receiver_id.eq.${viewUserId}),and(sender_id.eq.${viewUserId},receiver_id.eq.${userProfile.id})`)
+              .or(`exam_id.eq.${examId},receiver_exam_id.eq.${examId}`)
+              .limit(1);
 
-        if (cached) {
-          resDoc = cached.resDoc;
-          examDoc = cached.examDoc;
-          
-          setResult(resDoc);
-          setUserId(resDoc.userId || null);
-          setLoading(false);
-          setLoadingQuestions(true);
-        } else {
-          // Phase 1: Fetch result document from Supabase
-          const { data, error: getResultError } = await supabase
+            if (chErr || !chCheck || chCheck.length === 0) {
+              setIsAuthorized(false);
+              setLoading(false);
+              return;
+            }
+          }
+          setIsAuthorized(true);
+
+          // Find the result matching viewUserId and examId
+          const { data: resData, error: getResultError } = await supabase
             .from('results')
             .select('*')
-            .eq('id', resultId)
-            .single();
-          if (getResultError) throw getResultError;
+            .eq('userId', viewUserId)
+            .eq('examId', examId)
+            .maybeSingle();
 
-          resDoc = data;
+          if (getResultError) throw getResultError;
+          if (!resData) {
+            // No result found for this user/exam
+            setResult(null);
+            setLoading(false);
+            return;
+          }
+          resDoc = resData;
+        } else {
+          // Standard view by resultId
+          setIsAuthorized(true);
+
+          const cacheKey = `result_details_${resultId}`;
+          const cached = await idbGet(cacheKey);
+
+          if (cached) {
+            resDoc = cached.resDoc;
+            examDoc = cached.examDoc;
+          } else {
+            // Fetch result document from Supabase
+            const { data, error: getResultError } = await supabase
+              .from('results')
+              .select('*')
+              .eq('id', resultId)
+              .single();
+            if (getResultError) throw getResultError;
+
+            resDoc = data;
+          }
+
+          // If the owner of the result is not the logged-in user, verify challenge relationship
+          if (resDoc && resDoc.userId !== userProfile.id) {
+            setIsRestrictedView(true);
+            const { data: chCheck } = await supabase
+              .from('challenges')
+              .select('id')
+              .or(`and(sender_id.eq.${userProfile.id},receiver_id.eq.${resDoc.userId}),and(sender_id.eq.${resDoc.userId},receiver_id.eq.${userProfile.id})`)
+              .or(`exam_id.eq.${resDoc.examId},receiver_exam_id.eq.${resDoc.examId}`)
+              .limit(1);
+
+            if (!chCheck || chCheck.length === 0) {
+              setIsAuthorized(false);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
+        if (resDoc) {
           setResult(resDoc);
           setUserId(resDoc.userId || null);
           setLoading(false);
           setLoadingQuestions(true);
 
-          // Phase 2: Fetch exam details from Supabase
-          const { data: examDocs, error: examError } = await supabase
-            .from('exams')
-            .select('generatedExam, ExamPlan, subjects, totalTime, totalMarks, correct_marks, negative_marks')
-            .eq('id', resDoc.examId)
-            .limit(1);
+          // If we already loaded examDoc from cache, great. Otherwise fetch from Supabase
+          if (!examDoc) {
+            const { data: examDocs, error: examError } = await supabase
+              .from('exams')
+              .select('generatedExam, ExamPlan, subjects, totalTime, totalMarks, correct_marks, negative_marks')
+              .eq('id', resDoc.examId)
+              .limit(1);
 
-          if (examError) throw examError;
+            if (examError) throw examError;
 
-          if (examDocs && examDocs.length > 0) {
-            examDoc = examDocs[0];
-            await idbSet(cacheKey, { resDoc, examDoc });
+            if (examDocs && examDocs.length > 0) {
+              examDoc = examDocs[0];
+              if (resultId) {
+                await idbSet(`result_details_${resultId}`, { resDoc, examDoc });
+              }
+            }
           }
         }
 
@@ -364,7 +427,7 @@ export default function ResultDetails() {
         }
 
         // Live check for revision (never cached)
-        if (resDoc) {
+        if (resDoc && !isRestrictedView) {
           try {
             const { data: existingRev } = await supabase
               .from('revision')
@@ -386,7 +449,7 @@ export default function ResultDetails() {
     };
 
     fetchResult();
-  }, [resultId]);
+  }, [resultId, viewUserId, examId, userProfile]);
 
   // Scroll listener for scroll-to-top button
   useEffect(() => {
@@ -532,6 +595,19 @@ export default function ResultDetails() {
     return filteredQuestions.find(q => q.id === selectedQuestionId) || filteredQuestions[0];
   }, [filteredQuestions, selectedQuestionId]);
 
+  if (isAuthorized === false) {
+    return (
+      <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6 text-center">
+        <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+        <h2 className="text-lg font-bold" style={{ fontSize: fontSize.base }}>Access Denied</h2>
+        <p className="mt-2 text-xs text-zinc-500 dark:text-gray-400 font-medium max-w-xs leading-relaxed">
+          You are not authorized to view this result. Sharing is restricted to participants of the challenge.
+        </p>
+        <button onClick={() => { if (window.history.length > 1) { navigate(-1); } else { navigate('/results'); } }} className="mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold cursor-pointer" style={{ fontSize: fontSize.xs }}>Back</button>
+      </div>
+    );
+  }
+
   if (!loading && !result) {
     return (
       <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6">
@@ -562,29 +638,31 @@ export default function ResultDetails() {
           </h1>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 mr-2">
-          <button
-            onClick={createRevisionLog}
-            disabled={hasRevisionLog || isCreatingRevision}
-            className="px-2.5 sm:px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 dark:disabled:bg-gray-800 text-white disabled:text-zinc-500 dark:disabled:text-gray-400 rounded-xl text-[10px] sm:text-xs font-semibold shadow-sm hover:shadow-md disabled:shadow-none transition-all flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
-          >
-            {isCreatingRevision ? (
-              <>
-                <Loader2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 animate-spin" />
-                <span className="hidden sm:inline">Creating...</span>
-                <span className="sm:hidden">Creating</span>
-              </>
-            ) : hasRevisionLog ? (
-              <>
-                <span className="hidden sm:inline">Revision Log Created</span>
-                <span className="sm:hidden">Created</span>
-              </>
-            ) : (
-              <>
-                <span className="hidden sm:inline">Create Revision Log</span>
-                <span className="sm:hidden">Create Revision</span>
-              </>
-            )}
-          </button>
+          {!isRestrictedView && (
+            <button
+              onClick={createRevisionLog}
+              disabled={hasRevisionLog || isCreatingRevision}
+              className="px-2.5 sm:px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 dark:disabled:bg-gray-800 text-white disabled:text-zinc-500 dark:disabled:text-gray-400 rounded-xl text-[10px] sm:text-xs font-semibold shadow-sm hover:shadow-md disabled:shadow-none transition-all flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {isCreatingRevision ? (
+                <>
+                  <Loader2 className="w-3 sm:w-3.5 h-3 sm:h-3.5 animate-spin" />
+                  <span className="hidden sm:inline">Creating...</span>
+                  <span className="sm:hidden">Creating</span>
+                </>
+              ) : hasRevisionLog ? (
+                <>
+                  <span className="hidden sm:inline">Revision Log Created</span>
+                  <span className="sm:hidden">Created</span>
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">Create Revision Log</span>
+                  <span className="sm:hidden">Create Revision</span>
+                </>
+              )}
+            </button>
+          )}
           <button
             onClick={() => setShowPrintPreview(true)}
             className="px-2.5 sm:px-3.5 py-1.5 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 hover:bg-zinc-100 dark:hover:bg-gray-800 text-zinc-900 dark:text-white rounded-xl text-[10px] sm:text-xs font-medium shadow-sm hover:shadow-md transition-all flex items-center gap-1 cursor-pointer"
@@ -853,167 +931,168 @@ export default function ResultDetails() {
           </div>
         )}
 
-
         {/* Question Review List */}
-        {loadingQuestions ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl h-32 flex items-center justify-center">
-                <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-              </div>
-            ))}
-          </div>
-        ) : !analytics ? (
-          <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-3xl p-6 text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
-            Question review is unavailable because this result does not include usable question data.
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-900 pb-4">
-              <div className="flex items-center gap-2">
-                <h3 style={{ fontSize: fontSize.sm }}>Question-wise Analysis</h3>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex gap-1 bg-white/50 dark:bg-gray-900/50 rounded-full p-1">
-                  <button
-                    onClick={() => setFilter('all')}
-                    className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'all' ? 'bg-blue-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
-                      }`}
-                  >
-                    All ({questions.length})
-                  </button>
-                  <button
-                    onClick={() => setFilter('wrong')}
-                    className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'wrong' ? 'bg-red-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
-                      }`}
-                  >
-                    Wrong ({analytics.wrongIds.length})
-                  </button>
-                  <button
-                    onClick={() => setFilter('correct')}
-                    className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'correct' ? 'bg-green-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
-                      }`}
-                  >
-                    Correct ({analytics.correctIds.length})
-                  </button>
-                  <button
-                    onClick={() => setFilter('skipped')}
-                    className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'skipped' ? 'bg-gray-600 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
-                      }`}
-                  >
-                    Skipped ({analytics.skipped})
-                  </button>
+        {!isRestrictedView && (
+          loadingQuestions ? (
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl h-32 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                </div>
+              ))}
+            </div>
+          ) : !analytics ? (
+            <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-3xl p-6 text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
+              Question review is unavailable because this result does not include usable question data.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-900 pb-4">
+                <div className="flex items-center gap-2">
+                  <h3 style={{ fontSize: fontSize.sm }}>Question-wise Analysis</h3>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex gap-1 bg-white/50 dark:bg-gray-900/50 rounded-full p-1">
+                    <button
+                      onClick={() => setFilter('all')}
+                      className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'all' ? 'bg-blue-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                        }`}
+                    >
+                      All ({questions.length})
+                    </button>
+                    <button
+                      onClick={() => setFilter('wrong')}
+                      className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'wrong' ? 'bg-red-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                        }`}
+                    >
+                      Wrong ({analytics.wrongIds.length})
+                    </button>
+                    <button
+                      onClick={() => setFilter('correct')}
+                      className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'correct' ? 'bg-emerald-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                        }`}
+                    >
+                      Correct ({analytics.correctIds.length})
+                    </button>
+                    <button
+                      onClick={() => setFilter('skipped')}
+                      className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'skipped' ? 'bg-gray-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                        }`}
+                    >
+                      Skipped ({questions.length - analytics.correctIds.length - analytics.wrongIds.length})
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Question Number Grid - click to view */}
-            <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-16 gap-1.5 justify-center">
-              {filteredQuestions.map((q) => {
+              {/* Question Number Grid - click to view */}
+              <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-16 gap-1.5 justify-center">
+                {filteredQuestions.map((q) => {
+                  const originalIndex = questions.findIndex(qq => qq.id === q.id);
+                  const status = analytics.correctIds.includes(q.id) ? 'correct' : (analytics.wrongIds.includes(q.id) ? 'wrong' : 'skipped');
+                  const isSelected = selectedQuestion?.id === q.id;
+                  const statusColor =
+                    status === 'correct' ? 'bg-green-500/10 dark:bg-green-500/20 border-green-300 dark:border-green-500/40 text-green-700 dark:text-green-400 hover:bg-green-500/20 dark:hover:bg-green-500/30'
+                      : status === 'wrong' ? 'bg-red-500/10 dark:bg-red-500/20 border-red-300 dark:border-red-500/40 text-red-700 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30'
+                        : 'bg-zinc-200/50 dark:bg-gray-800 border-zinc-300 dark:border-gray-700 text-zinc-650 dark:text-gray-400 hover:bg-zinc-300/50 dark:hover:bg-gray-700/80';
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => setSelectedQuestionId(q.id)}
+                      className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg border text-[10px] font-medium transition-all flex items-center justify-center ${statusColor} ${isSelected ? 'ring-2 ring-blue-500 scale-110' : ''
+                        }`} style={{ fontSize: fontSize.xs }}
+                    >
+                      {originalIndex + 1}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Selected Question Detail View */}
+              {selectedQuestion && (() => {
+                const q = selectedQuestion;
                 const originalIndex = questions.findIndex(qq => qq.id === q.id);
                 const status = analytics.correctIds.includes(q.id) ? 'correct' : (analytics.wrongIds.includes(q.id) ? 'wrong' : 'skipped');
-                const isSelected = selectedQuestion?.id === q.id;
-                const statusColor =
-                  status === 'correct' ? 'bg-green-500/10 dark:bg-green-500/20 border-green-300 dark:border-green-500/40 text-green-700 dark:text-green-400 hover:bg-green-500/20 dark:hover:bg-green-500/30'
-                    : status === 'wrong' ? 'bg-red-500/10 dark:bg-red-500/20 border-red-300 dark:border-red-500/40 text-red-700 dark:text-red-400 hover:bg-red-500/20 dark:hover:bg-red-500/30'
-                      : 'bg-zinc-200/50 dark:bg-gray-800 border-zinc-300 dark:border-gray-700 text-zinc-650 dark:text-gray-400 hover:bg-zinc-300/50 dark:hover:bg-gray-700/80';
+                const timeSpent = analytics.questionTimes[q.id] || 0;
+                const userAns = analytics.userAnswers[q.id];
+                const currentIdx = filteredQuestions.findIndex(fq => fq.id === q.id);
+                const hasPrev = currentIdx > 0;
+                const hasNext = currentIdx < filteredQuestions.length - 1;
+
                 return (
-                  <button
-                    key={q.id}
-                    onClick={() => setSelectedQuestionId(q.id)}
-                    className={`w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg border text-[10px] font-medium transition-all flex items-center justify-center ${statusColor} ${isSelected ? 'ring-2 ring-blue-500 scale-110' : ''
-                      }`} style={{ fontSize: fontSize.xs }}
-                  >
-                    {originalIndex + 1}
-                  </button>
+                  <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-3xl overflow-hidden">
+                    <div className="p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${status === 'correct' ? 'bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400'
+                            : status === 'wrong' ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                              : 'bg-zinc-200 dark:bg-gray-800 text-zinc-650 dark:text-gray-400'
+                            }`} style={{ fontSize: fontSize.xs }}>
+                            {originalIndex + 1}
+                          </span>
+                          <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
+                            <div className="text-[8px] sm:text-[10px] text-zinc-550 dark:text-gray-450 font-medium">Time Taken</div>
+                            <div className="text-[10px] text-zinc-900 dark:text-white font-bold" style={{ fontSize: fontSize.xs }}>{timeSpent}s</div>
+                          </div>
+                          <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
+                            <div className="text-[8px] sm:text-[10px] text-zinc-550 dark:text-gray-455 font-medium">Difficulty</div>
+                            <div className="text-[10px] text-zinc-900 dark:text-white font-bold capitalize" style={{ fontSize: fontSize.xs }}>{q.difficulty || 'medium'}</div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => hasPrev && setSelectedQuestionId(filteredQuestions[currentIdx - 1].id)}
+                            disabled={!hasPrev}
+                            className="p-2 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:bg-zinc-100 dark:disabled:bg-gray-905 disabled:cursor-not-allowed rounded-lg text-zinc-700 dark:text-gray-300 disabled:text-zinc-400 dark:disabled:text-gray-600 border border-zinc-350 dark:border-gray-700/50 transition-all cursor-pointer"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => hasNext && setSelectedQuestionId(filteredQuestions[currentIdx + 1].id)}
+                            disabled={!hasNext}
+                            className="p-2 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:bg-zinc-100 dark:disabled:bg-gray-905 disabled:cursor-not-allowed rounded-lg text-zinc-700 dark:text-gray-300 disabled:text-zinc-400 dark:disabled:text-gray-600 border border-zinc-350 dark:border-gray-700/50 transition-all cursor-pointer"
+                          >
+                            <ChevronLeft className="w-4 h-4 rotate-180" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="font-medium leading-relaxed text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+                        <MathText text={q.text} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className={`p-3 rounded-2xl border flex items-center justify-between ${status === 'correct' ? 'bg-green-500/5 border-green-500/20 text-green-600 dark:text-green-400'
+                            : status === 'wrong' ? 'bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400'
+                              : 'bg-zinc-100 dark:bg-gray-900 border-zinc-200 dark:border-gray-800 text-zinc-500 dark:text-gray-400'
+                            }`} style={{ fontSize: fontSize.xs }}>
+                            <div className="flex flex-col gap-1 flex-1">
+                              <span className="text-[10px] text-zinc-500 dark:text-gray-455 font-medium">Your Answer</span>
+                              <span className="font-semibold"><MathText text={userAns || 'Not Attempted'} /></span>
+                            </div>
+                          </div>
+                          <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-2xl text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.xs }}>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] text-zinc-500 dark:text-blue-500/80 font-medium">Correct Answer</span>
+                              <span className="font-semibold"><MathText text={q.correct_answer} /></span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Ask AI Tutor Button */}
+                        <div className="flex justify-end pt-3 mt-1 border-t border-zinc-200/50 dark:border-gray-800/50">
+                          <button
+                            onClick={() => setTutorQuestion(q)}
+                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] sm:text-xs font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Sparkle className="w-3.5 h-3.5 fill-current" />
+                            Ask AI Tutor
+                          </button>
+                        </div>
+                      </div>
+                    </div>  </div>
                 );
-              })}
+              })()}
             </div>
-
-            {/* Selected Question Detail View */}
-            {selectedQuestion && (() => {
-              const q = selectedQuestion;
-              const originalIndex = questions.findIndex(qq => qq.id === q.id);
-              const status = analytics.correctIds.includes(q.id) ? 'correct' : (analytics.wrongIds.includes(q.id) ? 'wrong' : 'skipped');
-              const timeSpent = analytics.questionTimes[q.id] || 0;
-              const userAns = analytics.userAnswers[q.id];
-              const currentIdx = filteredQuestions.findIndex(fq => fq.id === q.id);
-              const hasPrev = currentIdx > 0;
-              const hasNext = currentIdx < filteredQuestions.length - 1;
-
-              return (
-                <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-3xl overflow-hidden">
-                  <div className="p-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold ${status === 'correct' ? 'bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400'
-                          : status === 'wrong' ? 'bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400'
-                            : 'bg-zinc-200 dark:bg-gray-800 text-zinc-650 dark:text-gray-400'
-                          }`} style={{ fontSize: fontSize.xs }}>
-                          {originalIndex + 1}
-                        </span>
-                        <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
-                          <div className="text-[8px] sm:text-[10px] text-zinc-550 dark:text-gray-400 font-medium">Time Taken</div>
-                          <div className="text-[10px] text-zinc-900 dark:text-white font-bold" style={{ fontSize: fontSize.xs }}>{timeSpent}s</div>
-                        </div>
-                        <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
-                          <div className="text-[8px] sm:text-[10px] text-zinc-550 dark:text-gray-400 font-medium">Difficulty</div>
-                          <div className="text-[10px] text-zinc-900 dark:text-white font-bold capitalize" style={{ fontSize: fontSize.xs }}>{q.difficulty || 'medium'}</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => hasPrev && setSelectedQuestionId(filteredQuestions[currentIdx - 1].id)}
-                          disabled={!hasPrev}
-                          className="p-2 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:bg-zinc-100 dark:disabled:bg-gray-905 disabled:cursor-not-allowed rounded-lg text-zinc-700 dark:text-gray-300 disabled:text-zinc-400 dark:disabled:text-gray-600 border border-zinc-350 dark:border-gray-700/50 transition-all cursor-pointer"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => hasNext && setSelectedQuestionId(filteredQuestions[currentIdx + 1].id)}
-                          disabled={!hasNext}
-                          className="p-2 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:bg-zinc-100 dark:disabled:bg-gray-905 disabled:cursor-not-allowed rounded-lg text-zinc-700 dark:text-gray-300 disabled:text-zinc-400 dark:disabled:text-gray-600 border border-zinc-350 dark:border-gray-700/50 transition-all cursor-pointer"
-                        >
-                          <ChevronLeft className="w-4 h-4 rotate-180" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="font-medium leading-relaxed text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
-                      <MathText text={q.text} />
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className={`p-3 rounded-2xl border flex items-center justify-between ${status === 'correct' ? 'bg-green-500/5 border-green-500/20 text-green-600 dark:text-green-400'
-                          : status === 'wrong' ? 'bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400'
-                            : 'bg-zinc-100 dark:bg-gray-900 border-zinc-200 dark:border-gray-800 text-zinc-500 dark:text-gray-400'
-                          }`} style={{ fontSize: fontSize.xs }}>
-                          <div className="flex flex-col gap-1 flex-1">
-                            <span className="text-[10px] text-zinc-500 dark:text-gray-455 font-medium">Your Answer</span>
-                            <span className="font-semibold"><MathText text={userAns || 'Not Attempted'} /></span>
-                          </div>
-                        </div>
-                        <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-2xl text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.xs }}>
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[10px] text-zinc-500 dark:text-blue-500/80 font-medium">Correct Answer</span>
-                            <span className="font-semibold"><MathText text={q.correct_answer} /></span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Ask AI Tutor Button */}
-                      <div className="flex justify-end pt-3 mt-1 border-t border-zinc-200/50 dark:border-gray-800/50">
-                        <button
-                          onClick={() => setTutorQuestion(q)}
-                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] sm:text-xs font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <Sparkle className="w-3.5 h-3.5 fill-current" />
-                          Ask AI Tutor
-                        </button>
-                      </div>
-                    </div>
-                  </div>  </div>
-              );
-            })()}
-          </div>
+          )
         )}
       </main>
 

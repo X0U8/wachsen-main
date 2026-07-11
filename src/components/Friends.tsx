@@ -14,6 +14,7 @@ import { ActionConfirmModals } from './friends/ActionConfirmModals';
 import { FriendsTab } from './friends/FriendsTab';
 import { ChallengesTab } from './friends/ChallengesTab';
 import { SearchTab } from './friends/SearchTab';
+import ProfileCard from './profile/ProfileCard';
 
 interface ProfileData {
   id: string;
@@ -77,6 +78,10 @@ export default function Friends() {
   const [activeExamSearchQuery, setActiveExamSearchQuery] = useState('');
   const [examOffset, setExamOffset] = useState(0);
   const [hasMoreExams, setHasMoreExams] = useState(false);
+
+  // Public Profile States
+  const [selectedProfileForDetails, setSelectedProfileForDetails] = useState<any | null>(null);
+  const [showPublicProfileModal, setShowPublicProfileModal] = useState(false);
 
   const [dailyChallengeCount, setDailyChallengeCount] = useState(0);
   const [challengeActionLoading, setChallengeActionLoading] = useState<string | null>(null);
@@ -146,17 +151,17 @@ export default function Friends() {
 
   const getFriendLimit = () => {
     const tier = userProfile?.PremiumType?.toLowerCase() || 'free';
-    if (tier === 'peak') return 50;
-    if (tier === 'rise') return 30;
-    if (tier === 'lite') return 15;
+    if (tier.includes('peak')) return 50;
+    if (tier.includes('rise')) return 30;
+    if (tier.includes('lite')) return 15;
     return 5;
   };
 
   const getMaxChallengesPerDay = () => {
     const tier = userProfile?.PremiumType?.toLowerCase() || 'free';
-    if (tier === 'peak') return 20;
-    if (tier === 'rise') return 15;
-    if (tier === 'lite') return 10;
+    if (tier.includes('peak')) return 20;
+    if (tier.includes('rise')) return 15;
+    if (tier.includes('lite')) return 10;
     return 3;
   };
 
@@ -178,6 +183,7 @@ export default function Friends() {
           created_at,
           updated_at,
           exam_id,
+          receiver_exam_id,
           sender:profiles!challenges_sender_id_fkey (id, name, username, profile_picture),
           exams!challenges_exam_id_fkey (id, examName, totalQuestions, difficulty)
         `)
@@ -187,11 +193,30 @@ export default function Friends() {
 
       if (error) throw error;
 
+      const examIds = (data || []).map((row: any) => row.exam_id).filter(Boolean);
+      const receiverExamIds = (data || []).map((row: any) => row.receiver_exam_id).filter(Boolean);
+      const allExamIds = [...new Set([...examIds, ...receiverExamIds])];
+
+      let resultsMap: { [key: string]: string } = {};
+      if (allExamIds.length > 0) {
+        const { data: resultsData } = await supabase
+          .from('results')
+          .select('id, examId')
+          .in('examId', allExamIds);
+        
+        if (resultsData) {
+          resultsData.forEach((r: any) => {
+            resultsMap[r.examId] = r.id;
+          });
+        }
+      }
+
       const list = (data || []).map((row: any) => ({
         id: row.id,
         sender_id: row.sender_id,
         receiver_id: row.receiver_id,
         exam_id: row.exam_id,
+        receiver_exam_id: row.receiver_exam_id,
         status: row.status,
         created_at: row.created_at,
         updated_at: row.updated_at,
@@ -200,7 +225,9 @@ export default function Friends() {
         difficulty: row.exams?.difficulty || 'medium',
         friendName: row.sender?.name || 'Someone',
         friendUsername: row.sender?.username || 'user',
-        friendProfilePic: row.sender?.profile_picture
+        friendProfilePic: row.sender?.profile_picture,
+        senderResultId: resultsMap[row.exam_id] || null,
+        receiverResultId: resultsMap[row.receiver_exam_id] || null,
       }));
 
       if (offset === 0) {
@@ -233,6 +260,7 @@ export default function Friends() {
           created_at,
           updated_at,
           exam_id,
+          receiver_exam_id,
           receiver:profiles!challenges_receiver_id_fkey (id, name, username, profile_picture),
           exams!challenges_exam_id_fkey (id, examName, totalQuestions, difficulty)
         `)
@@ -242,11 +270,30 @@ export default function Friends() {
 
       if (error) throw error;
 
+      const examIds = (data || []).map((row: any) => row.exam_id).filter(Boolean);
+      const receiverExamIds = (data || []).map((row: any) => row.receiver_exam_id).filter(Boolean);
+      const allExamIds = [...new Set([...examIds, ...receiverExamIds])];
+
+      let resultsMap: { [key: string]: string } = {};
+      if (allExamIds.length > 0) {
+        const { data: resultsData } = await supabase
+          .from('results')
+          .select('id, examId')
+          .in('examId', allExamIds);
+        
+        if (resultsData) {
+          resultsData.forEach((r: any) => {
+            resultsMap[r.examId] = r.id;
+          });
+        }
+      }
+
       const list = (data || []).map((row: any) => ({
         id: row.id,
         sender_id: row.sender_id,
         receiver_id: row.receiver_id,
         exam_id: row.exam_id,
+        receiver_exam_id: row.receiver_exam_id,
         status: row.status,
         created_at: row.created_at,
         updated_at: row.updated_at,
@@ -255,7 +302,9 @@ export default function Friends() {
         difficulty: row.exams?.difficulty || 'medium',
         friendName: row.receiver?.name || 'Someone',
         friendUsername: row.receiver?.username || 'user',
-        friendProfilePic: row.receiver?.profile_picture
+        friendProfilePic: row.receiver?.profile_picture,
+        senderResultId: resultsMap[row.exam_id] || null,
+        receiverResultId: resultsMap[row.receiver_exam_id] || null,
       }));
 
       if (offset === 0) {
@@ -437,6 +486,7 @@ export default function Friends() {
 
   const handleAcceptChallenge = async (challengeId: string, examId: string) => {
     setChallengeActionLoading(challengeId);
+    setChallengeError('');
     try {
       let categoryId = challengesExamTypeId;
       if (!categoryId) {
@@ -465,14 +515,6 @@ export default function Friends() {
 
       if (examErr || !examData) throw examErr || new Error('Exam details not found');
 
-      // Fetch source exam questions
-      const { data: qData, error: qErr } = await supabase
-        .from('questions')
-        .select('questionText, optionA, optionB, optionC, optionD, correctAnswer, explanation, question_number, segment')
-        .eq('examId', examId);
-
-      if (qErr) throw qErr;
-
       // Insert new exam for receiver
       const { data: newExam, error: insErr } = await supabase
         .from('exams')
@@ -488,50 +530,36 @@ export default function Friends() {
           generatedExam: examData.generatedExam || '[]',
           correct_marks: examData.correct_marks ?? 4,
           negative_marks: examData.negative_marks ?? 0,
+          totalMarks: examData.totalQuestions * (examData.correct_marks ?? 4),
           ExamPlan: examData.ExamPlan || '{}',
           status: 'Pending',
           examType: 'practice',
+          accessType: 'anytime',
+          startDateTime: null,
+          endDateTime: null,
         })
         .select('id')
         .single();
 
       if (insErr || !newExam) throw insErr || new Error('Failed to copy exam');
 
-      // Insert questions
-      if (qData && qData.length > 0) {
-        const questionsToInsert = qData.map((q) => ({
-          examId: newExam.id,
-          questionText: q.questionText,
-          optionA: q.optionA,
-          optionB: q.optionB,
-          optionC: q.optionC,
-          optionD: q.optionD,
-          correctAnswer: q.correctAnswer,
-          explanation: q.explanation,
-          question_number: q.question_number,
-          segment: q.segment,
-        }));
-
-        const { error: batchErr } = await supabase
-          .from('questions')
-          .insert(questionsToInsert);
-
-        if (batchErr) throw batchErr;
-      }
-
-      // Set challenge status to 'active'
+      // Set challenge status to 'active' and store copied exam ID
       const { error } = await supabase
         .from('challenges')
-        .update({ status: 'active', updated_at: new Date().toISOString() })
+        .update({
+          status: 'active',
+          receiver_exam_id: newExam.id,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', challengeId);
       if (error) throw error;
 
       setConfirmAcceptChallenge(null);
       await fetchReceivedChallenges(0);
-      navigate(`/take-exam/${newExam.id}`);
+      navigate(`/exam-details/${categoryId}`);
     } catch (err: any) {
       console.error('Error accepting challenge:', err);
-      alert(err.message || 'Failed to accept challenge');
+      setChallengeError(err.message || 'Failed to accept challenge');
     } finally {
       setChallengeActionLoading(null);
     }
@@ -539,6 +567,7 @@ export default function Friends() {
 
   const handleDeclineChallenge = async (challengeId: string) => {
     setChallengeActionLoading(challengeId);
+    setChallengeError('');
     try {
       const { error } = await supabase
         .from('challenges')
@@ -548,8 +577,9 @@ export default function Friends() {
       if (error) throw error;
       setConfirmDeclineChallengeId(null);
       await fetchReceivedChallenges(0);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error declining challenge:', err);
+      setChallengeError(err.message || 'Failed to decline challenge');
     } finally {
       setChallengeActionLoading(null);
     }
@@ -731,6 +761,11 @@ export default function Friends() {
     }
   };
 
+  const handleOpenDetails = (profile: ProfileData) => {
+    setSelectedProfileForDetails(profile);
+    setShowPublicProfileModal(true);
+  };
+
   const renderProfilePic = (user: ProfileData, size = 'w-12 h-12') => {
     if (user.profile_picture && user.profile_picture.trim() !== '') {
       return (
@@ -806,6 +841,7 @@ export default function Friends() {
             loadingFriends={loadingFriends}
             friendsList={friendsList}
             onOpenChallenge={handleOpenChallengeSelector}
+            onOpenDetails={handleOpenDetails}
             incomingRequests={incomingRequests}
             loadingRequests={loadingRequests}
             onAcceptRequest={handleAcceptRequest}
@@ -829,6 +865,7 @@ export default function Friends() {
             hasMoreSent={hasMoreSent}
             onLoadMoreSent={loadMoreSent}
             challengeActionLoading={challengeActionLoading}
+            challengesExamTypeId={challengesExamTypeId}
             onAcceptTrigger={(challenge) => {
               setConfirmAcceptChallenge({ id: challenge.id, examId: challenge.exam_id });
             }}
@@ -850,6 +887,7 @@ export default function Friends() {
             sentRequests={sentRequests}
             sendingRequest={sendingRequest}
             onRequestFriend={handleSendRequest}
+            onOpenDetails={handleOpenDetails}
             requestError={requestError}
             renderProfilePic={renderProfilePic}
           />
@@ -899,6 +937,16 @@ export default function Friends() {
         setConfirmDeclineChallengeId={setConfirmDeclineChallengeId}
         onDeclineChallenge={handleDeclineChallenge}
       />
+
+      {showPublicProfileModal && selectedProfileForDetails && (
+        <ProfileCard
+          onClose={() => {
+            setShowPublicProfileModal(false);
+            setSelectedProfileForDetails(null);
+          }}
+          userId={selectedProfileForDetails.id}
+        />
+      )}
 
       <Footer />
     </div>

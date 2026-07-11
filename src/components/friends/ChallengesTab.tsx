@@ -1,5 +1,6 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ChallengesTabProps {
   challengeView: 'received' | 'sent';
@@ -15,6 +16,7 @@ interface ChallengesTabProps {
   hasMoreSent: boolean;
   onLoadMoreSent: () => void;
   challengeActionLoading: string | null;
+  challengesExamTypeId: string | null;
   onAcceptTrigger: (challenge: any) => void;
   onDeclineTrigger: (challengeId: string) => void;
   renderProfilePic: (profile: any, className: string) => React.ReactNode;
@@ -33,20 +35,23 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
   sentChallenges,
   hasMoreSent,
   onLoadMoreSent,
+  challengesExamTypeId,
   onAcceptTrigger,
   onDeclineTrigger,
   renderProfilePic,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-4">
       {/* Sub-tabs for Received and Sent */}
-      <div className="flex border-b border-zinc-250 dark:border-zinc-800">
+      <div className="flex border-b border-zinc-200 dark:border-zinc-800">
         <button
           onClick={() => setChallengeView('received')}
           className={`flex-1 pb-2 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
             challengeView === 'received'
               ? 'border-blue-500 text-blue-500 font-bold'
-              : 'border-transparent text-zinc-400 dark:text-zinc-550 hover:text-zinc-600 dark:hover:text-zinc-400'
+              : 'border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400'
           }`}
         >
           Received
@@ -56,7 +61,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
           className={`flex-1 pb-2 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
             challengeView === 'sent'
               ? 'border-blue-500 text-blue-500 font-bold'
-              : 'border-transparent text-zinc-400 dark:text-zinc-550 hover:text-zinc-600 dark:hover:text-zinc-400'
+              : 'border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400'
           }`}
         >
           Sent
@@ -91,14 +96,14 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         profile_picture: challenge.friendProfilePic
                       }, 'w-8 h-8')}
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-semibold text-zinc-850 dark:text-white truncate">{challenge.friendName}</h4>
+                        <h4 className="text-xs font-semibold text-zinc-800 dark:text-white truncate">{challenge.friendName}</h4>
                         <p className="text-[10px] text-zinc-500 dark:text-zinc-400">@{challenge.friendUsername}</p>
                       </div>
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase ${
                         challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
                         challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
                         challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
-                        'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
+                        'bg-zinc-500/10 text-zinc-400 dark:text-zinc-500'
                       }`}>
                         {challenge.status}
                       </span>
@@ -130,6 +135,51 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                       </button>
                     </div>
                   )}
+
+                  {(challenge.status === 'active' || challenge.status === 'completed') && (
+                    <div className="flex flex-col gap-2 mt-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/60 animate-fade-in">
+                      <div className="flex items-center gap-2">
+                        {!challenge.receiverResultId ? (
+                          <button
+                            disabled
+                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
+                          >
+                            Give Exam First
+                          </button>
+                        ) : challenge.senderResultId ? (
+                          <button
+                            onClick={() => navigate(`/results/${challenge.sender_id}/${challenge.exam_id}`)}
+                            className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-blue-200/30"
+                          >
+                            See Sender's Performance
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
+                          >
+                            Sender didn't give this exam yet
+                          </button>
+                        )}
+
+                        {challenge.receiverResultId ? (
+                          <button
+                            onClick={() => navigate(`/results/${challenge.receiver_id}/${challenge.receiver_exam_id}`)}
+                            className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-emerald-200/30"
+                          >
+                            See My Performance
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => navigate(`/exam-details/${challengesExamTypeId}`)}
+                            className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl text-[10px] font-semibold transition-all cursor-pointer text-center"
+                          >
+                            Take Challenge Exam
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -145,7 +195,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
             <button
               onClick={onLoadMoreReceived}
               disabled={loadingReceived}
-              className="w-full py-2.5 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-zinc-650 dark:text-zinc-400 transition-all cursor-pointer flex justify-center items-center gap-1.5"
+              className="w-full py-2.5 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-zinc-605 dark:text-zinc-400 transition-all cursor-pointer flex justify-center items-center gap-1.5"
             >
               {loadingReceived ? (
                 <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />
@@ -179,21 +229,21 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         profile_picture: challenge.friendProfilePic
                       }, 'w-8 h-8')}
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-xs font-semibold text-zinc-805 dark:text-white truncate">{challenge.friendName}</h4>
+                        <h4 className="text-xs font-semibold text-zinc-800 dark:text-white truncate">{challenge.friendName}</h4>
                         <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">@{challenge.friendUsername}</p>
                       </div>
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase ${
                         challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
                         challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
                         challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
-                        'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
+                        'bg-zinc-500/10 text-zinc-400 dark:text-zinc-500'
                       }`}>
                         {challenge.status}
                       </span>
                     </div>
                   </div>
 
-                  <div className="bg-zinc-50 dark:bg-zinc-950/40 p-2.5 rounded-xl border border-zinc-150 dark:border-zinc-800/50 flex flex-col gap-1">
+                  <div className="bg-zinc-50 dark:bg-zinc-900/40 p-2.5 rounded-xl border border-zinc-150 dark:border-zinc-800/50 flex flex-col gap-1">
                     <div className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">{challenge.examName}</div>
                     <div className="flex gap-2 text-[9px] text-zinc-500 dark:text-zinc-400 font-medium">
                       <span>{challenge.totalQuestions} questions</span>
@@ -201,6 +251,44 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                       <span className="uppercase">{challenge.difficulty}</span>
                     </div>
                   </div>
+
+                  {(challenge.status === 'active' || challenge.status === 'completed') && (
+                    <div className="flex flex-col gap-2 mt-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/60 animate-fade-in">
+                      <div className="flex items-center gap-2">
+                        {challenge.senderResultId ? (
+                          <button
+                            onClick={() => navigate(`/results/${challenge.sender_id}/${challenge.exam_id}`)}
+                            className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-blue-200/30"
+                          >
+                            See My Performance
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
+                          >
+                            No Result Found
+                          </button>
+                        )}
+
+                        {challenge.receiverResultId ? (
+                          <button
+                            onClick={() => navigate(`/results/${challenge.receiver_id}/${challenge.receiver_exam_id}`)}
+                            className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-emerald-200/30"
+                          >
+                            See Receiver's Performance
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-655 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
+                          >
+                            Receiver Has Not Taken Yet
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -216,7 +304,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
             <button
               onClick={onLoadMoreSent}
               disabled={loadingSent}
-              className="w-full py-2.5 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-zinc-650 dark:text-zinc-400 transition-all cursor-pointer flex justify-center items-center gap-1.5"
+              className="w-full py-2.5 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold text-zinc-605 dark:text-zinc-400 transition-all cursor-pointer flex justify-center items-center gap-1.5"
             >
               {loadingSent ? (
                 <Loader2 className="w-4 h-4 text-zinc-500 animate-spin" />

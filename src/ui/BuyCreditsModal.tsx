@@ -6,6 +6,7 @@ import PlanIcon from './PlanIcon.tsx';
 import { useUserProfile } from '../lib/UserContext.tsx';
 import { fontSize } from '../lib/utils';
 import { useTheme } from '../lib/ThemeContext.tsx';
+import { supabase } from '../services/supabase';
 
 interface BuyCreditsModalProps {
   onClose: () => void;
@@ -193,15 +194,15 @@ const getCurrencySymbol = (currency: string): string => {
 
 const basePricingTiers = {
   monthly: [
-    { name: 'Free', creditsPerDay: 20, popular: false, totalCredits: 600, color: 'from-gray-600 to-gray-700', maxQuestions: 25, maxExamTypes: 5, maxSubjects: 3 },
-    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 2250, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5 },
-    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 4500, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8 },
-    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 9000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10 },
+    { name: 'Free', creditsPerDay: 20, popular: false, totalCredits: 600, color: 'from-gray-600 to-gray-700', maxQuestions: 25, maxExamTypes: 5, maxSubjects: 3, maxFriends: 5, dailyChallenges: 3, dailyImports: 3 },
+    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 2250, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5, maxFriends: 15, dailyChallenges: 10, dailyImports: 5 },
+    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 4500, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8, maxFriends: 30, dailyChallenges: 15, dailyImports: 10 },
+    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 9000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10, maxFriends: 50, dailyChallenges: 20, dailyImports: 15 },
   ],
   yearly: [
-    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 27000, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5 },
-    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 54000, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8 },
-    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 108000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10 },
+    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 27000, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5, maxFriends: 15, dailyChallenges: 10, dailyImports: 5 },
+    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 54000, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8, maxFriends: 30, dailyChallenges: 15, dailyImports: 10 },
+    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 108000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10, maxFriends: 50, dailyChallenges: 20, dailyImports: 15 },
   ],
 };
 
@@ -340,12 +341,15 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
 
     if (tier.price === 0) {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token || '';
         const updateResponse = await fetch('/api/subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'update',
             userId,
+            authToken: token,
             plan: tier.name,
             creditsPerDay: tier.creditsPerDay,
             period: 'month',
@@ -389,6 +393,8 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
           order_id: '',
           handler: async function (response: any) {
             try {
+              const { data: sessionData } = await supabase.auth.getSession();
+              const token = sessionData.session?.access_token || '';
               const processResponse = await fetch('/api/subscription', {
                 method: 'POST',
                 headers: {
@@ -400,6 +406,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_signature: response.razorpay_signature,
                   userId,
+                  authToken: token,
                   amount: tier.price,
                   currency: selectedCountry?.currency || 'USD',
                   plan: tier.name,
@@ -628,6 +635,21 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
                       <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.maxSubjects}</b> subjects per exam</span>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
+                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.maxFriends}</b> max friends</span>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
+                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.dailyChallenges}</b> challenges/day</span>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
+                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.dailyImports}</b> exam imports/day</span>
                     </div>
 
                     {tier.name === 'Free' && (

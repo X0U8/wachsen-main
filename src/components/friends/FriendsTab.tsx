@@ -23,6 +23,7 @@ interface FriendsTabProps {
   loadingFriends: boolean;
   friendsList: ProfileData[];
   onOpenChallenge: (friend: ProfileData) => void;
+  onOpenDetails: (friend: ProfileData) => void;
   incomingRequests: FriendRequest[];
   loadingRequests: boolean;
   onAcceptRequest: (reqId: string) => void;
@@ -34,6 +35,7 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
   loadingFriends,
   friendsList,
   onOpenChallenge,
+  onOpenDetails,
   incomingRequests,
   loadingRequests,
   onAcceptRequest,
@@ -116,13 +118,21 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => onOpenChallenge(friend)}
-                  className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 border border-blue-200/30"
-                >
-                  <Swords className="w-3.5 h-3.5" />
-                  Challenge
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onOpenDetails(friend)}
+                    className="px-3.5 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-[10px] font-bold transition-all cursor-pointer border border-zinc-200 dark:border-zinc-850"
+                  >
+                    Details
+                  </button>
+                  <button
+                    onClick={() => onOpenChallenge(friend)}
+                    className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 border border-blue-200/30"
+                  >
+                    <Swords className="w-3.5 h-3.5" />
+                    Challenge
+                  </button>
+                </div>
               </div>
             ))}
           </div>

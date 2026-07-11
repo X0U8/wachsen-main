@@ -111,6 +111,7 @@ function MainApp() {
       <Route path="/exam/:instanceId" element={<TakeExam />} />
       <Route path="/results" element={<Results />} />
       <Route path="/results/:resultId" element={<ResultDetails />} />
+      <Route path="/results/:viewUserId/:examId" element={<ResultDetails />} />
       <Route path="/revision" element={<RevisionLog />} />
       <Route path="/revision/:examId" element={<RevisionLog />} />
       <Route path="/friends" element={<Friends />} />

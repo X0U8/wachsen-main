@@ -13,6 +13,8 @@ export const fontSize = {
   xl: 'var(--fs-xl, clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem))',
   '2xl': 'var(--fs-2xl, clamp(1.5rem, 1.3rem + 1vw, 2rem))',
   '3xl': 'var(--fs-3xl, clamp(1.875rem, 1.5rem + 1.5vw, 2.5rem))',
+  '4xl': 'var(--fs-4xl, clamp(1.75rem, 1.55rem + 0.8vw, 2.25rem))',
+  '5xl': 'var(--fs-5xl, clamp(2.25rem, 1.95rem + 1.2vw, 3rem))',
 };
 
 

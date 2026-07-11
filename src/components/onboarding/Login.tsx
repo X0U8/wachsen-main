@@ -16,7 +16,7 @@ const GoogleIcon = () => (
 );
 
 const inputCls =
-  'w-full bg-white dark:bg-zinc-950 border border-blue-200/30 dark:border-blue-900/20 rounded-xl px-4 py-3 text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-650 focus:outline-none focus:border-blue-500 transition-colors font-sans';
+  'w-full bg-white dark:bg-zinc-950 border border-blue-200/30 dark:border-blue-900/20 rounded-xl px-4 py-3 text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:border-blue-500 transition-colors font-sans';
 const primaryBtnCls =
   'w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white dark:text-white font-medium py-3.5 rounded-xl transition-all disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center cursor-pointer';
 
@@ -143,7 +143,10 @@ export default function Login() {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-950/20 to-purple-950/20 blur-[120px] z-0" />
 
       <div className="w-full max-w-sm relative z-10 flex flex-col items-center">
-        <h1 className="mb-16 font-light text-black dark:text-white tracking-tight" style={{ fontSize: fontSize['2xl'] }}>Welcome  to  Wachsen</h1>
+        <div className="text-center mb-10">
+          <h1 className="text-black dark:text-white tracking-normal font-normal leading-none" style={{ fontSize: fontSize['5xl'], fontFamily: '"Times New Roman", Times, serif' }}>Wachsen</h1>
+          <p className="text-zinc-500 dark:text-zinc-400 mt-4 font-sans" style={{ fontSize: fontSize.xs }}>Plan . Execute . Revise all in one place</p>
+        </div>
 
         {error && (
           <p className="mb-4 text-blue-800 dark:text-blue-200 p-3 bg-blue-100/60 dark:bg-blue-950/40 border border-blue-200/30 dark:border-blue-900/35 rounded-xl w-full text-center animate-fade-in" style={{ fontSize: fontSize.sm }}>
@@ -156,7 +159,7 @@ export default function Login() {
           </p>
         )}
 
-        <div className="w-full rounded-2xl p-6 bg-zinc-50/60 dark:bg-zinc-950/60 border border-black/10 dark:border-white/10 relative overflow-hidden backdrop-blur-md">
+        <div className="w-full rounded-2xl p-6 bg-zinc-50/60 dark:bg-zinc-950/60 border border-black/10 dark:border-white/10 dark:shadow-[0_0_40px_rgba(255,255,255,0.09)] relative overflow-hidden backdrop-blur-md">
           {busy && (
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 animate-loading-line" />
           )}
@@ -189,6 +192,7 @@ export default function Login() {
                 onClick={handleGoogleLogin}
                 disabled={busy}
                 className="flex w-full items-center justify-center gap-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 px-4 py-4 text-black dark:text-white font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                style={{ fontSize: fontSize.sm }}
               >
                 {googleLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

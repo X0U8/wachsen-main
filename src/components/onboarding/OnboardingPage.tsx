@@ -41,7 +41,6 @@ export default function Onboarding({
   const [usernameVerified, setUsernameVerified] = useState(false);
   const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
   const [usernameMessage, setUsernameMessage] = useState<string | null>(null);
-  const [lastVerifyTime, setLastVerifyTime] = useState(0);
   const [alert, setAlert] = useState<{ message: string; type: InfoType } | null>(null);
 
   const updateData = (field: string, value: string) => {

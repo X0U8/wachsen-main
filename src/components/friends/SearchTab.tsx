@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search as SearchIcon, Loader2, UserPlus, Check } from 'lucide-react';
+import { fontSize } from '../../lib/utils';
 
 interface ProfileData {
   id: string;
@@ -39,7 +40,6 @@ export const SearchTab: React.FC<SearchTabProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      {/* Search Input Bar */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400" />
@@ -51,13 +51,15 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter') onSearch();
             }}
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs text-zinc-800 dark:text-zinc-100 focus:outline-none focus:border-blue-500 placeholder-zinc-400 font-medium transition-all shadow-xs"
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl text-zinc-800 dark:text-zinc-100 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none placeholder-zinc-400 font-medium transition-all shadow-xs"
+            style={{ fontSize: fontSize.xs }}
           />
         </div>
         <button
           onClick={onSearch}
           disabled={searchLoading}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl text-xs font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center min-w-[70px]"
+          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center min-w-[70px]"
+          style={{ fontSize: fontSize.xs }}
         >
           {searchLoading ? (
             <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -76,7 +78,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
       {hasSearched && (
         <div className="pt-2">
           {searchResult ? (
-            <div className="flex items-center justify-between p-3.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl shadow-xs animate-fade-in">
+            <div className="flex items-center justify-between p-3.5 bg-white dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl shadow-xs animate-fade-in">
               <div className="flex items-center gap-3">
                 {renderProfilePic(searchResult, 'w-11 h-11')}
                 <div>

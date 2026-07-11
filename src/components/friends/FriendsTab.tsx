@@ -1,4 +1,3 @@
-import React from 'react';
 import { Loader2, Swords } from 'lucide-react';
 
 interface ProfileData {
@@ -44,7 +43,6 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      {/* Friend Requests Section */}
       {incomingRequests.length > 0 && (
         <div className="bg-blue-50/50 dark:bg-blue-950/15 border border-blue-100 dark:border-blue-900/50 rounded-2xl p-4 space-y-3 animate-fade-in">
           <h3 className="text-xs font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
@@ -54,7 +52,7 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
             {incomingRequests.map((req) => (
               <div
                 key={req.id}
-                className="flex items-center justify-between bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800"
+                className="flex items-center justify-between bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-black/15 dark:border-white/20"
               >
                 <div className="flex items-center gap-2">
                   {renderProfilePic({
@@ -90,7 +88,6 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
         </div>
       )}
 
-      {/* Friends List Section */}
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 px-1">
           My Friends ({friendsList.length})
@@ -105,7 +102,7 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
             {friendsList.map((friend) => (
               <div
                 key={friend.id}
-                className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl shadow-xs"
+                className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl shadow-xs"
               >
                 <div className="flex items-center gap-3">
                   {renderProfilePic(friend, 'w-10 h-10')}
@@ -137,12 +134,9 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 bg-zinc-50 dark:bg-zinc-900/20 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
-            <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-2.5">
-              <Swords className="w-5 h-5 text-zinc-400" />
-            </div>
+          <div className="text-center py-12 bg-zinc-50 dark:bg-zinc-900/20 border border-dashed border-black/15 dark:border-white/20 rounded-2xl">
             <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-              No friends added yet.
+              No friends yet.
             </p>
           </div>
         )}

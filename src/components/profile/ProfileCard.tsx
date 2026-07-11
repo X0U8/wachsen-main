@@ -678,11 +678,10 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
       >
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl w-full max-w-[420px] sm:max-w-[620px] md:max-w-[720px] lg:max-w-[800px] h-[640px] max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden animate-fade-in">
 
-          {/* Header (fixed height) */}
-          <div className="flex justify-between items-center px-5 py-4 border-b border-zinc-200/50 dark:border-zinc-800/50 flex-shrink-0">
-            <h1 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">
-              Public Profile
-            </h1>
+            <div className="flex justify-between items-center px-5 py-4 border-b border-black/10 dark:border-white/10 flex-shrink-0">
+              <h1 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+                Public profile
+              </h1>
             <div className="flex items-center gap-2">
               <button
                 onClick={copyId}
@@ -830,7 +829,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
             <div className="flex-1 w-full max-w-[360px] sm:max-w-[560px] md:max-w-[660px] lg:max-w-[740px] bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 flex flex-col min-h-0 overflow-hidden">
               <div className="flex items-center justify-between px-1 mb-2.5 flex-shrink-0">
                 <div className="flex items-center gap-1.5">
-                  <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Public Exams</h4>
+                  <h4 className="font-semibold text-zinc-500" style={{ fontSize: fontSize.xs }}>Public Exams</h4>
                   <button
                     onClick={() => setShowProfileCard(!showProfileCard)}
                     className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-550 dark:text-zinc-450 cursor-pointer flex items-center justify-center"
@@ -839,7 +838,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                     {showProfileCard ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                   </button>
                 </div>
-                <span className="text-[10px] text-zinc-500 font-medium">Total: {totalCount}</span>
+                <span className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>Total: {totalCount}</span>
               </div>
 
               {/* Scrollable list wrapper */}
@@ -855,28 +854,27 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                     return (
                       <div
                         key={exam.id}
-                        className="p-3 bg-white dark:bg-zinc-950 border border-zinc-200/50 dark:border-zinc-850 rounded-2xl flex flex-col space-y-2.5 w-full hover:border-zinc-350 dark:hover:border-zinc-750 transition-all shadow-xs"
+                        className="p-3 bg-white dark:bg-zinc-950 border border-black/10 dark:border-white/10 rounded-2xl flex flex-col space-y-2.5 w-full hover:border-black/20 dark:hover:border-white/25 transition-all shadow-xs"
                       >
-                        {/* Top Row: Title, difficulty, time, marks on left, import button on right */}
                         <div className="flex justify-between items-start gap-4 w-full">
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <h5 className="text-[10px] font-bold text-zinc-900 dark:text-white truncate max-w-[130px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[420px]" title={exam.examName}>
+                              <h5 className="font-semibold text-zinc-900 dark:text-white truncate max-w-[130px] sm:max-w-[200px] md:max-w-[260px] lg:max-w-[420px]" title={exam.examName} style={{ fontSize: fontSize.sm }}>
                                 {exam.examName || 'Untitled Exam'}
                               </h5>
-                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${exam.difficulty?.toLowerCase() === 'easy' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
+                              <span className={`px-1.5 py-0.5 rounded font-bold uppercase ${exam.difficulty?.toLowerCase() === 'easy' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
                                   exam.difficulty?.toLowerCase() === 'hard' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
                                     'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                                }`}>
+                                }`} style={{ fontSize: fontSize.xs }}>
                                 {exam.difficulty || 'Medium'}
                               </span>
                               {exam.totalTime && (
-                                <span className="text-[8px] font-bold text-zinc-500 dark:text-zinc-400">
+                                <span className="font-bold text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
                                   {exam.totalTime} Mins
                                 </span>
                               )}
                               {exam.totalMarks && (
-                                <span className="text-[8px] font-bold text-zinc-500 dark:text-zinc-400">
+                                <span className="font-bold text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
                                   {exam.totalMarks} Marks
                                 </span>
                               )}
@@ -895,11 +893,10 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                           )}
                         </div>
 
-                        {/* Bottom Container: Grouped subjects & topics spanning full width */}
                         {groupedPlan.length > 0 && (
-                          <div className="w-full bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800/60 rounded-2xl p-2.5 space-y-1.5">
+                          <div className="w-full bg-zinc-50 dark:bg-zinc-900/60 border border-black/5 dark:border-white/8 rounded-2xl p-2.5 space-y-1.5">
                             {groupedPlan.map((g, idx) => (
-                              <div key={idx} className="text-[8.5px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+                              <div key={idx} className="leading-relaxed text-zinc-650 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
                                 <strong className="text-zinc-800 dark:text-zinc-200 uppercase">{g.subject}:</strong>{' '}
                                 {g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'}
                               </div>
@@ -910,31 +907,32 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                     );
                   })
                 ) : (
-                  <div className="text-center py-8 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                  <div className="text-center py-8 border border-dashed border-black/15 dark:border-white/20 rounded-2xl">
                     <BookOpen className="w-6 h-6 text-zinc-400 mx-auto mb-1.5" />
-                    <p className="text-[9px] text-zinc-550 font-medium">No public exams found.</p>
+                    <p className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>No public exams found.</p>
                   </div>
                 )}
               </div>
 
-              {/* Pagination Controls (fixed bottom of scroll list) */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-2.5 border-t border-zinc-200 dark:border-zinc-800/80 mt-2.5 flex-shrink-0">
+                <div className="flex items-center justify-between pt-2.5 border-t border-black/10 dark:border-white/10 mt-2.5 flex-shrink-0">
                   <button
                     onClick={() => setPage(p => Math.max(0, p - 1))}
                     disabled={page === 0}
-                    className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-[9px] font-semibold text-zinc-700 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
+                    className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
+                    style={{ fontSize: fontSize.xs }}
                   >
                     <ChevronLeft className="w-3 h-3" />
                     Prev
                   </button>
-                  <span className="text-[9px] text-zinc-500 dark:text-zinc-400 font-medium">
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
                     Page {page + 1} of {totalPages}
                   </span>
                   <button
                     onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                     disabled={page >= totalPages - 1}
-                    className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-[9px] font-semibold text-zinc-700 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
+                    className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
+                    style={{ fontSize: fontSize.xs }}
                   >
                     Next
                     <ChevronRight className="w-3 h-3" />

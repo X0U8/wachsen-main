@@ -6,6 +6,7 @@ import { ChevronLeft } from 'lucide-react';
 import Footer from './Footer';
 import { useQueryClient } from '@tanstack/react-query';
 import localStorageCache from '../lib/localStorage';
+import { fontSize } from '../lib/utils';
 
 // Sub-components
 import { MissingCategoryModal } from './friends/MissingCategoryModal';
@@ -772,7 +773,7 @@ export default function Friends() {
         <img
           src={user.profile_picture}
           alt={user.name}
-          className={`${size} rounded-full object-cover border border-zinc-200 dark:border-zinc-800`}
+          className={`${size} rounded-full object-cover border border-black/15 dark:border-white/20`}
           onError={(e) => {
             (e.target as HTMLImageElement).style.display = 'none';
             (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
@@ -783,7 +784,7 @@ export default function Friends() {
 
     const firstLetter = user.name ? user.name.charAt(0).toUpperCase() : '?';
     return (
-      <div className={`${size} rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300 font-semibold`}>
+      <div className={`${size} rounded-full bg-zinc-100 dark:bg-zinc-900 border border-black/15 dark:border-white/20 flex items-center justify-center text-zinc-700 dark:text-zinc-300 font-semibold`}>
         {firstLetter}
       </div>
     );
@@ -798,36 +799,39 @@ export default function Friends() {
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-sm font-semibold tracking-wider uppercase text-zinc-800 dark:text-white">Friends</h2>
+        <h2 className="font-semibold text-zinc-800 dark:text-white" style={{ fontSize: fontSize.base }}>Friends</h2>
         <div className="w-8" />
       </header>
 
-      <main className="flex-grow max-w-md w-full mx-auto p-4 sm:p-5 space-y-6">
-        <div className="flex bg-zinc-150 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
+      <main className="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-5 space-y-6">
+        <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
           <button
             onClick={() => setActiveTab('friends')}
-            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${activeTab === 'friends'
-                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                : 'text-zinc-550 hover:text-zinc-700 dark:hover:text-zinc-300'
+            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'friends'
+              ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-650 dark:hover:text-gray-300'
               }`}
+            style={{ fontSize: fontSize.xs }}
           >
             Friends
           </button>
           <button
             onClick={() => setActiveTab('challenges')}
-            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${activeTab === 'challenges'
-                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                : 'text-zinc-550 hover:text-zinc-700 dark:hover:text-zinc-300'
+            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'challenges'
+              ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-650 dark:hover:text-gray-300'
               }`}
+            style={{ fontSize: fontSize.xs }}
           >
             Challenges
           </button>
           <button
             onClick={() => setActiveTab('search')}
-            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${activeTab === 'search'
-                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                : 'text-zinc-550 hover:text-zinc-700 dark:hover:text-zinc-300'
+            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'search'
+              ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+              : 'text-zinc-400 dark:text-gray-550 hover:text-zinc-650 dark:hover:text-gray-300'
               }`}
+            style={{ fontSize: fontSize.xs }}
           >
             Search & Req
           </button>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { fontSize } from '../../lib/utils';
 
 interface MissingCategoryModalProps {
   isOpen: boolean;
@@ -15,24 +16,25 @@ export const MissingCategoryModal: React.FC<MissingCategoryModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-6 max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
-        <AlertCircle className="w-12 h-12 text-yellow-500 mb-4 animate-bounce" />
-        <h3 className="text-base font-bold text-zinc-900 dark:text-white mb-2">
-          Challenges Category Required
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+      <div className="bg-white dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-3xl p-6 max-w-sm w-full shadow-2xl dark:shadow-[0_0_30px_rgba(255,255,255,0.06)] flex flex-col items-center text-center">
+        <AlertCircle className="w-10 h-10 text-yellow-500 mb-4" />
+        <h3 className="font-semibold text-zinc-900 dark:text-white mb-2" style={{ fontSize: fontSize.base }}>
+          Challenges category required
         </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed font-medium">
-          To send and accept challenges, you need to create a default "challenges" category. This category has subject "any" and academic level "any".
+        <p className="text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed font-medium" style={{ fontSize: fontSize.xs }}>
+          To make the friends tab all functions work properly we need to create this exam type.
         </p>
         <button
           onClick={onCreate}
           disabled={creating}
-          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+          className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50"
+          style={{ fontSize: fontSize.xs }}
         >
           {creating ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            'Create Challenges Category'
+            'Create'
           )}
         </button>
       </div>

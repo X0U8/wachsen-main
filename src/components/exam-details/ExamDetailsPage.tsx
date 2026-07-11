@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import MakeAIForm from '../make-exam/MakeAIPage';
+import MakeAIForm from '../make-exam/MakeQuestions';
 import Notification from '../../ui/Notification';
 import { fontSize } from '../../lib/utils';
 import localStorageCache from '../../lib/localStorage';

@@ -14,10 +14,11 @@ import { fontSize } from '../../lib/utils';
 import InfoComponent from '../../ui/InfoComponent';
 import NewExamTypeForm from './NewExamTypeForm';
 import UpcomingTable from './UpcomingTable';
+import Plan from './Plan/index';
 import SubscriptionModal from './SubscriptionModal';
 import ClaimCreditsModal from './ClaimCreditsModal';
 
-type Tab = 'exams' | 'upcoming';
+type Tab = 'exams' | 'plan' | 'upcoming';
 
 interface ExamType {
   id: string;
@@ -303,8 +304,25 @@ export default function Exam() {
 
   const showChallenges = localStorage.getItem('show_challenges_category') === 'true';
   const showOthers = localStorage.getItem('show_others_category') === 'true';
-  const nonChallengeExamTypes = examTypes.filter(et => et.name !== 'challenges' && et.name !== 'others');
+
+  const filterOutDefaultAny = (cat: ExamType) => {
+    const hasAnyAcademic = cat.academicLevel?.toLowerCase() === 'any';
+    const hasAnySubject = Array.isArray(cat.subjects)
+      ? cat.subjects.some((s: string) => s.toLowerCase() === 'any')
+      : typeof cat.subjects === 'string' && (cat.subjects as string).toLowerCase() === 'any';
+    
+    // Hide generally if academic level or subjects are 'any'
+    if (hasAnyAcademic || hasAnySubject) return true;
+    return false;
+  };
+
+  const nonChallengeExamTypes = examTypes.filter(et => {
+    if (filterOutDefaultAny(et)) return false;
+    return et.name !== 'challenges' && et.name !== 'others';
+  });
+
   const displayedCategories = examTypes.filter(cat => {
+    if (filterOutDefaultAny(cat)) return false;
     if (cat.name === 'challenges') return showChallenges;
     if (cat.name === 'others') return showOthers;
     return true;
@@ -350,7 +368,7 @@ export default function Exam() {
       {/* Tabs */}
       <div className="flex shrink-0 px-3 sm:px-4 pt-3 pb-2 bg-white dark:bg-black">
         <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
-          {(['exams', 'upcoming'] as Tab[]).map(t => (
+          {(['exams', 'plan', 'upcoming'] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -360,7 +378,7 @@ export default function Exam() {
                 }`}
               style={{ fontSize: fontSize.xs }}
             >
-              {t === 'exams' ? 'Exams' : 'Upcoming'}
+              {t === 'exams' ? 'Exams' : t === 'plan' ? 'Plan' : 'Upcoming'}
             </button>
           ))}
         </div>
@@ -439,6 +457,9 @@ export default function Exam() {
               </>
             )}
           </>
+        )}
+        {tab === 'plan' && (
+          <Plan />
         )}
         {tab === 'upcoming' && (
           <UpcomingTable

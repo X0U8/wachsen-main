@@ -116,8 +116,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
     let finalCredits = null;
     let creditsDeducted = 0;
     if (!useOwnKey && authedSupabase && userId) {
-      const totalTokens = data.usage?.total_tokens || 500;
-      creditsDeducted = Math.max(1, Math.ceil(totalTokens / 1000));
+      creditsDeducted = 1;
       const newCreditsTotal = Math.max(0, currentCredits - creditsDeducted);
 
       const { data: updated } = await authedSupabase.from('profiles')

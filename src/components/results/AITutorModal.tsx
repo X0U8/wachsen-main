@@ -36,10 +36,13 @@ export default function AITutorModal({
   const [lastSentTime, setLastSentTime] = useState(0);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const initializedQuestionId = useRef<string | null>(null);
 
-  // Initialize Tutor greeting message
+  // Initialize Tutor greeting message only once per question
   useEffect(() => {
     if (!isOpen || !question) return;
+    if (initializedQuestionId.current === question.id) return;
+    initializedQuestionId.current = question.id;
 
     let intro = `Hi! I am your AI tutor. I noticed you got Question ${originalIndex} `;
     if (status === 'correct') {
@@ -79,6 +82,13 @@ export default function AITutorModal({
     if (!customMessage) {
       setChatInput('');
     }
+
+    const useOwnKey = localStorage.getItem('use_own_key') === 'true';
+    if (!useOwnKey && (userProfile?.credits || 0) < 1) {
+      showNotification('error', 'Insufficient credits. You need at least 1 credit to ask the tutor.');
+      return;
+    }
+
     setIsSendingChat(true);
 
     const userMessage = { role: 'user' as const, content: messageText };
@@ -145,7 +155,7 @@ export default function AITutorModal({
             <div>
               <div className="text-sm font-semibold text-zinc-900 dark:text-white">AI Tutor</div>
               <div className="text-[10px] text-zinc-550 dark:text-gray-400">
-                {localStorage.getItem('use_own_key') === 'true' ? 'Using own API key' : `Cost: Dynamic (You have ${userProfile?.credits || 0} credits)`}
+                {localStorage.getItem('use_own_key') === 'true' ? 'Using own API key' : `Cost: 1 credit per message (You have ${userProfile?.credits || 0} credits)`}
               </div>
             </div>
           </div>

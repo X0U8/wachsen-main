@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronLeft, Clock, GraduationCap, CheckCircle2, AlertCircle, Lock as LockIcon, CircleStop, Loader2 } from 'lucide-react';
+import { X, ChevronLeft, Clock, GraduationCap, CheckCircle2, AlertCircle, Lock as LockIcon, CircleStop, Loader2, ChevronDown } from 'lucide-react';
+import ScanPage, { ScannedFile } from './ScanPage';
 import { motion, AnimatePresence } from 'framer-motion';
 import Notification from '../../ui/Notification';
 import FinalizeExam from './FinalizeExam';
@@ -78,6 +79,8 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<('mcq' | 'integer' | 'true_false')[]>(['mcq']);
   const [defaultCounts, setDefaultCounts] = useState<Record<string, number>>({});
+  const [showScan, setShowScan] = useState(false);
+  const [scannedFiles, setScannedFiles] = useState<ScannedFile[]>([]);
 
   const [examName, setExamName] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -155,7 +158,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
 
   const totalQuestions = subjects.reduce((total, sub) => total + sub.questionTypes.reduce((qTotal, q) => qTotal + q.count, 0), 0);
   const totalMarks = subjects.reduce((total, sub) => total + sub.questionTypes.reduce((qTotal, q) => qTotal + (q.count * q.correctMarks), 0), 0);
-  const hasConflict = subjects.some(sub => 
+  const hasConflict = subjects.some(sub =>
     selectedTypes.includes('integer') && NON_INT_SUBJECTS.has(sub.name.toLowerCase().trim())
   );
 
@@ -326,16 +329,27 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     if (generating) return;
     setGenerating(true);
     if (!validateSubjects()) { setGenerating(false); return; }
+
     const useOwn = localStorage.getItem('use_own_key') === 'true';
     const prov = localStorage.getItem('provider') || 'mesh';
     const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key');
+    const hasFiles = scannedFiles && scannedFiles.length > 0;
+
+    if (hasFiles && useOwn) {
+      showNotification('error', "Scanned reference uploads are not supported when using your own API key. Please turn off 'Use Own Key' in settings to use the credit system or remove the scanned files.");
+      setGenerating(false);
+      return;
+    }
+
     if (!useOwn || !key) {
       const planCost = 2;
       const questionCost = totalQuestions;
-      const totalCost = planCost + questionCost;
+      const extraCreditsCost = Math.ceil((scannedFiles || []).reduce((sum, f) => sum + f.pagesCount, 0) / 2);
+      const totalCost = planCost + questionCost + extraCreditsCost;
       const userCredits = userProfile?.credits || 0;
       if (userCredits < totalCost) {
-        showNotification('error', `Insufficient credits. Cost: ${planCost} (plan) + ${questionCost} (questions) = ${totalCost}. You have ${userCredits}.`);
+        showNotification('error', `Insufficient credits. Cost: ${planCost} (plan) + ${questionCost} (questions) + ${extraCreditsCost} (scans) = ${totalCost}. You have ${userCredits}.`);
+        setGenerating(false);
         return;
       }
     }
@@ -350,10 +364,10 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
   const addSubject = (sub?: any) => {
     if (sub) {
       if (subjects.find(s => s.id === sub.id)) return;
-      
+
       const hasIntSelected = selectedTypes.includes('integer');
       const isNonInt = NON_INT_SUBJECTS.has(sub.name.toLowerCase().trim());
-      
+
       if (hasIntSelected && isNonInt) {
         setNotification({
           type: 'error',
@@ -684,13 +698,48 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             <section className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-blue-500">
-
                   <h3 className="font-medium" style={{ fontSize: fontSize.xs }}>Subject Selection</h3>
                   <span className="text-zinc-400 dark:text-gray-500 font-medium ml-2" style={{ fontSize: fontSize.xs }}>
                     ({subjects.length}/{maxSubjects})
                   </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowScan(!showScan)}
+                  className="p-1.5 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded-lg text-zinc-500 dark:text-gray-400 transition-all flex items-center justify-center cursor-pointer"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showScan ? 'rotate-180' : ''}`} />
+                </button>
               </div>
+
+              <AnimatePresence>
+                {showScan && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden mb-4"
+                  >
+                    {localStorage.getItem('use_own_key') === 'true' ? (
+                      <div className="p-5 bg-red-500/5 dark:bg-red-500/10 border border-red-500/20 text-red-500 rounded-3xl flex items-start gap-3.5 shadow-sm animate-fadeIn">
+                        <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                        <div>
+                          <h5 className="font-semibold" style={{ fontSize: fontSize.xs }}>Credit System Required</h5>
+                          <p className="text-zinc-500 dark:text-gray-400 mt-1 leading-relaxed" style={{ fontSize: fontSize.xs }}>
+                            Scanned reference file uploads are only supported via our default credit system. Please disable "Use Own Key" in Settings to unlock the scanner.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <ScanPage
+                        onFilesChange={(files) => setScannedFiles(files)}
+                        selectedSubjects={subjects.map(s => ({ id: s.id, name: s.name }))}
+                      />
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="flex flex-wrap gap-2">
                 {availableSubjects?.map((sub, index) => {
                   const isSelected = subjects.find(s => s.id === sub.id);
@@ -757,14 +806,31 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
               </div>
             ) : (
               <div className="space-y-3">
+                {scannedFiles.length > 0 && scannedFiles.some(f => !f.subjectId) && (
+                  <p className="text-red-500 font-medium text-center flex items-center justify-center gap-1 text-[11px]" style={{ fontSize: fontSize.xs }}>
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    Please map all uploaded files to a subject before generating.
+                  </p>
+                )}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex gap-4">
                     <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Questions</span><span className={`font-mono font-medium ${totalQuestions > maxQuestions ? 'text-red-500' : 'text-blue-500'}`} style={{ fontSize: fontSize.base }}>{totalQuestions}<span className={`text-sm ${totalQuestions > maxQuestions ? 'text-red-400' : 'text-zinc-400 dark:text-gray-600'}`}>/{maxQuestions}</span></span></div>
                     <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Marks</span><span className="font-mono font-medium text-blue-500" style={{ fontSize: fontSize.base }}>{totalMarks}</span></div>
                   </div>
-                  <button onClick={handleGenerate} disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid || hasConflict}
+                  <button onClick={handleGenerate} disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid || hasConflict || (scannedFiles.length > 0 && scannedFiles.some(f => !f.subjectId))}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2" style={{ fontSize: fontSize.sm }}>
-                    {(() => { const useOwn = localStorage.getItem('use_own_key') === 'true'; const prov = localStorage.getItem('provider') || 'mesh'; const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key'); return useOwn && key ? 'Generate (Your Key)' : `Generate (${2 + totalQuestions} credits)`; })()}
+                    {(() => {
+                      const useOwn = localStorage.getItem('use_own_key') === 'true';
+                      const prov = localStorage.getItem('provider') || 'mesh';
+                      const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key');
+                      const hasFiles = scannedFiles.length > 0;
+                      if (useOwn && key && !hasFiles) {
+                        return 'Generate (Your Key)';
+                      } else {
+                        const extraCreditsCost = Math.ceil(scannedFiles.reduce((sum, f) => sum + f.pagesCount, 0) / 2);
+                        return `Generate (${2 + totalQuestions + extraCreditsCost} credits)`;
+                      }
+                    })()}
                   </button>
                 </div>
               </div>
@@ -818,6 +884,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           categoryId,
           defaultCorrectMarks,
           defaultNegativeMarks,
+          scannedFiles,
         }}
         userId={userProfile?.$id || ''}
       />

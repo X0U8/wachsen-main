@@ -23,9 +23,19 @@ interface FinalizeExamProps {
     defaultCorrectMarks?: number;
     defaultNegativeMarks?: number;
     academicLevel?: string;
+    scannedFiles?: any[];
   };
   userId: string;
 }
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
 
 type GenerationStatus = 'idle' | 'planning' | 'generating' | 'done' | 'failed';
 
@@ -72,6 +82,72 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     // NOTE: Do NOT reset abortRef here when show becomes true.
     // generateBlueprint() handles that itself after capturing a fresh generation ID.
   }, [show]);
+
+  const uploadedFilePathsRef = useRef<string[]>([]);
+  const uploadedFilesRef = useRef<any[]>([]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanupUploadedFiles();
+    };
+  }, []);
+
+  const uploadScannedFiles = async (): Promise<any[]> => {
+    if (!examData.scannedFiles || examData.scannedFiles.length === 0) return [];
+    
+    const uploadedFiles: any[] = [];
+    const localPaths: string[] = [];
+
+    for (const f of examData.scannedFiles) {
+      const fileExt = f.file.name.split('.').pop() || 'jpg';
+      const uniqueId = Math.random().toString(36).substr(2, 9);
+      const filePath = `temp/${userId}/${uniqueId}_${Date.now()}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('scan-refs')
+        .upload(filePath, f.file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+        
+      if (error) {
+        console.error('Error uploading file to storage:', error, f.name);
+        throw new Error(`Failed to upload ${f.name} to storage.`);
+      }
+
+      localPaths.push(filePath);
+      uploadedFilePathsRef.current.push(filePath);
+
+      const { data } = supabase.storage.from('scan-refs').getPublicUrl(filePath);
+      
+      uploadedFiles.push({
+        name: f.name,
+        type: f.type,
+        url: data.publicUrl,
+        subjectId: f.subjectId,
+        subjectName: f.subjectName
+      });
+    }
+    
+    return uploadedFiles;
+  };
+
+  const cleanupUploadedFiles = async () => {
+    const paths = uploadedFilePathsRef.current;
+    if (paths.length === 0) return;
+    
+    try {
+      const { error } = await supabase.storage.from('scan-refs').remove(paths);
+      if (error) {
+        console.error('Error cleaning up files from storage:', error);
+      } else {
+        uploadedFilePathsRef.current = [];
+      }
+    } catch (e) {
+      console.error('Cleanup files exception:', e);
+    }
+  };
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
@@ -152,9 +228,19 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       const authToken = await getAuthToken();
       if (isStale(myId)) return;
       const apiKey = getUseOwnKey() ? getApiKey() : '';
-      const provider = getProvider();
-      const model = provider === 'mistral' ? 'mistral-small-latest' : getActiveModel();
-      const response = await fetch(`/api/generate-exam-plan`, {
+      const provider = getUseOwnKey() ? getProvider() : 'mesh';
+      const model = getUseOwnKey() ? (provider === 'mistral' ? 'mistral-small-latest' : getActiveModel()) : '';
+
+      const hasFiles = examData.scannedFiles && examData.scannedFiles.length > 0;
+      let filesPayload = [];
+      if (hasFiles) {
+        filesPayload = await uploadScannedFiles();
+        uploadedFilesRef.current = filesPayload;
+      }
+
+      const endpoint = hasFiles ? `/api/generate-exam-plan-with-file` : `/api/generate-exam-plan`;
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -165,7 +251,8 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
           authToken,
           apiKey: apiKey || undefined,
           provider,
-          model: model || undefined
+          model: model || undefined,
+          files: hasFiles ? filesPayload : undefined
         }),
       });
 
@@ -186,12 +273,14 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         setExamBlueprint(data.plan.subjects);
         await refreshCredits();
       } else {
+        await cleanupUploadedFiles();
         setStatus('failed');
         setFailureMessage(data.error || 'Failed to generate blueprint');
       }
     } catch (error) {
       if (isStale(myId)) return;
       console.error('Error generating blueprint:', error);
+      await cleanupUploadedFiles();
       setStatus('failed');
       setFailureMessage('Failed to generate blueprint. Please try again.');
     }
@@ -247,6 +336,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         if (isStale(myId)) return;
         if (!result) {
           // Permanent failure — refund ALL credits and halt
+          await cleanupUploadedFiles();
           await refundAllCredits(totalCredits);
           setStatus('failed');
           setFailureMessage(`Failed to generate questions for "${subject.name}" segment ${subject.segments[sgi].range}. No credits were charged.`);
@@ -262,7 +352,8 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
 
     if (isStale(myId)) return;
     setStatus('done');
-    showNotification('info', 'All questions generated successfully!');
+    showNotification('info', 'All questions generated successfully! Saving exam...');
+    await handleSaveExam(allQuestions);
   };
 
   // Generate one segment with retry logic
@@ -277,15 +368,34 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
 
         const authToken = await getAuthToken();
         const apiKey = getUseOwnKey() ? getApiKey() : '';
-        const provider = getProvider();
-        const model = provider === 'mistral' ? 'mistral-small-latest' : getActiveModel();
+        const provider = getUseOwnKey() ? getProvider() : 'mesh';
+        const model = getUseOwnKey() ? (provider === 'mistral' ? 'mistral-small-latest' : getActiveModel()) : '';
 
         const originalSubject = examData.subjects.find((s: any) =>
           (s.name || '').toLowerCase().trim() === (subject.name || '').toLowerCase().trim()
         );
         const questionTypes = originalSubject?.questionTypes || [];
 
-        const response = await fetch(`/api/generate-segment-questions`, {
+        const hasFiles = examData.scannedFiles && examData.scannedFiles.length > 0;
+        let filesPayload = [];
+        if (hasFiles && uploadedFilesRef.current.length > 0) {
+          const subjectFiles = uploadedFilesRef.current.filter((f: any) =>
+            String(f.subjectName || '').toLowerCase().trim() === String(subject.name || '').toLowerCase().trim() ||
+            String(f.subjectId || '').trim() === String(originalSubject?.id || '').trim()
+          );
+
+          if (subjectFiles.length > 0) {
+            filesPayload = subjectFiles.map((f) => ({
+              name: f.name,
+              type: f.type,
+              url: f.url
+            }));
+          }
+        }
+
+        const endpoint = (hasFiles && filesPayload.length > 0) ? `/api/generate-segment-questions-with-file` : `/api/generate-segment-questions`;
+
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -300,7 +410,8 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             apiKey: apiKey || undefined,
             provider,
             model: model || undefined,
-            creditsPreReserved: true
+            creditsPreReserved: true,
+            files: hasFiles ? filesPayload : undefined
           }),
         });
 
@@ -340,7 +451,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
   }, [examBlueprint, status]);
 
   // ── PHASE 3: Save Exam ──
-  const handleSaveExam = async () => {
+  const handleSaveExam = async (questionsOverride?: any[] | React.MouseEvent) => {
     if (isSaving) return;
     setIsSaving(true);
 
@@ -353,6 +464,8 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         totalMarks += q.count * q.correctMarks;
       });
     });
+
+    const targetQuestions = Array.isArray(questionsOverride) ? questionsOverride : generatedQuestions;
 
     const examDocument = {
       examName: examData.examName,
@@ -373,7 +486,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       status: examData.accessType === 'specific' && examData.startDateTime && examData.startDateTime !== 'anytime' ? 'Pending' : 'active',
       correct_marks: examData.defaultCorrectMarks ?? 4,
       negative_marks: examData.defaultNegativeMarks ?? 0,
-      generatedExam: JSON.stringify(generatedQuestions.map((q: any, i: number) => ({ ...q, id: i + 1 }))),
+      generatedExam: JSON.stringify(targetQuestions.map((q: any, i: number) => ({ ...q, id: i + 1 }))),
       ExamPlan: JSON.stringify(examBlueprint)
     };
 
@@ -386,11 +499,13 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
 
       const data = await response.json();
       if (data.success) {
+        await cleanupUploadedFiles();
         showNotification('success', 'Exam saved successfully!');
         setTimeout(() => {
           window.location.reload();
         }, 3000);
       } else {
+        await cleanupUploadedFiles();
         showNotification('error', data.error || 'Failed to save exam');
         setIsSaving(false);
       }
@@ -437,6 +552,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
               onClick={async () => { 
                 abortRef.current = true; 
                 generationIdRef.current++;
+                await cleanupUploadedFiles();
                 if (reservedCredits > 0) {
                   await refundAllCredits(reservedCredits);
                 }

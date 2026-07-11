@@ -203,7 +203,7 @@ export default function Friends() {
           .from('results')
           .select('id, examId')
           .in('examId', allExamIds);
-        
+
         if (resultsData) {
           resultsData.forEach((r: any) => {
             resultsMap[r.examId] = r.id;
@@ -280,7 +280,7 @@ export default function Friends() {
           .from('results')
           .select('id, examId')
           .in('examId', allExamIds);
-        
+
         if (resultsData) {
           resultsData.forEach((r: any) => {
             resultsMap[r.examId] = r.id;
@@ -806,31 +806,28 @@ export default function Friends() {
         <div className="flex bg-zinc-150 dark:bg-zinc-900/50 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
           <button
             onClick={() => setActiveTab('friends')}
-            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
-              activeTab === 'friends'
+            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${activeTab === 'friends'
                 ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
                 : 'text-zinc-550 hover:text-zinc-700 dark:hover:text-zinc-300'
-            }`}
+              }`}
           >
             Friends
           </button>
           <button
             onClick={() => setActiveTab('challenges')}
-            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
-              activeTab === 'challenges'
+            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${activeTab === 'challenges'
                 ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
                 : 'text-zinc-550 hover:text-zinc-700 dark:hover:text-zinc-300'
-            }`}
+              }`}
           >
             Challenges
           </button>
           <button
             onClick={() => setActiveTab('search')}
-            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${
-              activeTab === 'search'
+            className={`flex-1 py-2 rounded-lg font-medium text-xs transition-all cursor-pointer ${activeTab === 'search'
                 ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
                 : 'text-zinc-550 hover:text-zinc-700 dark:hover:text-zinc-300'
-            }`}
+              }`}
           >
             Search & Req
           </button>

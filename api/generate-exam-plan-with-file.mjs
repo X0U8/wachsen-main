@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { subjects, examName, difficulty, userId, authToken, apiKey: userKey, provider, model } = req.body;
+    const { subjects, examName, difficulty, userId, authToken, apiKey: userKey, provider, model, files } = req.body;
     const isByok = !!(userKey && userKey.trim());
     const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
         const type = qt.type.toLowerCase();
         const totalForType = qt.count;
         if (totalForType <= 0) return;
-        
+
         const segmentCount = Math.ceil(totalForType / 5);
 
         for (let i = 0; i < segmentCount; i++) {
@@ -112,28 +112,88 @@ STRICT RULES:
     const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);
     const apiLabel = isMistral ? 'Mistral' : 'Mesh';
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${meshKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: activeModel,
-        messages: [
-          { role: 'system', content: `You are an exam generator. Return only valid JSON. For any math content, use ONLY $...$ delimiters (single dollar signs). NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap expressions like $\\(...\\)$. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.` },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        response_format: { type: 'json_object' }
-      })
-    });
+    let textPrompt = prompt;
+    let userMessageContent = [];
 
-    const data = await response.json();
+    if (files && files.length > 0) {
+      let fileMappingsText = "Uploaded Reference Files Mapping:\n";
+      files.forEach(f => {
+        fileMappingsText += `- File "${f.name}" is mapped to Subject: "${f.subjectName || 'General'}"\n`;
+      });
+
+      textPrompt = `The User put some reference to make questions , see the reference if its theory then make plan from that theory , or if questions and the answer key is provided then make plan according on the topic of the questions  and if answer key not there then make plans based on those questions , if the reference images or pdfs not showed or the image or pdf reference is wrong or non related data , then it must be a mistake you simply ignore the images and pdf.\n\n` + fileMappingsText + "\n" + textPrompt;
+    }
+
+    userMessageContent.push({ type: 'text', text: textPrompt });
+
+    if (files && files.length > 0) {
+      files.forEach(f => {
+        const fileUrl = f.url || f.base64;
+        if (fileUrl) {
+          userMessageContent.push({
+            type: 'image_url',
+            image_url: { url: fileUrl }
+          });
+        }
+      });
+    }
+
+    let messages = [
+      { role: 'system', content: `You are an exam generator. Return only valid JSON. For any math content, use ONLY $...$ delimiters (single dollar signs). NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap expressions like $\\(...\\)$. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.` }
+    ];
+
+    if (files && files.length > 0) {
+      messages.push({ role: 'user', content: userMessageContent });
+    } else {
+      messages.push({ role: 'user', content: textPrompt });
+    }
+
+    console.log(`[API PLAN] Sending request to: ${apiUrl}`);
+    console.log(`[API PLAN] Using model: ${activeModel}`);
+    console.log(`[API PLAN] Messages payload:`, JSON.stringify(messages, null, 2));
+
+    let response;
+    try {
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${meshKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: activeModel,
+          messages: messages,
+          temperature: 0.7,
+          response_format: { type: 'json_object' }
+        })
+      });
+    } catch (fetchErr) {
+      console.error('[API PLAN] Fetch error calling AI gateway:', fetchErr);
+      await refundCredits();
+      return res.status(502).json({ error: 'Failed to contact AI gateway', details: fetchErr.message });
+    }
+
+    const responseText = await response.text();
+    console.log(`[API PLAN] Response status: ${response.status}`);
+    console.log(`[API PLAN] Response text: ${responseText}`);
+
+    let data = {};
+    try {
+      if (responseText) {
+        data = JSON.parse(responseText);
+      }
+    } catch (parseErr) {
+      console.error('[API PLAN] Failed to parse response as JSON:', parseErr);
+    }
 
     if (!response.ok) {
       await refundCredits();
-      return res.status(502).json({ error: `${apiLabel} API request failed`, code: data.error?.code, details: data.error?.message, request_id: data.error?.request_id });
+      return res.status(502).json({ 
+        error: `${apiLabel} API request failed`, 
+        code: data.error?.code, 
+        details: data.error?.message || responseText, 
+        request_id: data.error?.request_id 
+      });
     }
 
     let content = data.choices?.[0]?.message?.content || '';

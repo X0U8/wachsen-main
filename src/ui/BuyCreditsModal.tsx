@@ -134,14 +134,7 @@ const indiaPricing = {
   'Glix Peak': { monthly: 999, yearly: 9990 },
 };
 
-const defaultFeatures = [
-  "Limitless use with interactive export",
-  "Custom profile and emoji anywhere",
-  "HD video streaming & 4K support",
-  "Priority 24/7 customer support",
-  "Advanced analytics dashboard",
-  "Early access to beta features"
-];
+
 
 const calculatePrice = (planName: string, countryCurrency: string, isYearly: boolean, rates: { [key: string]: number }): number => {
   if (planName === 'Free') return 0;
@@ -194,15 +187,15 @@ const getCurrencySymbol = (currency: string): string => {
 
 const basePricingTiers = {
   monthly: [
-    { name: 'Free', creditsPerDay: 20, popular: false, totalCredits: 600, color: 'from-gray-600 to-gray-700', maxQuestions: 25, maxExamTypes: 5, maxSubjects: 3, maxFriends: 5, dailyChallenges: 3, dailyImports: 3 },
-    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 2250, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5, maxFriends: 15, dailyChallenges: 10, dailyImports: 5 },
-    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 4500, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8, maxFriends: 30, dailyChallenges: 15, dailyImports: 10 },
-    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 9000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10, maxFriends: 50, dailyChallenges: 20, dailyImports: 15 },
+    { name: 'Free', creditsPerDay: 20, popular: false, totalCredits: 600, color: 'from-gray-600 to-gray-700', maxQuestions: 25, maxExamTypes: 5, maxSubjects: 3, maxFriends: 5, dailyChallenges: 3, dailyImports: 3, maxScanPages: 10 },
+    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 2250, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5, maxFriends: 15, dailyChallenges: 10, dailyImports: 5, maxScanPages: 15 },
+    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 4500, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8, maxFriends: 30, dailyChallenges: 15, dailyImports: 10, maxScanPages: 20 },
+    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 9000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10, maxFriends: 50, dailyChallenges: 20, dailyImports: 15, maxScanPages: 25 },
   ],
   yearly: [
-    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 27000, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5, maxFriends: 15, dailyChallenges: 10, dailyImports: 5 },
-    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 54000, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8, maxFriends: 30, dailyChallenges: 15, dailyImports: 10 },
-    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 108000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10, maxFriends: 50, dailyChallenges: 20, dailyImports: 15 },
+    { name: 'Glix Lite', creditsPerDay: 75, popular: false, totalCredits: 27000, color: 'from-blue-500 to-indigo-600', maxQuestions: 75, maxExamTypes: 10, maxSubjects: 5, maxFriends: 15, dailyChallenges: 10, dailyImports: 5, maxScanPages: 15 },
+    { name: 'Glix Rise', creditsPerDay: 150, popular: true, totalCredits: 54000, color: 'from-indigo-600 to-purple-600', maxQuestions: 100, maxExamTypes: 15, maxSubjects: 8, maxFriends: 30, dailyChallenges: 15, dailyImports: 10, maxScanPages: 20 },
+    { name: 'Glix Peak', creditsPerDay: 300, popular: false, totalCredits: 108000, color: 'from-pink-500 to-rose-600', maxQuestions: 125, maxExamTypes: 20, maxSubjects: 10, maxFriends: 50, dailyChallenges: 20, dailyImports: 15, maxScanPages: 25 },
   ],
 };
 
@@ -299,8 +292,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
     if (!userId) return;
     async function fetchLatestTransaction() {
       try {
-        console.log('Querying transactions for userId:', userId);
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('transactions')
           .select('period')
           .eq('user_id', userId)
@@ -309,16 +301,11 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
           .limit(1)
           .maybeSingle();
 
-        if (error) {
-          console.error('Supabase error fetching latest transaction:', error);
-        } else if (data) {
-          console.log('Latest successful transaction:', data);
+        if (data) {
           setActivePeriod(data.period || 'month');
-        } else {
-          console.log('No successful transaction records found for userId:', userId);
         }
       } catch (err) {
-        console.error('Catch error fetching latest transaction:', err);
+        // Silent catch in production
       }
     }
     fetchLatestTransaction();
@@ -770,6 +757,11 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
                       <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.dailyImports}</b> exam imports/day</span>
+                    </div>
+
+                    <div className="flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
+                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{(tier as any).maxScanPages}</b> scan pages/images</span>
                     </div>
 
                     {tier.name === 'Free' && (

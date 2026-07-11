@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { segment, subjectName, questionTypes, difficulty, academicLevel, userId, authToken, apiKey: userKey, provider, model, creditsPreReserved } = req.body;
+    const { segment, subjectName, questionTypes, difficulty, academicLevel, userId, authToken, apiKey: userKey, provider, model, creditsPreReserved, files } = req.body;
     const isByok = !!(userKey && userKey.trim());
     const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
     const isMistral = activeProvider === 'mistral';
@@ -189,29 +189,82 @@ ${rules.join('\n')}
 Required format (no extra fields):
 ${formatExample}`;
 
+    let textPrompt = prompt;
+    let userMessageContent = [];
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${meshKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: activeModel,
-        messages: [
-          { role: 'system', content: `You are an exam question generator. Return only valid JSON. For any math content, use ONLY $...$ delimiters (single dollar signs). NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap expressions like $\\(...\\)$. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.` },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.4,
-        response_format: { type: 'json_object' }
-      })
-    });
+    if (files && files.length > 0) {
+      textPrompt = `The User put some reference to make questions , see the reference if its theory then ask questions from that theory , or if questions and the answer key is provided then take questions from there and if answer key not there then make questions like those questions , if the reference has many diagrams and you are making diagram related questions then ask questions those are answerable without viewing the diagram , if the reference images or pdfs not showed or the image or pdf reference is wrong or non related data , then it must be a mistake you simply ignore the images and pdf.\n\n` + textPrompt;
+    }
 
-    const data = await response.json();
+    userMessageContent.push({ type: 'text', text: textPrompt });
+
+    if (files && files.length > 0) {
+      files.forEach(f => {
+        const fileUrl = f.url || f.base64;
+        if (fileUrl) {
+          userMessageContent.push({
+            type: 'image_url',
+            image_url: { url: fileUrl }
+          });
+        }
+      });
+    }
+
+    let messages = [
+      { role: 'system', content: `You are an exam question generator. Return only valid JSON. For any math content, use ONLY $...$ delimiters (single dollar signs). NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap expressions like $\\(...\\)$. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.` }
+    ];
+
+    if (files && files.length > 0) {
+      messages.push({ role: 'user', content: userMessageContent });
+    } else {
+      messages.push({ role: 'user', content: textPrompt });
+    }
+
+    console.log(`[API QUESTIONS] Sending request to: ${apiUrl}`);
+    console.log(`[API QUESTIONS] Using model: ${activeModel}`);
+    console.log(`[API QUESTIONS] Messages payload:`, JSON.stringify(messages, null, 2));
+
+    let response;
+    try {
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${meshKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: activeModel,
+          messages: messages,
+          temperature: 0.4,
+          response_format: { type: 'json_object' }
+        })
+      });
+    } catch (fetchErr) {
+      console.error('[API QUESTIONS] Fetch error calling AI gateway:', fetchErr);
+      return res.status(502).json({ error: 'Failed to contact AI gateway', details: fetchErr.message });
+    }
+
+    const responseText = await response.text();
+    console.log(`[API QUESTIONS] Response status: ${response.status}`);
+    console.log(`[API QUESTIONS] Response text: ${responseText}`);
+
+    let data = {};
+    try {
+      if (responseText) {
+        data = JSON.parse(responseText);
+      }
+    } catch (parseErr) {
+      console.error('[API QUESTIONS] Failed to parse response as JSON:', parseErr);
+    }
 
     if (!response.ok) {
-      console.error(`${apiLabel} API request failed:`, response.status, JSON.stringify(data));
-      return res.status(502).json({ error: `${apiLabel} API request failed`, code: data.error?.code, details: data.error?.message, request_id: data.error?.request_id });
+      console.error(`${apiLabel} API request failed:`, response.status, responseText);
+      return res.status(502).json({ 
+        error: `${apiLabel} API request failed`, 
+        code: data.error?.code, 
+        details: data.error?.message || responseText, 
+        request_id: data.error?.request_id 
+      });
     }
 
     let content = data.choices?.[0]?.message?.content || '';

@@ -57,11 +57,11 @@ interface RevisionLogData {
 
 const resolveConceptsFromPlan = (questions: any[], planData: any) => {
   const planSubjects = Array.isArray(planData) ? planData : (planData?.subjects || []);
-  
+
   return questions.map((q: any, qIdx: number) => {
     if (q.chapter || q.concept) return { ...q, concept: q.chapter || q.concept };
 
-    const targetSubject = planSubjects?.find((sub: any) => 
+    const targetSubject = planSubjects?.find((sub: any) =>
       sub.name?.toLowerCase() === q.subject?.toLowerCase() ||
       sub.subject?.toLowerCase() === q.subject?.toLowerCase()
     );
@@ -162,8 +162,8 @@ export default function RevisionLog() {
         shuffledOptions: qType === 'mcq' && q.options && q.options.length > 0
           ? [...q.options].sort(() => Math.random() - 0.5)
           : qType === 'true_false'
-          ? ['True', 'False']
-          : []
+            ? ['True', 'False']
+            : []
       };
     });
     setRetryData(retryQuestions);
@@ -267,7 +267,7 @@ Return ONLY a valid JSON array matching this format:
       let replyText = data.reply || '[]';
       replyText = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
       const cards = safeParseJSON(replyText);
-      
+
       setConceptCards(cards);
       setShowConceptCards(true);
       if (data.creditsDeducted > 0) {
@@ -336,7 +336,7 @@ Return ONLY a valid JSON array matching this format:
             const questionsData = JSON.parse(cachedData.questions);
             const examLogsData = JSON.parse(cachedData.examLogs);
             setExamPlan(examLogsData);
-            
+
             let loadedResultId = cachedData.resultId;
             if (!loadedResultId) {
               const { data: resultDocs } = await supabase
@@ -543,8 +543,8 @@ Return ONLY a valid JSON array matching this format:
 
             {showFilterDropdown && (
               <>
-                <div 
-                  className="fixed inset-0 z-40 cursor-default" 
+                <div
+                  className="fixed inset-0 z-40 cursor-default"
                   onClick={() => setShowFilterDropdown(false)}
                 />
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
@@ -557,11 +557,10 @@ Return ONLY a valid JSON array matching this format:
                         setSelectedExamTypeId(null);
                         setShowFilterDropdown(false);
                       }}
-                      className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
-                        !selectedExamTypeId
+                      className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${!selectedExamTypeId
                           ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
                           : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                      }`}
+                        }`}
                     >
                       <span>All Exam Types</span>
                       {!selectedExamTypeId && <Check className="w-3.5 h-3.5" />}
@@ -574,11 +573,10 @@ Return ONLY a valid JSON array matching this format:
                           setSelectedExamTypeId(type.id);
                           setShowFilterDropdown(false);
                         }}
-                        className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
-                          selectedExamTypeId === type.id
+                        className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${selectedExamTypeId === type.id
                             ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
                             : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                        }`}
+                          }`}
                       >
                         <span className="truncate">{type.name}</span>
                         {selectedExamTypeId === type.id && <Check className="w-3.5 h-3.5" />}

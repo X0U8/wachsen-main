@@ -131,7 +131,8 @@ STRICT INSTRUCTIONS:
             { role: 'user', content: prompt }
           ],
           temperature: 0.7,
-          response_format: { type: 'json_object' }
+          response_format: { type: 'json_object' },
+          reasoning: { enabled: false }
         })
       });
     } catch (fetchErr) {
@@ -184,7 +185,8 @@ STRICT INSTRUCTIONS:
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
-            response_format: { type: 'json_object' }
+            response_format: { type: 'json_object' },
+            reasoning: { enabled: false }
           })
         });
 

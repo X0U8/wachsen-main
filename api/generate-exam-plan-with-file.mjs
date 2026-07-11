@@ -164,7 +164,8 @@ STRICT RULES:
           model: activeModel,
           messages: messages,
           temperature: 0.7,
-          response_format: { type: 'json_object' }
+          response_format: { type: 'json_object' },
+          ...(!isMistral && { reasoning: { enabled: false } })
         })
       });
     } catch (fetchErr) {
@@ -220,7 +221,8 @@ STRICT RULES:
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
-            response_format: { type: 'json_object' }
+            response_format: { type: 'json_object' },
+            ...(!isMistral && { reasoning: { enabled: false } })
           })
         });
 

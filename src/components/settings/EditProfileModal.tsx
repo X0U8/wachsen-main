@@ -20,7 +20,7 @@ const selectCls =
 
 const MAX_SIZE_MB = 1;
 
-async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB): Promise<File> {
+async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -46,7 +46,7 @@ async function compressImage(file: File, maxSizeMB = MAX_SIZE_MB): Promise<File>
           canvas.toBlob((blob) => {
             if (!blob) return reject(new Error('Compression failed'));
             if (blob.size <= maxSizeMB * 1024 * 1024 || quality <= 0.3) {
-              resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+              resolve(blob);
             } else {
               quality -= 0.1;
               tryCompress();
@@ -114,13 +114,16 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
     setUploading(true);
     setError('');
     try {
-      const compressed = await compressImage(file);
-      const ext = 'jpg';
-      const filePath = `temp/${userProfile.id}/avatar_${Date.now()}.${ext}`;
+      const compressedBlob = await compressImage(file);
+      const filePath = `avatars/${userProfile.id}_${Date.now()}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('scan-refs')
-        .upload(filePath, compressed, { cacheControl: '3600', upsert: true });
+        .upload(filePath, compressedBlob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw new Error(uploadError.message);
 
@@ -188,9 +191,7 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-gray-800 pb-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/10 rounded-xl">
-              <User className="w-4 h-4 text-purple-500" />
-            </div>
+
             <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Edit profile</h3>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:hover:bg-gray-800 rounded-lg text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer">

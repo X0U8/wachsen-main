@@ -33,6 +33,7 @@ export default function Settings() {
   const [showChallengesCategory, setShowChallengesCategory] = useState(false);
   const [showOthersCategory, setShowOthersCategory] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [modelToDelete, setModelToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const savedKey = localStorage.getItem('mesh_api_key');
@@ -81,12 +82,19 @@ export default function Settings() {
     setShowAddModel(false);
   };
 
-  const removeModel = (model: string) => {
+  const confirmRemoveModel = (model: string) => {
+    setModelToDelete(model);
+  };
+
+  const handleRemoveModelConfirm = () => {
+    if (!modelToDelete) return;
+    const model = modelToDelete;
     if (models.length <= 1) return;
     const updated = models.filter(m => m !== model);
     setModels(updated);
     localStorage.setItem('mesh_models', JSON.stringify(updated));
     if (activeModel === model) setAndSaveActiveModel(updated[0]);
+    setModelToDelete(null);
   };
 
   const toggleUseOwnKey = () => {
@@ -211,7 +219,7 @@ export default function Settings() {
                       <span className={`truncate ${activeModel === m ? 'text-[#007AFF] font-medium' : 'text-zinc-600 dark:text-gray-400'}`} style={{ fontSize: fontSize.xs }}>{m}</span>
                     </div>
                     {models.length > 1 && (
-                      <button onClick={(e) => { e.stopPropagation(); removeModel(m); }} className="p-1 hover:bg-red-500/10 rounded transition-colors cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); confirmRemoveModel(m); }} className="p-1 hover:bg-red-500/10 rounded transition-colors cursor-pointer">
                         <Trash2 className="w-3 h-3 text-red-400" />
                       </button>
                     )}
@@ -324,6 +332,27 @@ export default function Settings() {
               <button onClick={handleLogout}
                 className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors cursor-pointer"
                 style={{ fontSize: fontSize.sm }}>Sign out</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modelToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setModelToDelete(null); }}>
+          <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
+            <div className="text-center space-y-2">
+              <AlertTriangle className="w-7 h-7 text-red-500 mx-auto" />
+              <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Remove model?</h3>
+              <p className="text-zinc-505 dark:text-gray-400 truncate" style={{ fontSize: fontSize.xs }}>{modelToDelete}</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setModelToDelete(null)}
+                className="flex-1 py-2 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors cursor-pointer"
+                style={{ fontSize: fontSize.sm }}>Cancel</button>
+              <button onClick={handleRemoveModelConfirm}
+                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors cursor-pointer"
+                style={{ fontSize: fontSize.sm }}>Remove</button>
             </div>
           </div>
         </div>

@@ -114,7 +114,8 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
         body: JSON.stringify({
           model: MESH_MODEL,
           messages: messagesPayload,
-          temperature: 0.7
+          temperature: 0.7,
+          reasoning: { enabled: false }
         })
       });
     } catch (fetchErr) {

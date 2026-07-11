@@ -209,7 +209,8 @@ ${formatExample}`;
           { role: 'user', content: prompt }
         ],
         temperature: 0.4,
-        response_format: { type: 'json_object' }
+        response_format: { type: 'json_object' },
+        ...(!isMistral && { reasoning: { enabled: false } })
       })
     });
 
@@ -243,7 +244,8 @@ ${formatExample}`;
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
-            response_format: { type: 'json_object' }
+            response_format: { type: 'json_object' },
+            ...(!isMistral && { reasoning: { enabled: false } })
           })
         });
 

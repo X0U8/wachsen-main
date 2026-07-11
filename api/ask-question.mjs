@@ -87,7 +87,8 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       body: JSON.stringify({
         model: activeModel,
         messages: conversationMessages,
-        temperature: 0.7
+        temperature: 0.7,
+        ...(!isMistral && { reasoning: { enabled: false } })
       })
     });
 

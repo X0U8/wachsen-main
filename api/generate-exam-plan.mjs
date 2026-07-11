@@ -125,7 +125,8 @@ STRICT RULES:
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        response_format: { type: 'json_object' }
+        response_format: { type: 'json_object' },
+        ...(!isMistral && { reasoning: { enabled: false } })
       })
     });
 
@@ -160,7 +161,8 @@ STRICT RULES:
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
-            response_format: { type: 'json_object' }
+            response_format: { type: 'json_object' },
+            ...(!isMistral && { reasoning: { enabled: false } })
           })
         });
 

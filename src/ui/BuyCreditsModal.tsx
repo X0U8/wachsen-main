@@ -378,6 +378,33 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
     setLoading(true);
 
     try {
+      // Step 1: Create Razorpay order on the server first (required for signature verification)
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token || '';
+
+      const orderResponse = await fetch('/api/subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create-order',
+          userId,
+          authToken: token,
+          amount: tier.price,
+          currency: selectedCountry?.currency || 'INR',
+          plan: tier.name,
+          period: isYearly ? 'year' : 'month',
+        }),
+      });
+
+      const orderData = await orderResponse.json();
+
+      if (!orderData.success || !orderData.order_id) {
+        showNotification('error', orderData.error || 'Failed to create payment order. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Load Razorpay checkout script and open with server-created order_id
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
@@ -387,28 +414,27 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
         const options = {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: Math.round(tier.price * 100),
-          currency: selectedCountry?.currency || 'USD',
+          currency: selectedCountry?.currency || 'INR',
           name: 'Wachsen',
           description: `${tier.name} - ${tier.creditsPerDay} credits/day (${isYearly ? 'Yearly' : 'Monthly'})`,
-          order_id: '',
+          order_id: orderData.order_id,
           handler: async function (response: any) {
             try {
-              const { data: sessionData } = await supabase.auth.getSession();
-              const token = sessionData.session?.access_token || '';
+              // Step 3: Verify signature on the server (HMAC-SHA256 check using secret key)
+              const { data: sessionData2 } = await supabase.auth.getSession();
+              const token2 = sessionData2.session?.access_token || '';
               const processResponse = await fetch('/api/subscription', {
                 method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   action: 'process',
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_signature: response.razorpay_signature,
                   userId,
-                  authToken: token,
+                  authToken: token2,
                   amount: tier.price,
-                  currency: selectedCountry?.currency || 'USD',
+                  currency: selectedCountry?.currency || 'INR',
                   plan: tier.name,
                   creditsPerDay: tier.creditsPerDay,
                   period: isYearly ? 'year' : 'month',
@@ -421,12 +447,11 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                 if (refreshProfile) {
                   await refreshProfile();
                 }
-
                 onPaymentSuccess(tier.creditsPerDay);
                 onClose();
                 showNotification('success', 'Subscription activated successfully!');
               } else {
-                showNotification('error', 'Subscription activation failed. Please contact support.');
+                showNotification('error', processData.error || 'Subscription activation failed. Please contact support.');
               }
             } catch (error) {
               console.error('Subscription processing error:', error);

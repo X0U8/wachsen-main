@@ -142,16 +142,19 @@ export default async function handler(req, res) {
         const examIds = data.map(r => r.examID).filter(id => !!id);
         const { data: examsData, error: examsError } = await supabase
           .from('exams')
-          .select('id, examName')
+          .select('id, examName, categoryId')
           .in('id', examIds);
 
         if (examsError) throw examsError;
 
-        const examNameMap = new Map(examsData?.map(e => [e.id, e.examName]) || []);
-        const mapped = data.map(r => ({
-          ...r,
-          exams: r.examID ? { examName: examNameMap.get(r.examID) || 'Exam' } : null
-        }));
+        const examMap = new Map(examsData?.map(e => [e.id, { examName: e.examName, categoryId: e.categoryId }]) || []);
+        const mapped = data.map(r => {
+          const eInfo = r.examID ? examMap.get(r.examID) : null;
+          return {
+            ...r,
+            exams: eInfo ? { examName: eInfo.examName, categoryId: eInfo.categoryId } : null
+          };
+        });
         return res.status(200).json({ success: true, revisionList: mapped });
       } else {
         return res.status(200).json({ success: true, revisionList: [] });

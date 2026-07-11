@@ -108,7 +108,7 @@ export default function Results() {
     return (
       <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6 font-sans antialiased">
         <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-        <p className="mt-2 text-zinc-400 text-xs font-semibold uppercase tracking-wider">Loading Results</p>
+        <p className="mt-2 text-zinc-400 font-semibold uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>Loading Results</p>
       </div>
     );
   }
@@ -120,7 +120,7 @@ export default function Results() {
         <div className="relative">
           <button
             onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer flex items-center gap-1"
+            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-650 dark:text-zinc-400 cursor-pointer flex items-center gap-1"
           >
             <Filter className="w-4 h-4" />
           </button>
@@ -132,7 +132,7 @@ export default function Results() {
                 onClick={() => setShowFilterDropdown(false)}
               />
               <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 px-3 py-1.5 uppercase tracking-wider">
+                <div className="font-semibold text-zinc-400 dark:text-zinc-505 px-3 py-1.5 uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>
                   Filter by Exam Type
                 </div>
                 <div className="space-y-0.5 max-h-48 overflow-y-auto">
@@ -142,11 +142,12 @@ export default function Results() {
                       setExtraResults([]);
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
+                    className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${
                       !selectedExamTypeId
                         ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
                         : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                     }`}
+                    style={{ fontSize: fontSize.xs }}
                   >
                     <span>All Exam Types</span>
                     {!selectedExamTypeId && <Check className="w-3.5 h-3.5" />}
@@ -160,11 +161,12 @@ export default function Results() {
                         setExtraResults([]);
                         setShowFilterDropdown(false);
                       }}
-                      className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
+                      className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${
                         selectedExamTypeId === type.id
                           ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
                           : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                       }`}
+                      style={{ fontSize: fontSize.xs }}
                     >
                       <span className="truncate">{type.name}</span>
                       {selectedExamTypeId === type.id && <Check className="w-3.5 h-3.5" />}
@@ -191,14 +193,16 @@ export default function Results() {
                 setActiveSearchQuery(searchInput);
               }
             }}
-            className="flex-1 bg-transparent border-none text-xs text-zinc-800 dark:text-gray-200 placeholder-zinc-400 focus:outline-none"
+            className="flex-1 bg-transparent border-none text-zinc-800 dark:text-gray-250 placeholder-zinc-400 focus:outline-none"
+            style={{ fontSize: fontSize.xs }}
           />
           <button
             onClick={() => {
               setExtraResults([]);
               setActiveSearchQuery(searchInput);
             }}
-            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold cursor-pointer transition-colors"
+            style={{ fontSize: fontSize.xs }}
           >
             Search
           </button>
@@ -209,7 +213,8 @@ export default function Results() {
                 setExtraResults([]);
                 setActiveSearchQuery('');
               }}
-              className="px-2 py-1.5 border border-zinc-300 dark:border-gray-700 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-lg text-xs text-zinc-500 dark:text-gray-400 cursor-pointer transition-colors font-medium"
+              className="px-2 py-1.5 border border-zinc-300 dark:border-gray-700 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-lg text-zinc-500 dark:text-gray-400 cursor-pointer transition-colors font-medium"
+              style={{ fontSize: fontSize.xs }}
             >
               Clear
             </button>
@@ -248,13 +253,13 @@ export default function Results() {
                       <h3 className="font-semibold text-zinc-800 dark:text-gray-100 truncate" style={{ fontSize: fontSize.sm }}>
                         {res.examName || 'Untitled Exam'}
                       </h3>
-                      <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 font-semibold tracking-wide uppercase" style={{ fontSize: '0.625rem' }}>
+                      <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-500 font-semibold tracking-wide uppercase" style={{ fontSize: fontSize.xs }}>
                         <span>{date}</span><span>•</span><span>{time}</span><span>•</span><span>{timeSpent} mins</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`font-semibold ${scorePercent >= 75 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} style={{ fontSize: fontSize.sm }}>{scorePercent}%</span>
-                      <ChevronRight className="w-4 h-4 text-zinc-400 dark:text-zinc-600" />
+                      <ChevronRight className="w-4 h-4 text-zinc-400 dark:text-zinc-650" />
                     </div>
                   </button>
                 );
@@ -262,9 +267,9 @@ export default function Results() {
             </div>
 
             {hasMore && (
-              <div ref={sentinelRef} className="w-full py-6 flex items-center justify-center gap-2 text-zinc-400 dark:text-zinc-500">
+              <div ref={sentinelRef} className="w-full py-6 flex items-center justify-center gap-2 text-zinc-400 dark:text-zinc-505">
                 <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                <span className="text-[10px] uppercase tracking-wider font-semibold">Loading more results...</span>
+                <span className="uppercase tracking-wider font-semibold" style={{ fontSize: fontSize.xs }}>Loading more results...</span>
               </div>
             )}
           </>

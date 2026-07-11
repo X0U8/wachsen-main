@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../services/supabase';
 import { useUserProfile } from '../../../lib/UserContext.tsx';
 import { idbGet, idbSet } from '../../../lib/idb';
-import { Send, Sparkles, Loader2, RefreshCw, HelpCircle, Info, Database } from 'lucide-react';
+import { Send, Sparkles, Loader2, RefreshCw, HelpCircle, Info, Database, X } from 'lucide-react';
 import { fontSize } from '../../../lib/utils';
 
 interface PlanViewMentorProps {
@@ -29,6 +29,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [selectedCatName, setSelectedCatName] = useState<string>('');
   const [loadingCategories, setLoadingCategories] = useState<boolean>(true);
+  const [showSelectModal, setShowSelectModal] = useState<boolean>(false);
 
   // Chat states
   const [messages, setMessages] = useState<Message[]>([]);
@@ -57,7 +58,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
           .select('id, name, subjects, academicLevel')
           .eq('userId', userProfile?.id)
           .order('created_at', { ascending: true });
-        
+
         if (error) throw error;
         if (data) {
           const filtered = data.filter(cat => {
@@ -71,7 +72,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
             if (nameLower === 'challenges' || nameLower === 'others') {
               if (hasAnyAcademic || hasAnySubject) return false;
             }
-            
+
             // Also hide if academic level or subjects are 'any'
             if (hasAnyAcademic || hasAnySubject) return false;
 
@@ -79,7 +80,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
           });
 
           setCategories(filtered.map(f => ({ id: f.id, name: f.name })));
-          
+
           // Check if category is already linked in localStorage
           const savedCatId = localStorage.getItem(`mentor_linked_category_${planId}`);
           if (savedCatId) {
@@ -257,134 +258,172 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
     setVisibleCount(prev => prev + 20);
   };
 
-  // Render initial link category setup screen
-  if (!selectedCatId) {
-    return (
-      <div className="border border-zinc-200 dark:border-gray-850 rounded-3xl p-10 text-center flex flex-col items-center gap-6 bg-white/20 dark:bg-gray-900/20 backdrop-blur-[2px] animate-fadeIn">
-        <div className="p-4 bg-blue-500/10 text-blue-500 rounded-full border border-blue-500/20">
-          <HelpCircle className="w-8 h-8" />
-        </div>
-        <div className="space-y-1.5 max-w-sm">
-          <h4 className="font-bold text-zinc-800 dark:text-gray-250 text-sm">Link Exam Category to Mentor AI</h4>
-          <p className="text-zinc-500 dark:text-gray-400 text-xs leading-relaxed">
-            Select a preparation category to provide Mentor AI with mock exam scores and progress context automatically.
-          </p>
-        </div>
-
-        {loadingCategories ? (
-          <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-        ) : categories.length === 0 ? (
-          <div className="text-zinc-400 text-xs font-semibold py-2">
-            No Exam Categories found. Create one in the Exams tab first!
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2 w-full max-w-xs max-h-48 overflow-y-auto pr-1.5 scrollbar-thin">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => handleLinkCategory(cat.id, cat.name)}
-                className="w-full py-3 bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-gray-800 hover:border-blue-500 hover:bg-blue-500/5 text-zinc-700 dark:text-gray-300 font-bold rounded-2xl transition-all cursor-pointer text-xs uppercase tracking-wide text-center shrink-0"
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div className="border border-black/15 dark:border-white/20 bg-white dark:bg-zinc-900/40 rounded-3xl overflow-hidden flex flex-col h-[600px] shadow-sm animate-fadeIn relative">
-      
-      <div className="px-4 py-3 bg-zinc-50/50 dark:bg-zinc-950/40 border-b border-black/15 dark:border-white/20 flex items-center justify-between gap-4 shrink-0">
-        <div className="flex items-center gap-2">
-          <h4 className="font-semibold text-zinc-700 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>
-            Mentor AI
-          </h4>
-        </div>
-      </div>
-
-      <div 
-        ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 bg-zinc-50/20 dark:bg-gray-950/10"
-      >
-        {showLoadOlder && (
-          <button
-            onClick={handleLoadOlder}
-            className="w-full py-2 text-blue-500 hover:underline font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
-            style={{ fontSize: fontSize.xs }}
-          >
-            <RefreshCw className="w-3 h-3 animate-spin-reverse" />
-            Load older messages...
-          </button>
-        )}
-
-        {visibleMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <p className="text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
-              start prep related conversation
+    <>
+      {!selectedCatId ? (
+        <div className="border border-zinc-200 dark:border-gray-850 rounded-3xl p-10 text-center flex flex-col items-center gap-6 bg-white/20 dark:bg-gray-900/20 backdrop-blur-[2px] animate-fadeIn">
+          <div className="space-y-1.5 max-w-sm">
+            <h4 className="font-bold text-zinc-800 dark:text-gray-250 text-sm">Link Exam Type to Mentor AI</h4>
+            <p className="text-zinc-500 dark:text-gray-400 text-xs leading-relaxed">
+              Select a preparation category to provide Mentor AI with mock exam scores and progress context automatically.
             </p>
           </div>
-        ) : (
-          visibleMessages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 font-medium leading-relaxed ${
-                  msg.sender === 'user'
-                    ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
-                    : 'bg-zinc-200/60 dark:bg-zinc-800 text-zinc-800 dark:text-gray-200 rounded-bl-none border border-black/15 dark:border-white/20 shadow-xs'
-                }`}
+
+          <button
+            onClick={() => setShowSelectModal(true)}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg flex items-center gap-2"
+            style={{ fontSize: fontSize.xs }}
+          >
+            Select Exam Type
+          </button>
+        </div>
+      ) : (
+        <div className="border border-black/15 dark:border-white/20 bg-white dark:bg-zinc-900/40 rounded-3xl overflow-hidden flex flex-col h-[600px] shadow-sm animate-fadeIn relative">
+          
+          <div className="px-4 py-3 bg-zinc-50/50 dark:bg-zinc-950/40 border-b border-black/15 dark:border-white/20 flex items-center justify-between gap-4 shrink-0">
+            <div className="flex items-center gap-2">
+              <h4 className="font-semibold text-zinc-700 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>
+                Mentor AI <span className="text-zinc-400 dark:text-zinc-550 font-normal">({selectedCatName})</span>
+              </h4>
+            </div>
+          </div>
+
+          <div
+            ref={chatContainerRef}
+            className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 bg-zinc-50/20 dark:bg-gray-950/10"
+          >
+            {showLoadOlder && (
+              <button
+                onClick={handleLoadOlder}
+                className="w-full py-2 text-blue-500 hover:underline font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 style={{ fontSize: fontSize.xs }}
               >
-                {msg.text}
+                <RefreshCw className="w-3 h-3 animate-spin-reverse" />
+                Load older messages...
+              </button>
+            )}
+
+            {visibleMessages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+                <p className="text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                  start prep related conversation
+                </p>
               </div>
-            </div>
-          ))
-        )}
+            ) : (
+              visibleMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-4 py-2.5 font-medium leading-relaxed ${msg.sender === 'user'
+                      ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
+                      : 'bg-zinc-200/60 dark:bg-zinc-800 text-zinc-800 dark:text-gray-200 rounded-bl-none border border-black/15 dark:border-white/20 shadow-xs'
+                      }`}
+                    style={{ fontSize: fontSize.xs }}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))
+            )}
 
-        {sending && (
-          <div className="flex justify-start">
-            <div className="bg-zinc-150 dark:bg-zinc-800 text-zinc-400 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-2 border border-black/5 dark:border-white/8" style={{ fontSize: fontSize.xs }}>
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
-              <span>thinking</span>
+            {sending && (
+              <div className="flex justify-start">
+                <div className="bg-zinc-150 dark:bg-zinc-800 text-zinc-400 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-2 border border-black/5 dark:border-white/8" style={{ fontSize: fontSize.xs }}>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
+                  <span>thinking</span>
+                </div>
+              </div>
+            )}
+
+            {errorMsg && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl font-semibold leading-relaxed" style={{ fontSize: fontSize.xs }}>
+                {errorMsg}
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form
+            onSubmit={handleSendMessage}
+            className="p-3 bg-white dark:bg-zinc-950 border-t border-black/15 dark:border-white/20 flex items-center gap-2 shrink-0"
+          >
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Ask Mentor about study plan or performance..."
+              disabled={sending}
+              className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl text-zinc-800 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-40"
+              style={{ fontSize: fontSize.xs }}
+            />
+            <button
+              type="submit"
+              disabled={sending || !inputValue.trim()}
+              className="p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 dark:disabled:bg-zinc-900 text-white disabled:text-zinc-400 rounded-2xl transition-all cursor-pointer shrink-0 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
+      )}
+
+      {showSelectModal && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-sm flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white text-left animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-900">
+              <h3 className="font-bold text-zinc-800 dark:text-white tracking-wider" style={{ fontSize: fontSize.sm }}>Select Exam Type</h3>
+              <button
+                onClick={() => setShowSelectModal(false)}
+                className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="my-4 max-h-60 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+              {loadingCategories ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                </div>
+              ) : categories.length === 0 ? (
+                <div className="text-center py-6 text-zinc-400 text-xs font-semibold">
+                  No Exam Categories found. Create one in the Exams tab first!
+                </div>
+              ) : (
+                categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      handleLinkCategory(cat.id, cat.name);
+                      setShowSelectModal(false);
+                    }}
+                    className="w-full py-3 px-4 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 text-zinc-700 dark:text-gray-300 font-bold rounded-2xl transition-all cursor-pointer text-xs uppercase tracking-wide text-center shrink-0"
+                    style={{ fontSize: fontSize.xs }}
+                  >
+                    {cat.name}
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-zinc-100 dark:border-zinc-900 pt-3">
+              <button
+                onClick={() => setShowSelectModal(false)}
+                className="w-full py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-250 dark:border-zinc-800 rounded-xl font-semibold text-zinc-700 dark:text-white transition-all cursor-pointer"
+                style={{ fontSize: fontSize.xs }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
-        )}
-
-        {errorMsg && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl font-semibold leading-relaxed" style={{ fontSize: fontSize.xs }}>
-            {errorMsg}
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      <form
-        onSubmit={handleSendMessage}
-        className="p-3 bg-white dark:bg-zinc-950 border-t border-black/15 dark:border-white/20 flex items-center gap-2 shrink-0"
-      >
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Ask Mentor about study plan or performance..."
-          disabled={sending}
-          className="flex-1 px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl text-zinc-800 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-40"
-          style={{ fontSize: fontSize.xs }}
-        />
-        <button
-          type="submit"
-          disabled={sending || !inputValue.trim()}
-          className="p-3 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 dark:disabled:bg-zinc-900 text-white disabled:text-zinc-400 rounded-2xl transition-all cursor-pointer shrink-0 disabled:cursor-not-allowed"
-        >
-          <Send className="w-4 h-4" />
-        </button>
-      </form>
-    </div>
+        </div>
+      )}
+    </>
   );
 }

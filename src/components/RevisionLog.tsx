@@ -262,7 +262,9 @@ Return ONLY a valid JSON array matching this format:
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to generate flashcards');
+      if (!response.ok) {
+        throw new Error(`${data.error || 'Failed to generate flashcards'} (${data.details || ''})`);
+      }
 
       let replyText = data.reply || '[]';
       replyText = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
@@ -441,7 +443,7 @@ Return ONLY a valid JSON array matching this format:
     };
 
     fetchRevisionLog();
-  }, [examId, userProfile?.id]);
+  }, [examId, userProfile?.id, selectedExamTypeId, activeSearchQuery]);
 
   const displayList = [...revisionList, ...extraRevisionLogs];
 
@@ -495,7 +497,7 @@ Return ONLY a valid JSON array matching this format:
     return (
       <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6 font-sans antialiased select-none">
         <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-        <p className="mt-2 text-zinc-400 text-xs font-semibold uppercase tracking-wider">Loading Revision Log</p>
+        <p className="mt-2 text-zinc-400 text-xs font-semibold tracking-wider">Loading Revision Log</p>
       </div>
     );
   }
@@ -558,8 +560,8 @@ Return ONLY a valid JSON array matching this format:
                         setShowFilterDropdown(false);
                       }}
                       className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${!selectedExamTypeId
-                          ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
-                          : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                        ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
+                        : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                         }`}
                     >
                       <span>All Exam Types</span>
@@ -574,8 +576,8 @@ Return ONLY a valid JSON array matching this format:
                           setShowFilterDropdown(false);
                         }}
                         className={`w-full text-left px-3 py-1.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${selectedExamTypeId === type.id
-                            ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
-                            : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                          ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
+                          : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                           }`}
                       >
                         <span className="truncate">{type.name}</span>

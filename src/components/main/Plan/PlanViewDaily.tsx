@@ -40,10 +40,10 @@ export default function PlanViewDaily({
   // Compute active month based on dates
   const createdDate = new Date(createdAt);
   const currentDate = new Date();
-  
+
   const createdMidnight = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()).getTime();
   const currentMidnight = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).getTime();
-  
+
   const diffDays = Math.max(0, Math.floor((currentMidnight - createdMidnight) / (1000 * 60 * 60 * 24)));
   const currentActiveMonth = Math.floor(diffDays / 30) + 1;
 
@@ -53,7 +53,7 @@ export default function PlanViewDaily({
     start.setDate(start.getDate() + (monthNum - 1) * 30);
     const end = new Date(start);
     end.setDate(start.getDate() + 29);
-    
+
     const formatDateStr = (d: Date) => {
       const dd = String(d.getDate()).padStart(2, '0');
       const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -199,13 +199,12 @@ export default function PlanViewDaily({
             <button
               key={m.month}
               onClick={() => setSelectedMonthNum(m.month)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                selectedMonthNum === m.month
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${selectedMonthNum === m.month
                   ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
                   : isLocked
-                  ? 'bg-zinc-100/50 dark:bg-zinc-950/20 border-zinc-200 dark:border-gray-850 text-zinc-400 dark:text-gray-650'
-                  : 'bg-white dark:bg-zinc-900 border-zinc-250 dark:border-gray-800 text-zinc-650 dark:text-gray-350 hover:bg-zinc-50 dark:hover:bg-white/5'
-              }`}
+                    ? 'bg-zinc-100/50 dark:bg-zinc-950/20 border-zinc-200 dark:border-gray-850 text-zinc-400 dark:text-gray-650'
+                    : 'bg-white dark:bg-zinc-900 border-zinc-250 dark:border-gray-800 text-zinc-650 dark:text-gray-350 hover:bg-zinc-50 dark:hover:bg-white/5'
+                }`}
             >
               Month {m.month}
               {isLocked && <Lock className="w-3 h-3 text-zinc-400" />}
@@ -237,7 +236,7 @@ export default function PlanViewDaily({
           {loadedDetails[selectedMonthNum].map((block, idx) => (
             <div key={idx} className="relative group animate-fadeIn space-y-2">
               <div className="absolute -left-[31px] md:-left-[39px] top-1 w-4 h-4 rounded-full border-2 border-blue-500 bg-white dark:bg-zinc-950 flex items-center justify-center transition-colors group-hover:bg-blue-500" />
-              
+
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <h4 className="text-sm font-extrabold text-zinc-800 dark:text-white uppercase tracking-wide">
                   {block.label || `Block ${idx + 1}`}
@@ -272,7 +271,7 @@ export default function PlanViewDaily({
             <div className="space-y-4 py-4 flex flex-col items-center">
               <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
               <div className="space-y-1">
-                <p className="font-semibold text-zinc-705 dark:text-white text-xs">Generating detailed 2-day tasks...</p>
+                <p className="font-semibold text-zinc-705 dark:text-white text-xs">Generating detailed daily tasks...</p>
                 <p className="text-zinc-400 text-[10px]">Processing month date horizon: {getMonthDateRange(createdAt, selectedMonthNum)}</p>
               </div>
             </div>
@@ -291,11 +290,11 @@ export default function PlanViewDaily({
                   </p>
                 )}
               </div>
- 
+
               <div className="text-zinc-550 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
                 planning cost: <strong className="text-blue-600 dark:text-blue-400 font-bold">15 credits</strong>
               </div>
- 
+
               <button
                 onClick={handleGenerateDetailedTasks}
                 disabled={selectedMonthNum !== currentActiveMonth}

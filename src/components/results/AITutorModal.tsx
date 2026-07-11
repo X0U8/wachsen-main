@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import MathText from '../../ui/MathText';
+import { fontSize } from '../../lib/utils';
 import {
   Sparkle, X, Send, Loader2, Lightbulb, XCircle, HelpCircle, BookOpen, ListOrdered
 } from 'lucide-react';
@@ -41,9 +42,10 @@ export default function AITutorModal({
   // Initialize Tutor greeting message only once per question
   useEffect(() => {
     if (!isOpen || !question) return;
+    if (chatHistory.length > 0) return;
     if (initializedQuestionId.current === question.id) return;
     initializedQuestionId.current = question.id;
-
+ 
     let intro = `Hi! I am your AI tutor. I noticed you got Question ${originalIndex} `;
     if (status === 'correct') {
       intro += `correct! Excellent job.\n\nWould you like to review the core concepts or discuss any specific step of this question?`;
@@ -52,25 +54,25 @@ export default function AITutorModal({
     } else {
       intro += `skipped.\n\nThe correct answer is "${question.correct_answer}".\n\nLet's go over how to solve this so you are ready next time!`;
     }
-
+ 
     setChatHistory([
       { role: 'assistant', content: intro }
     ]);
     setChatInput('');
     setIsSendingChat(false);
-  }, [isOpen, question, originalIndex, status, userAnswer]);
-
+  }, [isOpen, question?.id]);
+ 
   // Scroll to bottom of chat history when it changes
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [chatHistory]);
-
+ 
   const sendTutorMessage = async (customMessage?: string) => {
     const messageText = customMessage || chatInput.trim();
     if (!messageText.trim() || isSendingChat || !question) return;
-
+ 
     // Client-side rate limit check (3 seconds between requests)
     const now = Date.now();
     if (now - lastSentTime < 3000) {
@@ -78,32 +80,32 @@ export default function AITutorModal({
       return;
     }
     setLastSentTime(now);
-
+ 
     if (!customMessage) {
       setChatInput('');
     }
-
+ 
     const useOwnKey = localStorage.getItem('use_own_key') === 'true';
     if (!useOwnKey && (userProfile?.credits || 0) < 1) {
       showNotification('error', 'Insufficient credits. You need at least 1 credit to ask the tutor.');
       return;
     }
-
+ 
     setIsSendingChat(true);
-
+ 
     const userMessage = { role: 'user' as const, content: messageText };
     const updatedHistory = [...chatHistory, userMessage];
     setChatHistory(updatedHistory);
-
+ 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
-
+ 
       const useOwnKey = localStorage.getItem('use_own_key') === 'true';
       const userApiKey = localStorage.getItem(localStorage.getItem('provider') === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
       const activeProvider = localStorage.getItem('provider') || 'mesh';
       const activeModel = localStorage.getItem('mesh_active_model') || '';
-
+ 
       const response = await fetch('/api/ask-question', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,12 +123,12 @@ export default function AITutorModal({
           model: activeModel
         })
       });
-
+ 
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || 'Failed to ask tutor');
       }
-
+ 
       setChatHistory(prev => [...prev, { role: 'assistant', content: data.reply }]);
       if (data.creditsDeducted > 0) {
         refreshCredits();
@@ -142,19 +144,19 @@ export default function AITutorModal({
       setIsSendingChat(false);
     }
   };
-
+ 
   if (!isOpen || !question) return null;
-
+ 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl w-full max-w-lg h-[500px] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl w-full max-w-lg h-[500px] max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="p-4 border-b border-zinc-200/50 dark:border-gray-800 flex items-center justify-between bg-zinc-50/50 dark:bg-gray-900/50 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <Sparkle className="w-5 h-5 text-blue-500 fill-blue-500 " />
             <div>
-              <div className="text-sm font-semibold text-zinc-900 dark:text-white">AI Tutor</div>
-              <div className="text-[10px] text-zinc-550 dark:text-gray-400">
+              <div className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.sm }}>AI Tutor</div>
+              <div className="text-zinc-550 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>
                 {localStorage.getItem('use_own_key') === 'true' ? 'Using own API key' : `Cost: 1 credit per message (You have ${userProfile?.credits || 0} credits)`}
               </div>
             </div>
@@ -166,20 +168,21 @@ export default function AITutorModal({
             <X className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
           </button>
         </div>
-
+ 
         {/* Messages Area */}
         <div className="flex-grow p-4 overflow-y-auto space-y-4">
           {chatHistory.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed select-text whitespace-pre-wrap ${msg.role === 'user'
+              <div className={`max-w-[85%] rounded-2xl p-3.5 leading-relaxed select-text whitespace-pre-wrap ${msg.role === 'user'
                   ? 'bg-blue-600 text-white rounded-tr-none'
                   : 'bg-zinc-100 dark:bg-gray-800/80 text-zinc-900 dark:text-gray-200 rounded-tl-none border border-zinc-200/20 dark:border-gray-700/30'
-                }`}>
+                }`}
+                style={{ fontSize: fontSize.xs }}>
                 <MathText text={msg.content} />
               </div>
             </div>
           ))}
-
+ 
           {/* Quick Suggestion Pills */}
           {chatHistory.length === 1 && !isSendingChat && (
             <div className="flex flex-wrap gap-2 pt-2 px-1">
@@ -202,18 +205,18 @@ export default function AITutorModal({
               ))}
             </div>
           )}
-
+ 
           {isSendingChat && (
             <div className="flex justify-start">
               <div className="bg-zinc-100 dark:bg-gray-800/80 border border-zinc-200/20 dark:border-gray-700/30 rounded-2xl rounded-tl-none p-3.5 flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
-                <span className="text-[10px] text-zinc-500 dark:text-gray-450 font-medium">Tutor is thinking...</span>
+                <span className="text-zinc-500 dark:text-gray-450 font-medium" style={{ fontSize: fontSize.xs }}>Tutor is thinking...</span>
               </div>
             </div>
           )}
           <div ref={chatEndRef} />
         </div>
-
+ 
         {/* Input Footer */}
         <div className="p-3 border-t border-zinc-200/50 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-900/50">
           <form
@@ -228,10 +231,11 @@ export default function AITutorModal({
                 onChange={(e) => setChatInput(e.target.value)}
                 disabled={isSendingChat}
                 maxLength={250}
-                className="flex-grow bg-transparent border-none py-2.5 text-xs text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-gray-500 focus:outline-none disabled:opacity-50"
+                className="flex-grow bg-transparent border-none py-2.5 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-gray-500 focus:outline-none disabled:opacity-50"
+                style={{ fontSize: fontSize.xs }}
               />
               {chatInput.length > 200 && (
-                <span className="text-[9px] text-zinc-400 dark:text-gray-500 select-none">
+                <span className="text-zinc-400 dark:text-gray-500 select-none" style={{ fontSize: fontSize.xs }}>
                   {250 - chatInput.length}
                 </span>
               )}

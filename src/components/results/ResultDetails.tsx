@@ -449,7 +449,7 @@ export default function ResultDetails() {
     };
 
     fetchResult();
-  }, [resultId, viewUserId, examId, userProfile]);
+  }, [resultId, viewUserId, examId, userProfile?.id]);
 
   // Scroll listener for scroll-to-top button
   useEffect(() => {
@@ -642,7 +642,8 @@ export default function ResultDetails() {
             <button
               onClick={createRevisionLog}
               disabled={hasRevisionLog || isCreatingRevision}
-              className="px-2.5 sm:px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 dark:disabled:bg-gray-800 text-white disabled:text-zinc-500 dark:disabled:text-gray-400 rounded-xl text-[10px] sm:text-xs font-semibold shadow-sm hover:shadow-md disabled:shadow-none transition-all flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
+              className="px-2.5 sm:px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 dark:disabled:bg-gray-800 text-white disabled:text-zinc-500 dark:disabled:text-gray-400 rounded-xl font-semibold shadow-sm hover:shadow-md disabled:shadow-none transition-all flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
+              style={{ fontSize: fontSize.xs }}
             >
               {isCreatingRevision ? (
                 <>
@@ -665,7 +666,8 @@ export default function ResultDetails() {
           )}
           <button
             onClick={() => setShowPrintPreview(true)}
-            className="px-2.5 sm:px-3.5 py-1.5 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 hover:bg-zinc-100 dark:hover:bg-gray-800 text-zinc-900 dark:text-white rounded-xl text-[10px] sm:text-xs font-medium shadow-sm hover:shadow-md transition-all flex items-center gap-1 cursor-pointer"
+            className="px-2.5 sm:px-3.5 py-1.5 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 hover:bg-zinc-100 dark:hover:bg-gray-800 text-zinc-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all flex items-center gap-1 cursor-pointer"
+            style={{ fontSize: fontSize.xs }}
           >
             <Printer className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
             <span className="hidden sm:inline">Print Exam</span>
@@ -676,7 +678,7 @@ export default function ResultDetails() {
       <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full space-y-12">
         {/* Top Marks Display */}
         <div className="text-center  space-y-2 py-4">
-          <div className="text-5xl font-black text-zinc-900 dark:text-white">
+          <div className="text-5xl font-black text-zinc-900 dark:text-white" style={{ fontSize: fontSize['3xl'] }}>
             {result.marksObtained}<span className="text-blue-500">/</span><span className="text-gray-600">{result.totalMarks}</span>
           </div>
 
@@ -819,9 +821,9 @@ export default function ResultDetails() {
                   { label: 'Slow + Wrong', value: analytics.performanceMatrix.slowWrong, desc: 'Conceptual Gap', color: 'bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-300' },
                 ].map((item, idx) => (
                   <div key={idx} className={`${item.color} border p-4 rounded-2xl flex flex-col justify-center items-center text-center space-y-1`}>
-                    <div className="text-2xl font-bold">{item.value}</div>
-                    <div className="text-[10px] font-semibold">{item.label}</div>
-                    <div className="text-[8px] opacity-70">{item.desc}</div>
+                    <div className="font-bold" style={{ fontSize: fontSize.xl }}>{item.value}</div>
+                    <div className="font-semibold" style={{ fontSize: fontSize.xs }}>{item.label}</div>
+                    <div className="opacity-70" style={{ fontSize: fontSize.xs }}>{item.desc}</div>
                   </div>
                 ))}
               </div>
@@ -848,7 +850,7 @@ export default function ResultDetails() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="text-zinc-900 dark:text-white" style={{ fontSize: fontSize.xs }}>{subject.name || ''}</div>
-                                {subject.chapters ? <div className="text-[10px] text-zinc-550 dark:text-gray-400 mt-0.5">{subject.chapters}</div> : null}
+                                {subject.chapters ? <div className="text-zinc-550 dark:text-gray-400 mt-0.5" style={{ fontSize: fontSize.xs }}>{subject.chapters}</div> : null}
                               </div>
                               {hasSubtopics && (
                                 <div className={`text-zinc-500 dark:text-gray-500 text-[10px] shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>▶</div>
@@ -860,10 +862,10 @@ export default function ResultDetails() {
                                   const showRange = tIdx === 0 || topic.range !== subject.planTopics[tIdx - 1].range;
                                   return (
                                     <div key={tIdx} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-zinc-100 dark:bg-gray-950 border border-zinc-200 dark:border-gray-800 rounded-lg max-w-full">
-                                      <div className="text-[9px] text-zinc-450 dark:text-gray-500 shrink-0 w-10 font-semibold">
+                                      <div className="text-zinc-455 dark:text-gray-500 shrink-0 w-10 font-semibold" style={{ fontSize: fontSize.xs }}>
                                         {showRange && topic.range ? `Q${String(topic.range).replace('-', '–')}` : ''}
                                       </div>
-                                      <div className="text-[10px] text-zinc-700 dark:text-gray-300 min-w-0">
+                                      <div className="text-zinc-700 dark:text-gray-300 min-w-0" style={{ fontSize: fontSize.xs }}>
                                         <MathText text={topic.label} />
                                       </div>
                                     </div>
@@ -955,29 +957,33 @@ export default function ResultDetails() {
                   <div className="flex gap-1 bg-white/50 dark:bg-gray-900/50 rounded-full p-1">
                     <button
                       onClick={() => setFilter('all')}
-                      className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'all' ? 'bg-blue-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                      className={`px-3 py-1 rounded-full transition-all ${filter === 'all' ? 'bg-blue-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
                         }`}
+                      style={{ fontSize: fontSize.xs }}
                     >
                       All ({questions.length})
                     </button>
                     <button
                       onClick={() => setFilter('wrong')}
-                      className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'wrong' ? 'bg-red-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                      className={`px-3 py-1 rounded-full transition-all ${filter === 'wrong' ? 'bg-red-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
                         }`}
+                      style={{ fontSize: fontSize.xs }}
                     >
                       Wrong ({analytics.wrongIds.length})
                     </button>
                     <button
                       onClick={() => setFilter('correct')}
-                      className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'correct' ? 'bg-emerald-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                      className={`px-3 py-1 rounded-full transition-all ${filter === 'correct' ? 'bg-emerald-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
                         }`}
+                      style={{ fontSize: fontSize.xs }}
                     >
                       Correct ({analytics.correctIds.length})
                     </button>
                     <button
                       onClick={() => setFilter('skipped')}
-                      className={`px-3 py-1 rounded-full text-[10px]   transition-all ${filter === 'skipped' ? 'bg-gray-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
+                      className={`px-3 py-1 rounded-full transition-all ${filter === 'skipped' ? 'bg-gray-500 text-zinc-900 dark:text-white' : 'text-gray-500 hover:text-zinc-500 dark:hover:text-gray-400'
                         }`}
+                      style={{ fontSize: fontSize.xs }}
                     >
                       Skipped ({questions.length - analytics.correctIds.length - analytics.wrongIds.length})
                     </button>
@@ -1031,12 +1037,12 @@ export default function ResultDetails() {
                             {originalIndex + 1}
                           </span>
                           <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
-                            <div className="text-[8px] sm:text-[10px] text-zinc-550 dark:text-gray-450 font-medium">Time Taken</div>
-                            <div className="text-[10px] text-zinc-900 dark:text-white font-bold" style={{ fontSize: fontSize.xs }}>{timeSpent}s</div>
+                            <div className="text-zinc-550 dark:text-gray-450 font-medium" style={{ fontSize: fontSize.xs }}>Time Taken</div>
+                            <div className="text-zinc-900 dark:text-white font-bold" style={{ fontSize: fontSize.xs }}>{timeSpent}s</div>
                           </div>
                           <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
-                            <div className="text-[8px] sm:text-[10px] text-zinc-550 dark:text-gray-455 font-medium">Difficulty</div>
-                            <div className="text-[10px] text-zinc-900 dark:text-white font-bold capitalize" style={{ fontSize: fontSize.xs }}>{q.difficulty || 'medium'}</div>
+                            <div className="text-zinc-550 dark:text-gray-455 font-medium" style={{ fontSize: fontSize.xs }}>Difficulty</div>
+                            <div className="text-zinc-900 dark:text-white font-bold capitalize" style={{ fontSize: fontSize.xs }}>{q.difficulty || 'medium'}</div>
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -1065,13 +1071,13 @@ export default function ResultDetails() {
                               : 'bg-zinc-100 dark:bg-gray-900 border-zinc-200 dark:border-gray-800 text-zinc-500 dark:text-gray-400'
                             }`} style={{ fontSize: fontSize.xs }}>
                             <div className="flex flex-col gap-1 flex-1">
-                              <span className="text-[10px] text-zinc-500 dark:text-gray-455 font-medium">Your Answer</span>
+                              <span className="text-zinc-500 dark:text-gray-455 font-medium" style={{ fontSize: fontSize.xs }}>Your Answer</span>
                               <span className="font-semibold"><MathText text={userAns || 'Not Attempted'} /></span>
                             </div>
                           </div>
                           <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-2xl text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.xs }}>
                             <div className="flex flex-col gap-1">
-                              <span className="text-[10px] text-zinc-500 dark:text-blue-500/80 font-medium">Correct Answer</span>
+                              <span className="text-zinc-500 dark:text-blue-500/80 font-medium" style={{ fontSize: fontSize.xs }}>Correct Answer</span>
                               <span className="font-semibold"><MathText text={q.correct_answer} /></span>
                             </div>
                           </div>
@@ -1082,6 +1088,7 @@ export default function ResultDetails() {
                           <button
                             onClick={() => setTutorQuestion(q)}
                             className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[10px] sm:text-xs font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                            style={{ fontSize: fontSize.xs }}
                           >
                             <Sparkle className="w-3.5 h-3.5 fill-current" />
                             Ask AI Tutor

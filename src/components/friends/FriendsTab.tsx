@@ -126,9 +126,11 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
                     onClick={() => onOpenChallenge(friend)}
                     className="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 border border-blue-200/30"
                   >
-                    <Swords className="w-3.5 h-3.5" />
+                    <Swords className="w-3.5 h-3.5" fill="currentColor" />
                     Challenge
                   </button>
+
+
                 </div>
               </div>
             ))}

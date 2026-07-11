@@ -54,12 +54,12 @@ export default async function handler(req, res) {
       }
     }
 
-    const systemPrompt = `You are a helpful tutor explaining exam questions. Be direct, clear, and explain in short. Avoid unnecessary conversational fluff. Keep explanations concise, but make sure to write out all mathematical steps and derivations fully and clearly.
-
+    const systemPrompt = `You are a helpful tutor explaining exam questions. Be extremely concise, direct, and explain in short. Avoid unnecessary conversational fluff. Keep explanations brief and to the point, but make sure to write out all mathematical steps and derivations fully and clearly.
+ 
 Do NOT use raw markdown formatting symbols like headers (###), markdown bolding (**), bullet lists with dashes, or dividers (---). Instead, format your output into separate, clean paragraphs. Start a new line whenever a new step, equation, or part of the explanation begins (e.g. after full stops, colons, or semicolons where appropriate) to make the text clean, readable, and well-spaced.
-
+ 
 Wrap any math content, variables, formulas, or equations in single $...$ delimiters for inline LaTeX (e.g. $E = mc^2$).
-
+ 
 Context of the question under discussion:
 Question: "${question}"
 ${options && Array.isArray(options) && options.length > 0 ? `Options:\n${options.map((opt, i) => `- ${opt}`).join('\n')}` : ''}
@@ -67,12 +67,22 @@ Correct Answer: "${correctAnswer}"
 User's Answer: "${userAnswer || '(No answer provided)'}"`;
 
     const conversationMessages = [
-      { role: 'system', content: systemPrompt },
-      ...history.map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }))
+      { role: 'system', content: systemPrompt }
     ];
+
+    if (history && history.length > 0) {
+      history.forEach(msg => {
+        conversationMessages.push({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        });
+      });
+    } else {
+      conversationMessages.push({
+        role: 'user',
+        content: `Please process the task or question: "${question}"`
+      });
+    }
 
     const apiUrl = isMistral ? MISTRAL_API_URL : MESH_API_URL;
     const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);
@@ -95,7 +105,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(502).json({ error: `${apiLabel} API request failed`, code: data.error?.code, details: data.error?.message });
+      return res.status(502).json({ error: `${apiLabel} API request failed`, code: data.error?.code, details: data.error?.message || JSON.stringify(data) });
     }
 
     const reply = data.choices?.[0]?.message?.content || '';
@@ -122,6 +132,6 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
     });
   } catch (error) {
     console.error('Ask question AI error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 }

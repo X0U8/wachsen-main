@@ -59,7 +59,7 @@ export default function ExamDetails() {
     subjectError: ''
   });
   const [isSavingCategory, setIsSavingCategory] = useState(false);
-  
+
   const getMaxSubjects = () => {
     const premiumType = (userProfile as any)?.PremiumType || '';
     if (premiumType.toLowerCase().includes('peak')) return 10;
@@ -130,7 +130,7 @@ export default function ExamDetails() {
       if (!userProfile?.id) return [];
       const sessionData = await supabase.auth.getSession();
       const authToken = sessionData.data.session?.access_token || '';
-      
+
       const response = await fetch(`/api/search?type=exams&userId=${userProfile.id}&authToken=${authToken}&categoryId=${id}&statusFilter=${statusFilter}&sortOrder=${sortOrder}&query=${encodeURIComponent(activeSearchQuery)}&limit=${EXAMS_PER_PAGE}&offset=0`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to search exams');
@@ -395,11 +395,11 @@ export default function ExamDetails() {
           ) : exams.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left" style={{ fontSize: fontSize.sm }}>
-                <thead className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 uppercase font-medium tracking-wider" style={{ fontSize: fontSize.xs }}>
+                <thead className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 uppercase font-semibold tracking-wider" style={{ fontSize: fontSize.xs }}>
                   <tr>
-                    <th className="px-4 py-3">Exam Name</th>
-                    <th className="px-4 py-3">Starting Time</th>
-                    <th className="px-4 py-3">Ending Time</th>
+                    <th className="px-4 py-3">Name</th>
+                    <th className="px-4 py-3">Start</th>
+                    <th className="px-4 py-3">End</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3 text-right">Difficulty</th>
                     <th className="px-4 py-3 w-10"></th>

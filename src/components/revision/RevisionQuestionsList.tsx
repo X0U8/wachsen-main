@@ -1,6 +1,7 @@
 import React from 'react';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Square } from 'lucide-react';
 import MathText from '../../ui/MathText';
+import { fontSize } from '../../lib/utils';
 
 interface Question {
   id: string;
@@ -25,46 +26,47 @@ export default function RevisionQuestionsList({ questions }: RevisionQuestionsLi
         return (
           <div key={question.id || idx} className="bg-white dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-5 space-y-4 shadow-xs">
             <div className="flex items-start gap-4">
-              <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-center text-xs font-bold text-zinc-650 dark:text-zinc-300 flex-shrink-0">
+              <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-center font-bold text-zinc-600 dark:text-zinc-300 flex-shrink-0" style={{ fontSize: fontSize.sm }}>
                 {qNum}
               </div>
               <div className="flex-1 space-y-4">
-                <div className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal">
+                <div className="text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal" style={{ fontSize: fontSize.sm }}>
                   <MathText text={question.question || question.text || ''} />
                 </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-xl border border-zinc-200 dark:border-zinc-850 text-[11px]">
-                <div>
-                  <span className="text-zinc-500 font-medium block mb-1">Your Answer:</span>
-                  <span className="text-red-650 dark:text-red-400/90 font-medium">
-                    {question.userAnswer ? <MathText text={question.userAnswer} /> : <span className="text-zinc-450 dark:text-zinc-650 italic">Skipped</span>}
-                  </span>
-                </div>
-                {(question.correctAnswer || question.correct_answer) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800" style={{ fontSize: fontSize.sm }}>
                   <div>
-                    <span className="text-zinc-500 font-medium block mb-1">Correct Answer:</span>
-                    <span className="text-green-600 dark:text-green-400/90 font-medium">
-                      <MathText text={question.correctAnswer || question.correct_answer || ''} />
+                    <span className="text-zinc-500 font-medium block mb-1">Your Answer:</span>
+                    <span className="text-red-650 dark:text-red-400 font-medium">
+                      {question.userAnswer ? <MathText text={question.userAnswer} /> : <span className="text-zinc-500 dark:text-zinc-650 italic">Skipped</span>}
                     </span>
+                  </div>
+                  {(question.correctAnswer || question.correct_answer) && (
+                    <div>
+                      <span className="text-zinc-500 font-medium block mb-1">Correct Answer:</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium">
+                        <MathText text={question.correctAnswer || question.correct_answer || ''} />
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {question.concept && (
+                  <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800/50">
+                    <div className="text-zinc-500 mb-1 flex items-center gap-1.5 uppercase tracking-wider font-semibold" style={{ fontSize: fontSize.xs }}>
+                      <Square className="w-2.5 h-2.5 text-zinc-500 bg-zinc-500 dark:text-zinc-655" />
+                      Subtopic
+                    </div>
+                    <div className="text-zinc-600 dark:text-zinc-400 leading-relaxed" style={{ fontSize: fontSize.sm }}>
+                      <MathText text={question.concept} />
+                    </div>
                   </div>
                 )}
               </div>
-
-              {question.concept && (
-                <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800/50">
-                  <div className="text-[9px] text-zinc-500 mb-1 flex items-center gap-1.5 uppercase tracking-wider font-semibold">
-                    <BookOpen className="w-3 h-3 text-zinc-450 dark:text-zinc-600" />
-                    Subtopic / Concept
-                  </div>
-                  <div className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    <MathText text={question.concept} />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-        </div>
-      ); })}
+        );
+      })}
     </div>
   );
 }

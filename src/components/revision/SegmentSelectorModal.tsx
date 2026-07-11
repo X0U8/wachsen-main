@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, BookOpen } from 'lucide-react';
+import { X } from 'lucide-react';
+import { fontSize } from '../../lib/utils';
 
 interface Segment {
   subject: string;
@@ -55,12 +56,12 @@ export default function SegmentSelectorModal({
         {/* Header */}
         <div className="flex items-center justify-between flex-shrink-0">
           <div>
-            <h3 className="text-xs font-semibold text-zinc-800 dark:text-white uppercase tracking-wider">Select Segment</h3>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-450">Choose a topic range to generate 10 concept cards</p>
+            <h3 className="font-semibold text-zinc-800 dark:text-white tracking-wider" style={{ fontSize: fontSize.base }}>Select Subtopic</h3>
+            <p className="text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>Choose a topic range to generate 10 concept cards</p>
           </div>
-          <button 
-            onClick={onClose} 
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-705 dark:hover:text-white"
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
           >
             <X className="w-4 h-4" />
           </button>
@@ -69,13 +70,13 @@ export default function SegmentSelectorModal({
         {/* Scrollable Segment List */}
         <div className="flex-grow overflow-y-auto pr-1 my-4 space-y-5">
           {Object.keys(segmentsBySubject).length === 0 ? (
-            <div className="text-center py-12 text-xs text-zinc-500 dark:text-zinc-450">
+            <div className="text-center py-12 text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
               No segments found in this exam plan.
             </div>
           ) : (
             Object.entries(segmentsBySubject).map(([subject, list]) => (
               <div key={subject} className="space-y-2">
-                <div className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-550 uppercase tracking-widest pl-1">
+                <div className="font-bold text-zinc-500 dark:text-zinc-400 tracking-widest pl-1" style={{ fontSize: fontSize.xs }}>
                   {subject}
                 </div>
                 <div className="space-y-2">
@@ -86,19 +87,16 @@ export default function SegmentSelectorModal({
                         onSelectSegment(seg.topics);
                         onClose();
                       }}
-                      className="w-full text-left p-3 rounded-xl border border-zinc-200 dark:border-zinc-850 bg-zinc-50/50 dark:bg-zinc-900/30 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/30 hover:border-zinc-300 dark:hover:border-zinc-750 transition-all cursor-pointer group"
+                      className="w-full text-left p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/30 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all cursor-pointer group"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <div className="font-medium text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" style={{ fontSize: fontSize.sm }}>
                             {seg.topics || 'General Review'}
                           </div>
-                          <div className="text-[10px] text-zinc-500 dark:text-zinc-450">
+                          <div className="text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
                             Questions {seg.range}
                           </div>
-                        </div>
-                        <div className="flex-shrink-0 p-1 bg-zinc-100 dark:bg-zinc-800 border border-zinc-250 dark:border-zinc-700 rounded-lg group-hover:bg-blue-600/10 group-hover:border-blue-600/30 transition-all">
-                          <BookOpen className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
                         </div>
                       </div>
                     </button>
@@ -113,7 +111,8 @@ export default function SegmentSelectorModal({
         <div className="flex-shrink-0 border-t border-zinc-150 dark:border-zinc-900 pt-3">
           <button
             onClick={onClose}
-            className="w-full py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-850 border border-zinc-250 dark:border-zinc-800 rounded-xl text-xs font-semibold text-zinc-700 dark:text-white transition-all cursor-pointer"
+            className="w-full py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl font-semibold text-zinc-700 dark:text-white transition-all cursor-pointer"
+            style={{ fontSize: fontSize.xs }}
           >
             Cancel
           </button>

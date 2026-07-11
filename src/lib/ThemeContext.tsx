@@ -52,7 +52,7 @@ const FONT_SIZE_VALUES: Record<FontSizeLevel, Record<string, string>> = {
 
 const getInitialTheme = (): Theme => {
   const saved = localStorage.getItem('theme');
-  const theme = (saved === 'light' || saved === 'dark') ? saved : 'dark';
+  const theme = (saved === 'light' || saved === 'dark') ? saved : 'light';
   document.documentElement.classList.toggle('dark', theme === 'dark');
   return theme;
 };

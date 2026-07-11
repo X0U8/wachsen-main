@@ -22,16 +22,16 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
   // Compute progress day "x" where x is (current date - created date) capped at total plan days
   const createdDate = new Date(plan.created_at);
   const currentDate = new Date();
-  
+
   // Set times to midnight to calculate exact difference in calendar days
   const createdMidnight = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()).getTime();
   const currentMidnight = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).getTime();
-  
+
   const diffDays = Math.max(0, Math.floor((currentMidnight - createdMidnight) / (1000 * 60 * 60 * 24)));
   const x = Math.min(plan.days, diffDays);
 
   const parsedSubjects = Array.isArray(plan.subjects) ? plan.subjects : [];
-  
+
   // Progress percentage (elapsed time)
   const progressPercent = Math.min(100, Math.max(0, (x / plan.days) * 100));
 
@@ -64,8 +64,8 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
           {plan.exam_name} preparation
         </h2>
         {createdDate.getDate() === currentDate.getDate() &&
-         createdDate.getMonth() === currentDate.getMonth() &&
-         createdDate.getFullYear() === currentDate.getFullYear() ? (
+          createdDate.getMonth() === currentDate.getMonth() &&
+          createdDate.getFullYear() === currentDate.getFullYear() ? (
           <button
             onClick={handleOpenDeleteConfirm}
             disabled={isDeleting}
@@ -80,8 +80,11 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
       </div>
 
       <div className="space-y-4 py-2">
-        <div className="text-center font-bold text-blue-500 font-mono tracking-tight" style={{ fontSize: fontSize.xl }}>
-          DAY {x}/{plan.days}
+        <div className="text-center font-bold text-blue-500 tracking-widest" style={{ fontSize: fontSize.sm }}>
+          DAY
+        </div>
+        <div className="text-center font-bold text-blue-500 tracking-widest" style={{ fontSize: fontSize.xl }}>
+          {x}/{plan.days}
         </div>
 
         <div className="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden relative">
@@ -136,7 +139,7 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
                   {isDeleting ? 'Deleting...' : 'Delete Permanently'}
                 </button>
               )}
-              
+
               <button
                 type="button"
                 onClick={() => setShowConfirmModal(false)}

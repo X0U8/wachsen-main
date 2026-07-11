@@ -33,7 +33,7 @@ const MathText = ({ text }: { text: any }) => {
 
   if (text === null || text === undefined) return null;
 
-  return <span ref={containerRef} style={{ display: 'inline-block' }} />;
+  return <span ref={containerRef} className="inline-block max-w-full break-words whitespace-pre-wrap" />;
 };
 
 export default MathText;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Check, AlertCircle } from 'lucide-react';
 import MathText from '../ui/MathText';
+import { fontSize } from '../lib/utils';
 
 interface ConceptCardData {
   question: string;
@@ -26,11 +27,12 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
       <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 w-full max-w-md text-center space-y-4 shadow-2xl">
           <AlertCircle className="w-12 h-12 text-zinc-400 dark:text-zinc-500 mx-auto" />
-          <h3 className="text-sm font-semibold text-zinc-800 dark:text-white">No concept cards generated</h3>
-          <p className="text-zinc-500 dark:text-zinc-450 text-xs">Try generating concept cards from the revision logs dashboard.</p>
+          <h3 className="font-semibold text-zinc-800 dark:text-white" style={{ fontSize: fontSize.sm }}>No concept cards generated</h3>
+          <p className="text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>Try generating concept cards from the revision logs dashboard.</p>
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer"
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all cursor-pointer"
+            style={{ fontSize: fontSize.xs }}
           >
             Close Dashboard
           </button>
@@ -80,13 +82,13 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div>
-              <h3 className="text-xs font-semibold text-zinc-800 dark:text-white uppercase tracking-wider">Concept Card Training</h3>
-              <p className="text-[10px] text-zinc-500 dark:text-zinc-450">Multiple select practice</p>
+              <h3 className="font-semibold text-zinc-800 dark:text-white tracking-wider" style={{ fontSize: fontSize.sm }}>Concept Cards</h3>
+              <p className="text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>Multiple select practice</p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-705 dark:hover:text-white"
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
           >
             <X className="w-4 h-4" />
           </button>
@@ -96,12 +98,12 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
           <div className="flex-grow flex flex-col justify-between overflow-hidden mt-4 space-y-4">
             {/* Progress Bar */}
             <div className="space-y-1.5 flex-shrink-0">
-              <div className="flex items-center justify-between text-[10px] text-zinc-500 font-semibold uppercase tracking-wider">
+              <div className="flex items-center justify-between text-zinc-500 font-semibold tracking-wider" style={{ fontSize: fontSize.xs }}>
                 <span>Card {currentIndex + 1} of {cards.length}</span>
                 <span>{correctCount} correct</span>
               </div>
-              <div className="w-full bg-zinc-100 dark:bg-zinc-850 h-1.5 rounded-full overflow-hidden">
-                <div 
+              <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                <div
                   className="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 />
@@ -111,8 +113,8 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
             {/* Flashcard Scrollable Content Area */}
             <div className="flex-grow overflow-y-auto pr-1 space-y-4">
               {/* Question Text */}
-              <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-850/80 rounded-2xl p-5 space-y-3">
-                <div className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal h-32 overflow-y-auto pr-1">
+              <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-5 space-y-3">
+                <div className="text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal h-32 overflow-y-auto pr-1" style={{ fontSize: fontSize.sm }}>
                   <MathText text={currentCard.question} />
                 </div>
               </div>
@@ -122,16 +124,16 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
                 {currentCard.options && currentCard.options.map((option, optIdx) => {
                   const isSelected = selectedOptions.includes(optIdx);
                   const isCorrectAnswer = (currentCard.correctAnswers || []).includes(optIdx);
-                  
-                  let buttonClass = 'bg-white dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-850 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 text-zinc-750 dark:text-zinc-300';
-                  
+
+                  let buttonClass = 'bg-white dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 text-zinc-700 dark:text-zinc-300';
+
                   if (isFlipped) {
                     if (isCorrectAnswer) {
                       buttonClass = 'bg-green-500/10 border-green-500/40 text-green-600 dark:text-green-400 font-medium';
                     } else if (isSelected && !isCorrectAnswer) {
-                      buttonClass = 'bg-red-500/10 border-red-500/40 text-red-655 dark:text-red-400 font-medium';
+                      buttonClass = 'bg-red-500/10 border-red-500/40 text-red-600 dark:text-red-400 font-medium';
                     } else {
-                      buttonClass = 'bg-zinc-50 dark:bg-zinc-900/10 border-zinc-200/60 dark:border-zinc-850/40 opacity-40 text-zinc-400 dark:text-zinc-650';
+                      buttonClass = 'bg-zinc-50 dark:bg-zinc-900/10 border-zinc-200/60 dark:border-zinc-800/40 opacity-40 text-zinc-400 dark:text-zinc-500';
                     }
                   } else if (isSelected) {
                     buttonClass = 'bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-semibold';
@@ -142,10 +144,11 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
                       key={optIdx}
                       disabled={isFlipped}
                       onClick={() => handleToggleOption(optIdx)}
-                      className={`w-full p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${buttonClass}`}
+                      className={`w-full p-3 rounded-xl border text-left transition-all cursor-pointer ${buttonClass}`}
+                      style={{ fontSize: fontSize.xs }}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-250 dark:border-zinc-700 flex items-center justify-center text-[10px] text-zinc-650 dark:text-zinc-400">
+                        <span className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
                           {String.fromCharCode(65 + optIdx)}
                         </span>
                         <span><MathText text={option} /></span>
@@ -157,9 +160,9 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
 
               {/* Explanation (Back card view) */}
               {isFlipped && (
-                <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-850 rounded-xl space-y-2 animate-in fade-in duration-200">
-                  <div className="text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Explanation</div>
-                  <div className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2 animate-in fade-in duration-200">
+                  <div className="font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>Explanation</div>
+                  <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed" style={{ fontSize: fontSize.xs }}>
                     <MathText text={currentCard.explanation} />
                   </div>
                 </div>
@@ -172,14 +175,16 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
                 <button
                   disabled={selectedOptions.length === 0}
                   onClick={handleCheckAnswer}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-xs font-semibold text-white transition-all cursor-pointer"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold text-white transition-all cursor-pointer"
+                  style={{ fontSize: fontSize.xs }}
                 >
                   Check Answers
                 </button>
               ) : (
                 <button
                   onClick={handleNext}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-semibold text-white transition-all cursor-pointer"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold text-white transition-all cursor-pointer"
+                  style={{ fontSize: fontSize.xs }}
                 >
                   {currentIndex === cards.length - 1 ? 'See Results Summary' : 'Next Question'}
                 </button>
@@ -188,22 +193,23 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
           </div>
         ) : (
           /* Results Summary Screen */
-          <div className="flex-grow flex flex-col justify-center bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-850 rounded-2xl p-5 space-y-4 my-4 overflow-y-auto">
-            <h4 className="text-xs font-semibold text-zinc-850 dark:text-white uppercase tracking-wider">Training Summary</h4>
-            <div className="text-sm text-zinc-650 dark:text-gray-300">
-              <div className="text-lg font-bold text-zinc-850 dark:text-white mb-1">
+          <div className="flex-grow flex flex-col justify-center bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 space-y-4 my-4 overflow-y-auto">
+            <h4 className="font-semibold text-zinc-800 dark:text-white uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>Training Summary</h4>
+            <div className="text-zinc-650 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>
+              <div className="font-bold text-zinc-800 dark:text-white mb-1" style={{ fontSize: fontSize.base }}>
                 {correctCount} / {cards.length} correct ({percentage}%)
               </div>
-              <div className="text-xs text-zinc-500 dark:text-zinc-450 mb-4">
-                {percentage >= 80 
-                  ? 'Excellent job! You have fully mastered these concepts.' 
-                  : percentage >= 50 
-                  ? 'Good effort! A bit more practice will make it perfect.' 
-                  : 'Keep revising. Practice makes permanent!'}
+              <div className="text-zinc-500 dark:text-zinc-400 mb-4" style={{ fontSize: fontSize.xs }}>
+                {percentage >= 80
+                  ? 'Excellent job! You have fully mastered these concepts.'
+                  : percentage >= 50
+                    ? 'Good effort! A bit more practice will make it perfect.'
+                    : 'Keep revising. Practice makes permanent!'}
               </div>
               <button
                 onClick={onClose}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-semibold text-white transition-all cursor-pointer"
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold text-white transition-all cursor-pointer"
+                style={{ fontSize: fontSize.xs }}
               >
                 Close Summary
               </button>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { fontSize } from '../../../lib/utils';
-import { ChevronLeft, Calendar, ListTodo, CheckSquare, BrainCircuit, X } from 'lucide-react';
+import { ChevronLeft, Calendar, ListTodo, CheckSquare, BrainCircuit, X, Bot } from 'lucide-react';
 import PlanViewMonthly from './PlanViewMonthly';
 import PlanViewDaily from './PlanViewDaily';
 import PlanViewChecklist from './PlanViewChecklist';
@@ -37,7 +37,7 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
   return (
     <div className="fixed inset-0 z-[100] bg-zinc-50 dark:bg-zinc-950 overflow-y-auto p-6 md:p-10 animate-fadeIn">
       <div className="max-w-4xl mx-auto space-y-6">
-        
+
         {/* Toast alerts */}
         {errorMsg && (
           <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center gap-3 animate-fadeIn">
@@ -65,11 +65,11 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
- 
+
           <h2 className="font-semibold text-zinc-800 dark:text-white" style={{ fontSize: fontSize.base }}>
             {examName} roadmap
           </h2>
-          
+
           <div className="w-10" />
         </div>
 
@@ -77,11 +77,10 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
         <div className="flex bg-zinc-100 dark:bg-gray-900/80 p-1.5 rounded-2xl gap-1">
           <button
             onClick={() => setActiveTab('monthly')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${
-              activeTab === 'monthly'
-                ? 'bg-white dark:bg-zinc-800 text-blue-500 shadow-sm border border-zinc-250/20'
-                : 'text-zinc-500 dark:text-gray-400 hover:text-zinc-850 dark:hover:text-white'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${activeTab === 'monthly'
+              ? 'bg-white dark:bg-zinc-800 text-blue-500 shadow-sm border border-zinc-250/20'
+              : 'text-zinc-500 dark:text-gray-400 hover:text-zinc-850 dark:hover:text-white'
+              }`}
           >
             <Calendar className="w-4 h-4 shrink-0" />
             <span className="hidden md:inline">Monthly Overview</span>
@@ -89,35 +88,32 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
 
           <button
             onClick={() => setActiveTab('daily')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${
-              activeTab === 'daily'
-                ? 'bg-white dark:bg-zinc-800 text-blue-500 shadow-sm border border-zinc-250/20'
-                : 'text-zinc-500 dark:text-gray-400 hover:text-zinc-850 dark:hover:text-white'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${activeTab === 'daily'
+              ? 'bg-white dark:bg-zinc-800 text-blue-500 shadow-sm border border-zinc-250/20'
+              : 'text-zinc-500 dark:text-gray-400 hover:text-zinc-850 dark:hover:text-white'
+              }`}
           >
             <ListTodo className="w-4 h-4 shrink-0" />
-            <span className="hidden md:inline">2-Day Tasks</span>
+            <span className="hidden md:inline">Daily Tasks</span>
           </button>
 
           <button
             onClick={() => setActiveTab('mentor')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${
-              activeTab === 'mentor'
-                ? 'bg-white dark:bg-zinc-800 text-blue-500 shadow-sm border border-zinc-250/20'
-                : 'text-zinc-500 dark:text-gray-400 hover:text-zinc-850 dark:hover:text-white'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${activeTab === 'mentor'
+              ? 'bg-white dark:bg-zinc-800 text-blue-500 shadow-sm border border-zinc-250/20'
+              : 'text-zinc-500 dark:text-gray-400 hover:text-zinc-850 dark:hover:text-white'
+              }`}
           >
-            <BrainCircuit className="w-4 h-4 shrink-0" />
+            <Bot className="w-4 h-4 shrink-0" />
             <span className="hidden md:inline">Mentor AI</span>
           </button>
 
           <button
             onClick={() => setActiveTab('checklist')}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${
-              activeTab === 'checklist'
-                ? 'bg-white dark:bg-zinc-800 text-blue-500 shadow-sm border border-zinc-250/20'
-                : 'text-zinc-500 dark:text-gray-400 hover:text-zinc-850 dark:hover:text-white'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${activeTab === 'checklist'
+              ? 'bg-white dark:bg-zinc-800 text-blue-500 shadow-sm border border-zinc-250/20'
+              : 'text-zinc-500 dark:text-gray-400 hover:text-zinc-850 dark:hover:text-white'
+              }`}
           >
             <CheckSquare className="w-4 h-4 shrink-0" />
             <span className="hidden md:inline">Syllabus Progress</span>

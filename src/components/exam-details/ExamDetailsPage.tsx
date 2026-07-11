@@ -59,7 +59,14 @@ export default function ExamDetails() {
     subjectError: ''
   });
   const [isSavingCategory, setIsSavingCategory] = useState(false);
-  const MAX_SUBJECTS = 10;
+  
+  const getMaxSubjects = () => {
+    const premiumType = (userProfile as any)?.PremiumType || '';
+    if (premiumType.toLowerCase().includes('peak')) return 10;
+    if (premiumType.toLowerCase().includes('rise')) return 8;
+    if (premiumType.toLowerCase().includes('lite')) return 5;
+    return 3;
+  };
   const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
 
   // State for exams - initialized as empty
@@ -546,7 +553,7 @@ export default function ExamDetails() {
       <EditCategoryModal
         show={showEditCategoryModal}
         form={editCategoryForm}
-        maxSubjects={MAX_SUBJECTS}
+        maxSubjects={getMaxSubjects()}
         isEditing={isSavingCategory}
         onSave={handleSaveCategory}
         onClose={() => setShowEditCategoryModal(false)}

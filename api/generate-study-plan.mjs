@@ -3,7 +3,7 @@ import { jsonrepair } from 'jsonrepair';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
-const MESH_MODEL = process.env.MESH_MODEL || 'openai/gpt-4o';
+const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
@@ -11,33 +11,36 @@ const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  try {
-    const { subjects, examName, days, userId, authToken } = req.body;
+  const { subjects, examName, days, userId, authToken } = req.body;
 
-    if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
-      return res.status(400).json({ error: 'Invalid subjects data' });
-    }
+  if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
+    return res.status(400).json({ error: 'Invalid subjects data' });
+  }
 
-    if (!examName || !days || isNaN(days)) {
-      return res.status(400).json({ error: 'Invalid exam name or days count' });
-    }
+  if (!examName || !days || isNaN(days)) {
+    return res.status(400).json({ error: 'Invalid exam name or days count' });
+  }
 
-    const calculatedMonths = Math.max(1, Math.round(days / 30));
-    const deductCost = calculatedMonths * subjects.length;
+  const calculatedMonths = Math.max(1, Math.round(days / 30));
+  const deductCost = calculatedMonths * subjects.length;
 
-    const refundCredits = async () => {
-      if (supabaseUrl && supabaseAnonKey && userId && authToken) {
+  const refundCredits = async () => {
+    if (supabaseUrl && supabaseAnonKey && userId && authToken) {
+      try {
         const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
         const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
         await authed.from('profiles').update({ credits: (profile?.credits || 0) + deductCost }).eq('id', userId);
+      } catch (e) {
+        console.error('Refund failed:', e);
       }
-    };
+    }
+  };
 
+  try {
     if (!MESH_API_KEY) {
       return res.status(500).json({ error: 'No MESH_API_KEY config found.' });
     }
 
-    // Reserve credits BEFORE calling AI
     if (supabaseUrl && supabaseAnonKey && userId && authToken) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
@@ -56,13 +59,12 @@ export default async function handler(req, res) {
       }
     }
 
-    // Construct JSON template
     const jsonTemplate = {
       months: Array.from({ length: calculatedMonths }, (_, i) => ({
         month: i + 1,
         subjects: subjects.map(s => ({
           subjectName: s.name,
-          chapters: [] // Array of subtopics/chapters to study this month
+          chapters: []
         }))
       }))
     };
@@ -200,6 +202,7 @@ STRICT RULES:
 
   } catch (error) {
     console.error('Study plan generation exception:', error);
+    await refundCredits();
     return res.status(500).json({ error: error.message });
   }
 }

@@ -3,12 +3,12 @@ import { jsonrepair } from 'jsonrepair';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
-const MESH_MODEL = process.env.MESH_MODEL || 'openai/gpt-4o';
+const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-const DEDUCT_AMOUNT = 15; // 15 credits for detailed month planning
+const DEDUCT_AMOUNT = 15;
 
 function formatDate(date) {
   const dd = String(date.getDate()).padStart(2, '0');
@@ -20,30 +20,33 @@ function formatDate(date) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  try {
-    const { subjects, monthNumber, startDateStr, userId, authToken } = req.body;
+  const { subjects, monthNumber, startDateStr, userId, authToken } = req.body;
 
-    if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
-      return res.status(400).json({ error: 'Invalid subjects data' });
-    }
+  if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
+    return res.status(400).json({ error: 'Invalid subjects data' });
+  }
 
-    if (!monthNumber || !startDateStr) {
-      return res.status(400).json({ error: 'Invalid month number or start date' });
-    }
+  if (!monthNumber || !startDateStr) {
+    return res.status(400).json({ error: 'Invalid month number or start date' });
+  }
 
-    const refundCredits = async () => {
-      if (supabaseUrl && supabaseAnonKey && userId && authToken) {
+  const refundCredits = async () => {
+    if (supabaseUrl && supabaseAnonKey && userId && authToken) {
+      try {
         const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
         const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
         await authed.from('profiles').update({ credits: (profile?.credits || 0) + DEDUCT_AMOUNT }).eq('id', userId);
+      } catch (e) {
+        console.error('Refund failed:', e);
       }
-    };
+    }
+  };
 
+  try {
     if (!MESH_API_KEY) {
       return res.status(500).json({ error: 'No MESH_API_KEY config found.' });
     }
 
-    // Reserve 1 credit BEFORE calling AI
     if (supabaseUrl && supabaseAnonKey && userId && authToken) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
@@ -62,7 +65,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Pre-calculate the exact 15 date ranges (each block is 2 days)
     const startDate = new Date(startDateStr);
     const dateBlocks = [];
     for (let i = 0; i < 15; i++) {
@@ -77,7 +79,7 @@ export default async function handler(req, res) {
         dates: `${formatDate(dayStart)} to ${formatDate(dayEnd)}`,
         subjects: subjects.map(s => ({
           subjectName: s.subjectName,
-          task: "" // To be filled by AI
+          task: ""
         }))
       });
     }
@@ -220,6 +222,7 @@ STRICT INSTRUCTIONS:
 
   } catch (error) {
     console.error('Month detail plan generation exception:', error);
+    await refundCredits();
     return res.status(500).json({ error: error.message });
   }
 }

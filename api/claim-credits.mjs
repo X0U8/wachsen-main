@@ -31,7 +31,6 @@ export default async function handler(req, res) {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const lastClaimed = profile.last_claimed ? new Date(profile.last_claimed) : null;
 
-    // Check if already claimed today (based on midnight reset)
     if (lastClaimed && lastClaimed >= todayStart) {
       const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
       return res.json({ canClaim: false, cooldownRemaining: Math.ceil(msUntilMidnight / 1000), error: 'Already claimed today' });
@@ -39,15 +38,16 @@ export default async function handler(req, res) {
 
     if (check) return res.json({ canClaim: true, dailyCredits });
 
-    // Process claim
+    const newCreditsTotal = (profile.credits || 0) + dailyCredits;
+
     const { error: updateError } = await authed.from('profiles').update({
-      credits: dailyCredits,
+      credits: newCreditsTotal,
       last_claimed: now.toISOString(),
     }).eq('id', userId);
 
     if (updateError) return res.status(500).json({ error: 'Failed to update credits' });
 
-    return res.json({ success: true, creditsAdded: dailyCredits, newTotal: dailyCredits, lastClaimed: now.toISOString() });
+    return res.json({ success: true, creditsAdded: dailyCredits, newTotal: newCreditsTotal, lastClaimed: now.toISOString() });
   } catch (error) {
     console.error('Claim credits error:', error);
     return res.status(500).json({ error: 'Internal server error' });

@@ -2,15 +2,28 @@ import { createClient } from '@supabase/supabase-js';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
-const MESH_MODEL = 'google/gemini-2.5-flash';
+const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-const CHAT_DEDUCT_AMOUNT = 1; // 1 credit per message
+const CHAT_DEDUCT_AMOUNT = 1;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const refundCredits = async () => {
+    try {
+      const { userId, authToken } = req.body;
+      if (supabaseUrl && supabaseAnonKey && userId && authToken) {
+        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
+        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
+        await authed.from('profiles').update({ credits: (profile?.credits || 0) + CHAT_DEDUCT_AMOUNT }).eq('id', userId);
+      }
+    } catch (e) {
+      console.error('Refund failed:', e);
+    }
+  };
 
   try {
     const { 
@@ -27,19 +40,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required parameters.' });
     }
 
-    const refundCredits = async () => {
-      if (supabaseUrl && supabaseAnonKey) {
-        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
-        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-        await authed.from('profiles').update({ credits: (profile?.credits || 0) + CHAT_DEDUCT_AMOUNT }).eq('id', userId);
-      }
-    };
-
     if (!MESH_API_KEY) {
       return res.status(500).json({ error: 'No MESH_API_KEY config found.' });
     }
 
-    // Reserve 1 credit
     if (supabaseUrl && supabaseAnonKey) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
@@ -58,7 +62,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Construct the context-enriched system message
     let systemContext = `You are Mentor AI, an expert, friendly study mentor helping the student prepare for their target exams.
 Your tone is highly encouraging, supportive, and direct.
 STRICT RULE: Answer in short, concise paragraphs (maximum 2-3 sentences per response). Do not give long explanations unless specifically asked. Keep answers brief and actionable.
@@ -80,7 +83,6 @@ ${examsPerformance && examsPerformance.length > 0
 Math Delimiters Instructions:
 For any mathematical formulas/expressions, use ONLY single dollar sign delimiters $...$. NEVER use \\( \\) or \\[ \\].`;
 
-    // Map history to OpenAI/Mesh format
     const messagesPayload = [
       { role: 'system', content: systemContext }
     ];
@@ -94,7 +96,6 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
       });
     }
 
-    // Add current user message
     messagesPayload.push({
       role: 'user',
       content: message
@@ -153,6 +154,7 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
 
   } catch (error) {
     console.error('Mentor chat handler exception:', error);
+    await refundCredits();
     return res.status(500).json({ error: error.message });
   }
 }

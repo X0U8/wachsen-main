@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
-const MESH_MODEL = process.env.MESH_MODEL || 'openai/gpt-4o';
+const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
@@ -41,7 +41,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'No API key provided. Set MESH_API_KEY in .env or provide an apiKey.' });
     }
 
-    // Initial credit verification BEFORE calling AI (Bypass if useOwnKey is true)
     let currentCredits = 0;
     let authedSupabase = null;
     if (!useOwnKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
@@ -55,22 +54,11 @@ export default async function handler(req, res) {
       }
     }
 
-    if (!question) {
-      return res.status(400).json({ error: 'Missing question content' });
-    }
-
-    if (!meshKey) {
-      return res.status(500).json({ error: 'No API key provided. Set MESH_API_KEY in .env or provide an apiKey.' });
-    }
-
-    // Build the system prompt (direct, clear, and concise but allows full mathematical derivations; restricts raw markdown symbols)
     const systemPrompt = `You are a helpful tutor explaining exam questions. Be direct, clear, and explain in short. Avoid unnecessary conversational fluff. Keep explanations concise, but make sure to write out all mathematical steps and derivations fully and clearly.
 
 Do NOT use raw markdown formatting symbols like headers (###), markdown bolding (**), bullet lists with dashes, or dividers (---). Instead, format your output into separate, clean paragraphs. Start a new line whenever a new step, equation, or part of the explanation begins (e.g. after full stops, colons, or semicolons where appropriate) to make the text clean, readable, and well-spaced.
 
 Wrap any math content, variables, formulas, or equations in single $...$ delimiters for inline LaTeX (e.g. $E = mc^2$).
-
-
 
 Context of the question under discussion:
 Question: "${question}"
@@ -78,7 +66,6 @@ ${options && Array.isArray(options) && options.length > 0 ? `Options:\n${options
 Correct Answer: "${correctAnswer}"
 User's Answer: "${userAnswer || '(No answer provided)'}"`;
 
-    // Map conversation history
     const conversationMessages = [
       { role: 'system', content: systemPrompt },
       ...history.map(msg => ({
@@ -112,7 +99,6 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
 
     const reply = data.choices?.[0]?.message?.content || '';
 
-    // Calculate actual cost based on total tokens used (1 credit per 1000 tokens, min 1)
     let finalCredits = null;
     let creditsDeducted = 0;
     if (!useOwnKey && authedSupabase && userId) {

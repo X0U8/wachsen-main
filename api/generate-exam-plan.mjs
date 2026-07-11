@@ -4,7 +4,7 @@ import { jsonrepair } from 'jsonrepair';
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
-const MESH_MODEL = process.env.MESH_MODEL || 'openai/gpt-4o';
+const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
@@ -14,21 +14,25 @@ const DEDUCT_AMOUNT = 2;
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  try {
-    const { subjects, examName, difficulty, userId, authToken, apiKey: userKey, provider, model } = req.body;
-    const isByok = !!(userKey && userKey.trim());
-    const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
-    const isMistral = activeProvider === 'mistral';
-    const meshKey = isByok ? userKey : MESH_API_KEY;
+  const { subjects, examName, difficulty, userId, authToken, apiKey: userKey, provider, model } = req.body;
+  const isByok = !!(userKey && userKey.trim());
+  const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
+  const isMistral = activeProvider === 'mistral';
+  const meshKey = isByok ? userKey : MESH_API_KEY;
 
-    const refundCredits = async () => {
-      if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
+  const refundCredits = async () => {
+    if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
+      try {
         const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
         const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
         await authed.from('profiles').update({ credits: (profile?.credits || 0) + DEDUCT_AMOUNT }).eq('id', userId);
+      } catch (e) {
+        console.error('Refund failed:', e);
       }
-    };
+    }
+  };
 
+  try {
     if (!subjects || !Array.isArray(subjects) || subjects.length === 0) {
       return res.status(400).json({ error: 'Invalid subjects data' });
     }
@@ -37,8 +41,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'No API key provided. Set MESH_API_KEY in .env or provide an apiKey.' });
     }
 
-
-    // Reserve credits BEFORE calling AI
     if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
@@ -55,14 +57,12 @@ export default async function handler(req, res) {
       if (deductError || !updated || updated.length === 0) {
         return res.status(500).json({ error: 'Failed to reserve credits.' });
       }
-    } else {
     }
 
     const subjectsTemplate = subjects.map(sub => {
       const segments = [];
       let currentQuestionIndex = 1;
 
-      // Group question types and generate segments of exactly 5 questions (or remainder)
       sub.questionTypes.forEach(qt => {
         const type = qt.type.toLowerCase();
         const totalForType = qt.count;
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
           segments.push({
             range: `${start}-${end}`,
             type: type,
-            topics: [] // To be filled by AI
+            topics: []
           });
           currentQuestionIndex = end + 1;
         }
@@ -140,6 +140,7 @@ STRICT RULES:
 
     if (!content) {
       await refundCredits();
+      return res.status(502).json({ error: `${apiLabel} API returned empty content` });
     }
 
     content = content.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
@@ -192,17 +193,12 @@ STRICT RULES:
       }
     }
 
-    // Normalize LaTeX delimiters and fix common AI formatting mistakes
     const fixLatex = (obj) => {
       if (typeof obj === 'string') {
         let s = obj;
-        // 1. Fix double-wrapped: $\(...\)$ → $...$
         s = s.replace(/\$\s*\\+\(\s*([\s\S]*?)\s*\\+\)\s*\$/g, (_, inner) => `$${inner}$`);
-        // 2. Convert standalone \(...\) → $...$
         s = s.replace(/\\+\(([\s\S]*?)\\+\)/g, (_, inner) => `$${inner}$`);
-        // 3. Convert standalone \[...\] → $...$
         s = s.replace(/\\+\[([\s\S]*?)\\+\]/g, (_, inner) => `$${inner}$`);
-        // 4. Normalize row separators: runs of backslashes before space → \\
         s = s.replace(/\\+(?= )/g, '\\\\');
         return s;
       }
@@ -212,7 +208,6 @@ STRICT RULES:
     };
     parsedPlan = fixLatex(parsedPlan);
 
-    // Validate format
     if (!Array.isArray(parsedPlan?.subjects) || parsedPlan.subjects.length === 0) {
       await refundCredits();
       return res.status(422).json({ error: 'Response missing subjects array', raw: content });

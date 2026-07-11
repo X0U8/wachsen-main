@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
-const MESH_MODEL = process.env.MESH_MODEL || 'openai/gpt-4o';
+const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
@@ -30,12 +30,22 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'No API key provided.' });
     }
 
-
-    // Calculate question count from segment range
     const [segStart, segEnd] = (segment.range || '1-1').split('-').map(Number);
     const questionCount = (segEnd || segStart) - segStart + 1;
 
-    // Reserve credits BEFORE calling AI (skip if credits were pre-reserved by FinalizeExam)
+    const refundCredits = async () => {
+      if (creditsPreReserved) return;
+      if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
+        try {
+          const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
+          const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
+          await authed.from('profiles').update({ credits: (profile?.credits || 0) + questionCount }).eq('id', userId);
+        } catch (e) {
+          console.error('Credit refund failed:', e);
+        }
+      }
+    };
+
     if (!creditsPreReserved && !isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
       const authed = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
@@ -52,10 +62,8 @@ export default async function handler(req, res) {
       if (deductError || !updated || updated.length === 0) {
         return res.status(500).json({ error: 'Failed to reserve credits.' });
       }
-    } else {
     }
 
-    // Flatten question types to identify exactly what this segment range contains
     const questionSequence = [];
     for (const qt of questionTypes) {
       for (let i = 0; i < qt.count; i++) {
@@ -65,9 +73,8 @@ export default async function handler(req, res) {
 
     let segmentType = (segment.type || '').toLowerCase().trim();
     if (!segmentType) {
-      // Fallback: detect type from range sequence
-      const segStart = parseInt(segment.range.split('-')[0]);
-      const qTypeObj = questionSequence[segStart - 1];
+      const segStartVal = parseInt(segment.range.split('-')[0]);
+      const qTypeObj = questionSequence[segStartVal - 1];
       segmentType = qTypeObj?.type || 'mcq';
     }
 
@@ -332,17 +339,12 @@ ${formatExample}`;
       }
     }
 
-    // Normalize LaTeX delimiters and fix common AI formatting mistakes
     const fixLatex = (obj) => {
       if (typeof obj === 'string') {
         let s = obj;
-        // 1. Fix double-wrapped: $\(...\)$ → $...$
         s = s.replace(/\$\s*\\+\(\s*([\s\S]*?)\s*\\+\)\s*\$/g, (_, inner) => `$${inner}$`);
-        // 2. Convert standalone \(...\) → $...$
         s = s.replace(/\\+\(([\s\S]*?)\\+\)/g, (_, inner) => `$${inner}$`);
-        // 3. Convert standalone \[...\] → $...$
         s = s.replace(/\\+\[([\s\S]*?)\\+\]/g, (_, inner) => `$${inner}$`);
-        // 4. Normalize row separators: runs of backslashes before space → \\
         s = s.replace(/\\+(?= )/g, '\\\\');
         return s;
       }
@@ -352,16 +354,6 @@ ${formatExample}`;
     };
     parsedQuestions = fixLatex(parsedQuestions);
 
-    const refundCredits = async () => {
-      if (creditsPreReserved) return; // FinalizeExam handles refund for pre-reserved credits
-      if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
-        const authed = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${authToken}` } } });
-        const { data: profile } = await authed.from('profiles').select('credits').eq('id', userId).single();
-        await authed.from('profiles').update({ credits: (profile?.credits || 0) + questionCount }).eq('id', userId);
-      }
-    };
-
-    // Strip extra fields — keep only what we need, regardless of what AI added
     const ALLOWED_FIELDS = ['id', 'type', 'question', 'options', 'correct_answer', 'difficulty'];
     parsedQuestions.questions = parsedQuestions.questions.map(q => {
       const clean = {};
@@ -369,7 +361,6 @@ ${formatExample}`;
       return clean;
     });
 
-    // Post-process MCQ correct_answer to resolve mismatch/label issues (e.g. correct_answer is "Option A" but option is "Option A: $x^2$")
     if (Array.isArray(parsedQuestions?.questions)) {
       for (const q of parsedQuestions.questions) {
         if (q.type === 'mcq' && Array.isArray(q.options) && q.options.length > 0) {
@@ -377,12 +368,10 @@ ${formatExample}`;
 
           if (!correctStr) continue;
 
-          // If it matches exactly one of the options, we are good.
           if (q.options.includes(correctStr)) continue;
 
           let matchedOption = null;
 
-          // 1. Case-insensitive exact match
           for (const opt of q.options) {
             if (String(opt).trim().toLowerCase() === correctStr.toLowerCase()) {
               matchedOption = opt;
@@ -390,20 +379,17 @@ ${formatExample}`;
             }
           }
 
-          // 2. Try parsing index from "A", "B", "C", "D", "Option A", "option a" etc.
           if (!matchedOption) {
             const matchLetter = correctStr.match(/^(?:option\s+)?([a-d])\b/i);
             if (matchLetter) {
               const letter = matchLetter[1].toUpperCase();
-              const index = letter.charCodeAt(0) - 65; // A=0, B=1...
+              const index = letter.charCodeAt(0) - 65;
               if (index >= 0 && index < q.options.length) {
                 matchedOption = q.options[index];
               }
             }
           }
 
-          // 3. Prefix matching: if option starts with correct_answer (e.g. option is "Option A: text", correctStr is "Option A")
-          // or if correct_answer starts with option (e.g. correctStr is "Option A: text", option is "Option A")
           if (!matchedOption) {
             for (const opt of q.options) {
               const optStr = String(opt).trim();
@@ -426,7 +412,6 @@ ${formatExample}`;
       return res.status(422).json({ error: 'Response missing questions array', raw: content });
     }
 
-    // Validate each question format
     for (const q of parsedQuestions.questions) {
       if (!q.id || !q.type || !q.question || !q.correct_answer) {
         await refundCredits();
@@ -438,11 +423,8 @@ ${formatExample}`;
       }
     }
 
-    // Credits already reserved — no extra deduction needed
-
     return res.status(200).json({ success: true, questions: parsedQuestions.questions, raw: content });
   } catch (error) {
-    // Refund credits on failure (skip if pre-reserved — FinalizeExam handles that)
     if (!creditsPreReserved && !isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
       try {
         const authed = createClient(supabaseUrl, supabaseAnonKey, {

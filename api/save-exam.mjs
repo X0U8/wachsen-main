@@ -12,7 +12,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'examName and createdBy are required' });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const authToken = examData.authToken;
+    if (!authToken) {
+      return res.status(401).json({ error: 'Unauthorized. Missing authToken.' });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${authToken}` } }
+    });
 
     const { data, error } = await supabase.from('exams').insert({
       examName: examData.examName,

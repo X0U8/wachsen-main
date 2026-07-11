@@ -4,7 +4,6 @@ import Footer from '../Footer';
 import SpotlightCard from '../../ui/SpotlightCard';
 import TextType from '../../ui/TextType';
 import PlanIcon from '../../ui/PlanIcon';
-import BuyCreditsModal from '../../ui/BuyCreditsModal';
 import { Plus, Lock } from 'lucide-react';
 import { SettingsIcon } from '../../icons/SettingsIcon';
 import { supabase } from '../../services/supabase';
@@ -40,7 +39,6 @@ export default function Exam() {
   const [userId, setUserId] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [disabledItemName, setDisabledItemName] = useState('');
-  const [showBuyCredits, setShowBuyCredits] = useState(false);
   const [showClaim, setShowClaim] = useState(false);
   const [showIcon, setShowIcon] = useState(false);
   const [upcomingExams, setUpcomingExams] = useState<any[]>([]);
@@ -56,8 +54,7 @@ export default function Exam() {
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const getMaxExamTypes = () => {
-    const profile = localProfile || userProfile;
-    const premiumType = (profile as any)?.PremiumType || '';
+    const premiumType = (userProfile as any)?.PremiumType || '';
     if (premiumType.toLowerCase().includes('peak')) return 20;
     if (premiumType.toLowerCase().includes('rise')) return 15;
     if (premiumType.toLowerCase().includes('lite')) return 10;
@@ -65,8 +62,7 @@ export default function Exam() {
   };
 
   const getMaxSubjects = () => {
-    const profile = localProfile || userProfile;
-    const premiumType = (profile as any)?.PremiumType || '';
+    const premiumType = (userProfile as any)?.PremiumType || '';
     if (premiumType.toLowerCase().includes('peak')) return 10;
     if (premiumType.toLowerCase().includes('rise')) return 8;
     if (premiumType.toLowerCase().includes('lite')) return 5;
@@ -322,14 +318,14 @@ export default function Exam() {
         <div>
           <h1 className="flex items-center gap-2 font-semibold tracking-tight text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.lg }}>
             <TextType text={greeting} typingSpeed={200} pauseDuration={2000} showCursor={false} loop={false} />
-            {showIcon && userProfile?.PremiumType && userProfile.PremiumType !== 'Free' && (
-              <PlanIcon planName={userProfile.PremiumType} />
-            )}
           </h1>
           <p className="text-zinc-450 dark:text-gray-550 mt-1" style={{ fontSize: fontSize.sm }}>{today}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2 bg-zinc-150/50 dark:bg-gray-900/50 border border-zinc-250 dark:border-gray-800 rounded-xl px-2.5 sm:px-3 py-1.5 text-zinc-600 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
+            {userProfile?.PremiumType && userProfile.PremiumType !== 'Free' && (
+              <PlanIcon planName={userProfile.PremiumType} className="mr-0.5 shrink-0" />
+            )}
             <strong className="text-zinc-850 dark:text-gray-100 font-semibold">{userProfile?.credits || 0}</strong>
             <span className="hidden sm:inline">credits</span>
             <button onClick={() => setShowClaim(true)} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Daily credits">+</button>
@@ -469,18 +465,6 @@ export default function Exam() {
         <SubscriptionModal name={disabledItemName} onClose={() => setShowUpgradeModal(false)} />
       )}
 
-      {/* Buy Credits Modal */}
-      {showBuyCredits && (
-        <BuyCreditsModal
-          onClose={() => setShowBuyCredits(false)}
-          userId={userProfile?.$id}
-          onPaymentSuccess={async () => { await refreshCredits(); }}
-          currentPlan={userProfile?.PremiumType}
-          isPremium={userProfile?.isPremium}
-          premiumEnds={userProfile?.premiumEnds}
-          refreshProfile={refreshProfile}
-        />
-      )}
 
       {/* Notification */}
       {notification && (

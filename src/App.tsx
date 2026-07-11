@@ -11,6 +11,7 @@ import Results from './components/results/Results';
 import ResultDetails from './components/results/ResultDetails';
 import RevisionLog from './components/RevisionLog';
 import Friends from './components/Friends';
+import Subscription from './components/Subscription';
 
 import { UserProvider, useUserProfile } from './lib/UserContext.tsx';
 import { ThemeProvider } from './lib/ThemeContext.tsx';
@@ -116,6 +117,7 @@ function MainApp() {
       <Route path="/revision/:examId" element={<RevisionLog />} />
       <Route path="/friends" element={<Friends />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/subscription" element={<Subscription />} />
       <Route path="*" element={<Navigate to="/exam" />} />
     </Routes>
   );

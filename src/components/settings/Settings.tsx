@@ -4,7 +4,6 @@ import { useTheme } from '../../lib/ThemeContext.tsx';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
 import { ArrowLeft, Sun, Moon, Type, Gift, Key, Check, Eye, EyeOff, Trash2, AlertTriangle, Plus, User } from 'lucide-react';
-import BuyCreditsModal from '../../ui/BuyCreditsModal';
 import { supabase } from '../../services/supabase';
 import EditProfileModal from './EditProfileModal';
 
@@ -21,7 +20,6 @@ export default function Settings() {
   const navigate = useNavigate();
   const { theme, toggleTheme, fontSizeLevel, setFontSizeLevel } = useTheme();
   const { userProfile, refreshCredits, refreshProfile } = useUserProfile();
-  const [showBuy, setShowBuy] = useState(false);
   const [meshKey, setMeshKey] = useState('');
   const [mistralKey, setMistralKey] = useState('');
   const [showKey, setShowKey] = useState(false);
@@ -168,8 +166,8 @@ export default function Settings() {
                   </p>
                 </div>
               </div>
-              <button onClick={() => setShowBuy(true)}
-                className="px-3 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-lg font-medium transition-colors"
+              <button onClick={() => navigate('/subscription')}
+                className="px-3 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-lg font-medium transition-colors cursor-pointer"
                 style={{ fontSize: fontSize.xs }}>Upgrade</button>
             </div>
           </div>
@@ -353,18 +351,6 @@ export default function Settings() {
             </div>
           </div>
         </div>
-      )}
-
-      {showBuy && (
-        <BuyCreditsModal
-          onClose={() => setShowBuy(false)}
-          userId={userProfile?.$id}
-          onPaymentSuccess={async () => { await refreshCredits(); }}
-          currentPlan={userProfile?.PremiumType}
-          isPremium={userProfile?.isPremium}
-          premiumEnds={userProfile?.premiumEnds}
-          refreshProfile={refreshProfile}
-        />
       )}
 
       <EditProfileModal show={showEditProfile} onClose={() => setShowEditProfile(false)} />

@@ -1,5 +1,5 @@
 import { X, CircleStop, Loader2, Sparkle, ShieldCheck, CheckCircle2, Globe } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Notification from './Notification.tsx';
 import TiltedCard from './TiltedCard.tsx';
 import PlanIcon from './PlanIcon.tsx';
@@ -220,9 +220,11 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
   const [loadingRates, setLoadingRates] = useState(false);
   const [ratesLoaded, setRatesLoaded] = useState(false);
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const savedCountry = localStorage.getItem('glixup_country');
-    let countryToSet = countries.find(c => c.code === 'US') || countries[0];
+    let countryToSet = countries.find(c => c.code === 'IN') || countries[0];
 
     if (savedCountry) {
       const country = countries.find(c => c.code === savedCountry);
@@ -233,6 +235,20 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
 
     setSelectedCountry(countryToSet);
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false);
+      }
+    }
+    if (showCountryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCountryDropdown]);
 
   const handleCountryChange = (country: typeof countries[0]) => {
     setSelectedCountry(country);
@@ -277,6 +293,37 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
     fetchExchangeRates();
   }, []);
 
+  const [activePeriod, setActivePeriod] = useState<string>('month');
+
+  useEffect(() => {
+    if (!userId) return;
+    async function fetchLatestTransaction() {
+      try {
+        console.log('Querying transactions for userId:', userId);
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('period')
+          .eq('user_id', userId)
+          .eq('status', 'success')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Supabase error fetching latest transaction:', error);
+        } else if (data) {
+          console.log('Latest successful transaction:', data);
+          setActivePeriod(data.period || 'month');
+        } else {
+          console.log('No successful transaction records found for userId:', userId);
+        }
+      } catch (err) {
+        console.error('Catch error fetching latest transaction:', err);
+      }
+    }
+    fetchLatestTransaction();
+  }, [userId]);
+
   const isPremiumActive = () => {
     if (!premiumEnds || !isPremium) return false;
     const endDate = new Date(premiumEnds);
@@ -299,15 +346,26 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
     const planFromStorage = userProfile?.PremiumType;
     const planToCheck = planFromProps || planFromStorage;
 
-    if (!planToCheck) return false;
+    // Determine normalized current plan name using keyword matching
+    let userPlan = 'Free';
+    if (planToCheck) {
+      const p = planToCheck.toLowerCase();
+      if (p.includes('lite')) userPlan = 'Glix Lite';
+      else if (p.includes('rise')) userPlan = 'Glix Rise';
+      else if (p.includes('peak')) userPlan = 'Glix Peak';
+    }
 
-    const baseCurrentPlan = planToCheck.replace(/_month|_year|_monthly|_yearly$/, '');
-    const currentPeriod = planToCheck.match(/(_month|_year|_monthly|_yearly)$/)?.[1] || '';
+    // Check if the plan name matches the tier name
+    if (userPlan !== tierName) return false;
 
-    const expectedPeriod = isYearly ? '_yearly' : '_monthly';
-    const currentPeriodNormalized = currentPeriod.replace('_year', '_yearly').replace('_month', '_monthly');
+    // For free plan, it's always in use
+    if (tierName === 'Free') return true;
 
-    return baseCurrentPlan === tierName && currentPeriodNormalized === expectedPeriod;
+    // For paid tiers, check if it matches the tab period
+    const isYearlyPlan = activePeriod.toLowerCase().includes('year') || activePeriod.toLowerCase() === 'yearly';
+    const expectedIsYearly = isYearly;
+
+    return isYearlyPlan === expectedIsYearly;
   };
 
   const handlePurchaseClick = (tier: any) => {
@@ -517,68 +575,105 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
 
         <div className="relative bg-gray-100/50 dark:bg-gray-900/50 border border-black/10 dark:border-white/10 rounded-[3rem] w-full max-w-[1100px] shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
 
-          <div className="p-6 sm:p-10 pb-6 flex items-center justify-between">
+          <div className="px-6 sm:px-10 pt-6 pb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-gray-900 dark:text-white tracking-tight" style={{ fontSize: fontSize['3xl'] }}>
+              <h2 className="text-gray-900 dark:text-white tracking-tight font-bold" style={{ fontSize: fontSize.xl }}>
                 Ready to <span className="text-blue-600 dark:text-blue-500">Level Up?</span>
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-3 sm:p-4 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all"
+              className="p-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all"
             >
-              <X className="w-5 h-5 sm:w-7 sm:h-7" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="px-8 pb-4 flex justify-center">
-            <div className="relative">
-              <button
-                onClick={() => setShowCountryDropdown(!showCountryDropdown)}
-                className="flex items-center gap-2 bg-gray-200/40 dark:bg-black/40 hover:bg-gray-300/60 dark:hover:bg-black/60 rounded-xl px-4 py-2.5 border border-black/5 dark:border-white/5 transition-all"
-              >
-                <Globe className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                <span className="text-gray-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{selectedCountry.name}</span>
-                <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>({selectedCountry.currency})</span>
-              </button>
+          {/* Current Plan Status Bar */}
+          <div className="px-6 sm:px-10 pb-3">
+            <div className="flex items-center justify-between gap-3 bg-gray-200/60 dark:bg-black/40 border border-black/5 dark:border-white/5 rounded-2xl px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-2 h-2 rounded-full ${currentPlan && currentPlan !== 'Free' && isPremiumActive() ? 'bg-green-500' : 'bg-gray-400'}`} />
+                <div>
+                  <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Current plan</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-gray-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{currentPlan || 'Free'}</span>
+                    {currentPlan && currentPlan !== 'Free' && isPremiumActive() ? (
+                      <span className="text-green-600 dark:text-green-400" style={{ fontSize: fontSize.xs }}>
+                        Expires {new Date(premiumEnds || '').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>No expiry</span>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-              {showCountryDropdown && (
-                <div className="absolute top-full left-0 mt-2 bg-gray-100 dark:bg-gray-900 border border-black/10 dark:border-white/10 rounded-xl shadow-xl z-10 w-48 max-h-64 overflow-y-auto">
-                  {countries.map((country) => (
-                    <button
-                      key={country.code}
-                      onClick={() => handleCountryChange(country)}
-                      className={`w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-all ${selectedCountry.code === country.code ? 'bg-black/10 dark:bg-white/10' : ''
-                        }`}
-                    >
-                      <span className="text-gray-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{country.name}</span>
-                      <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>({country.currency})</span>
-                    </button>
-                  ))}
+              {/* Days left indicator */}
+              {currentPlan && currentPlan !== 'Free' && isPremiumActive() && premiumEnds ? (
+                <div className="flex flex-col items-end">
+                  <span className="font-bold text-green-600 dark:text-green-400" style={{ fontSize: fontSize.sm }}>
+                    {Math.max(0, Math.ceil((new Date(premiumEnds).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days
+                  </span>
+                  <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: '0.625rem' }}>remaining</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-end">
+                  <span className="font-bold text-gray-400 dark:text-gray-500" style={{ fontSize: fontSize.sm }}>∞</span>
+                  <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: '0.625rem' }}>no expiry</span>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="px-8 pb-8 flex justify-center">
-            <div className="flex items-center bg-gray-200/40 dark:bg-black/40 rounded-2xl p-1.5 border border-black/5 dark:border-white/5">
+          {/* Currency selector + Monthly/Yearly toggle row */}
+          <div className="px-6 sm:px-10 pb-5 flex items-center justify-between gap-3">
+            {/* Currency selector */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                className="flex items-center gap-1.5 bg-gray-200/60 dark:bg-black/40 hover:bg-gray-300/60 dark:hover:bg-white/5 rounded-lg px-2.5 py-1.5 border border-black/5 dark:border-white/5 transition-all"
+              >
+                <Globe className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                <span className="text-gray-900 dark:text-white" style={{ fontSize: '0.625rem' }}>{selectedCountry.currency}</span>
+              </button>
+
+              {showCountryDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-gray-100 dark:bg-gray-900 border border-black/10 dark:border-white/10 rounded-xl shadow-xl z-10 w-52 max-h-64 overflow-y-auto">
+                  {countries.map((country) => (
+                    <button
+                      key={country.code}
+                      onClick={() => handleCountryChange(country)}
+                      className={`w-full flex items-center justify-between px-4 py-2 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-all ${selectedCountry.code === country.code ? 'bg-black/10 dark:bg-white/10' : ''}`}
+                    >
+                      <span className="text-gray-900 dark:text-white" style={{ fontSize: fontSize.xs }}>{country.name}</span>
+                      <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: '0.625rem' }}>({country.currency})</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Monthly / Yearly toggle */}
+            <div className="flex items-center bg-gray-200/40 dark:bg-black/40 rounded-xl p-1 border border-black/5 dark:border-white/5">
               <button
                 onClick={() => setIsYearly(false)}
-                className={`px-8 py-2.5 rounded-xl bold transition-all ${!isYearly ? 'bg-white text-black shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                style={{ fontSize: fontSize.sm }}
+                className={`px-6 py-1.5 rounded-lg font-medium transition-all ${!isYearly ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+                style={{ fontSize: fontSize.xs }}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setIsYearly(true)}
-                className={`px-8 py-2.5 rounded-xl bold transition-all ${isYearly ? 'bg-white text-black shadow-lg' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                style={{ fontSize: fontSize.sm }}
+                className={`px-6 py-1.5 rounded-lg font-medium transition-all ${isYearly ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+                style={{ fontSize: fontSize.xs }}
               >
                 Yearly
               </button>
             </div>
+
+            {/* Spacer to balance the layout */}
+            <div style={{ width: '3rem' }} />
           </div>
 
           <div className={`p-8 pt-0 grid gap-6 ${isYearly ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
@@ -590,11 +685,11 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                 scaleOnHover={1.08}
                 rotateAmplitude={8}
               >
-                <div className={`relative h-full flex flex-col bg-gray-200/40 dark:bg-gray-800/40 border ${tier.popular ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'border-black/10 dark:border-white/10'} rounded-[2.5rem] p-6 backdrop-blur-sm transition-all`}>
+                <div className={`relative h-full flex flex-col bg-gray-200/40 dark:bg-gray-800/40 border ${isCurrentPlan(tier.name) || (!isPremium && tier.name === 'Free') ? 'border-green-500/60 ring-1 ring-green-500/20' : tier.popular ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'border-black/10 dark:border-white/10'} rounded-[2.5rem] p-6 backdrop-blur-sm transition-all`}>
 
                   {isYearly && !isCurrentPlan(tier.name) && (
-                    <div className="absolute top-4 right-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>
-                      2 Months Free
+                    <div className="absolute top-2 right-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wide" style={{ fontSize: '0.55rem' }}>
+                      2 Mo. Free
                     </div>
                   )}
 
@@ -706,18 +801,18 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                   </div>
 
                   <button
-                    onClick={() => handlePurchaseClick(tier)}
+                    onClick={() => (isCurrentPlan(tier.name) || (!isPremium && tier.name === 'Free')) ? undefined : handlePurchaseClick(tier)}
                     disabled={loading || isCurrentPlan(tier.name) || (!isPremium && tier.name === 'Free')}
-                    className={`w-full py-2 sm:py-3 rounded-xl transition-all transform active:scale-95 flex items-center justify-center gap-2 font-medium
+                    className={`w-full py-2 rounded-xl transition-all transform active:scale-95 flex items-center justify-center gap-2 font-medium
                       ${isCurrentPlan(tier.name) || (!isPremium && tier.name === 'Free')
-                        ? 'bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed'
+                        ? 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400 border border-green-400/40 cursor-default'
                         : tier.popular
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-900/20 hover:brightness-110'
-                          : 'bg-white text-black hover:bg-gray-200'}
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-900/20 hover:brightness-110 cursor-pointer'
+                          : 'bg-white text-black hover:bg-gray-200 cursor-pointer'}
                       disabled:opacity-50`}
-                    style={{ fontSize: fontSize.sm }}
+                    style={{ fontSize: fontSize.xs }}
                   >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : isCurrentPlan(tier.name) || (!isPremium && tier.name === 'Free') ? 'IN USE' : getTierLevel(tier.name) < getTierLevel(currentPlan?.replace(/_monthly|_yearly|_month|_year$/, '') || '') ? 'DOWNGRADE' : 'UPGRADE'}
+                    {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isCurrentPlan(tier.name) || (!isPremium && tier.name === 'Free') ? 'IN USE' : getTierLevel(tier.name) < getTierLevel(currentPlan?.replace(/_monthly|_yearly|_month|_year$/, '') || '') ? 'DOWNGRADE' : 'UPGRADE'}
                   </button>
                 </div>
               </TiltedCard>
@@ -725,9 +820,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
           </div>
 
           <div className="bg-black/[0.02] dark:bg-white/[0.02] p-8 border-t border-black/5 dark:border-white/5 flex flex-col items-center justify-between gap-4">
-            <p className="text-gray-500 dark:text-gray-600 text-center w-full" style={{ fontSize: fontSize.xs }}>
-              Payments processed via Razorpay. Subscriptions can be cancelled at any time from your dashboard settings.
-            </p>
+
             <p className="text-gray-600 dark:text-gray-500 text-center w-full" style={{ fontSize: fontSize.xs }}>
               When you upgrade to any different plan, the plan will start instantly and does not wait for your current subscription to end.
             </p>

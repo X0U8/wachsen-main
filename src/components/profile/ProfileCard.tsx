@@ -607,7 +607,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                         background: theme === 'dark' ? '#0f0f23' : '#1e293b',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
                       }}>
-                        <PlanIcon planName={userProfile.PremiumType} />
+                        <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
                         <span style={{
                           fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em',
                           color: '#ffffff', textTransform: 'uppercase',
@@ -775,7 +775,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                           background: theme === 'dark' ? '#0f0f23' : '#1e293b',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
                         }}>
-                          <PlanIcon planName={userProfile.PremiumType} />
+                          <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
                           <span style={{
                             fontSize: '8px', fontWeight: 600, letterSpacing: '0.05em',
                             color: '#ffffff', textTransform: 'uppercase',

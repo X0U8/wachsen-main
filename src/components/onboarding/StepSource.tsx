@@ -10,7 +10,7 @@ interface StepSourceProps {
 export default function StepSource({ value, onChange, selectCls }: StepSourceProps) {
   return (
     <div className="space-y-4">
-      <label className="block font-medium text-zinc-600 dark:text-zinc-350" style={{ fontSize: fontSize.sm }}>From where did you hear about us?</label>
+      <label className="block font-medium text-black dark:text-white" style={{ fontSize: fontSize.base }}>From where did you hear about us?</label>
       <select
         className={selectCls}
         style={{ fontSize: fontSize.sm }}

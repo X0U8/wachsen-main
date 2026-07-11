@@ -9,7 +9,7 @@ interface StepFrequencyProps {
 export default function StepFrequency({ value, onChange, inputCls }: StepFrequencyProps) {
   return (
     <div className="space-y-4">
-      <label className="block font-medium text-zinc-600 dark:text-zinc-350" style={{ fontSize: fontSize.sm }}>How many exams do you give per week?</label>
+      <label className="block font-medium text-black dark:text-white" style={{ fontSize: fontSize.base }}>How many exams do you give per week?</label>
       <input
         type="text"
         inputMode="numeric"

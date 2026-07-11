@@ -13,10 +13,10 @@ import StepCountry from './StepCountry';
 import StepSource from './StepSource';
 
 const inputCls =
-  "w-full bg-zinc-50/60 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500/40 rounded-xl px-4 py-3 text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none transition-colors font-sans";
+  "w-full bg-zinc-50/60 dark:bg-zinc-950/60 border border-black/15 dark:border-white/20 focus:border-blue-500 dark:focus:border-white/50 rounded-xl px-4 py-3 text-black dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none transition-colors font-sans";
 
 const selectCls =
-  "w-full bg-zinc-50/60 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500/40 rounded-xl px-4 py-3 text-black dark:text-white focus:outline-none transition-colors font-sans";
+  "w-full bg-zinc-50/60 dark:bg-zinc-950/60 border border-black/15 dark:border-white/20 focus:border-blue-500 dark:focus:border-white/50 rounded-xl px-4 py-3 text-black dark:text-white focus:outline-none transition-colors font-sans";
 
 export default function Onboarding({
   session,
@@ -170,11 +170,10 @@ export default function Onboarding({
   return (
     <div className="min-h-screen bg-white dark:bg-black flex flex-col items-center justify-center p-6 text-black dark:text-white selection:bg-blue-500/30 font-sans">
       <div className="w-full max-w-lg mb-6">
-        <h1 className="font-light text-black dark:text-white tracking-tight" style={{ fontSize: fontSize['3xl'] }}>Welcome to Wachsen!</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-1" style={{ fontSize: fontSize.sm }}>Let's set up your profile.</p>
+        <p className="text-black dark:text-white font-light tracking-tight" style={{ fontSize: fontSize.lg }}>Let's set up your profile</p>
       </div>
 
-      <div className="w-full max-w-lg bg-zinc-50/60 dark:bg-zinc-950/60 border border-black/15 dark:border-white/15 rounded-3xl p-6 backdrop-blur-xl">
+      <div className="w-full max-w-lg bg-zinc-50/60 dark:bg-zinc-950/60 border border-black/15 dark:border-white/20 dark:shadow-[0_0_35px_rgba(255,255,255,0.06)] rounded-3xl p-6 backdrop-blur-xl">
         <Stepper
           onFinalStepCompleted={handleSave}
           onStepChange={(step) => setActiveStep(step)}

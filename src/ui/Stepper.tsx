@@ -72,7 +72,7 @@ export default function Stepper({
 
   return (
     <div className="w-full max-w-lg mx-auto" {...rest}>
-      <div className={`flex justify-between mb-4 ${stepCircleContainerClassName}`}>
+      <div className={`flex justify-between items-center mb-6 overflow-x-auto no-scrollbar py-2 gap-4 ${stepCircleContainerClassName}`}>
         {stepsArray.map((_, index) => {
           const stepNumber = index + 1;
           const isNotLastStep = index < totalSteps - 1;
@@ -114,7 +114,7 @@ export default function Stepper({
           <button
             onClick={handleBack}
             disabled={currentStep === 1}
-            className="flex-1 px-3 py-2 bg-gray-100 dark:bg-zinc-900/60 border border-gray-300/50 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-zinc-800/80 rounded-xl disabled:opacity-30 text-gray-700 dark:text-white font-medium transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed"
+            className="flex-1 px-3 py-2 bg-gray-100 dark:bg-zinc-900/60 border border-gray-300/50 dark:border-white/20 hover:bg-gray-200 dark:hover:bg-zinc-800/80 rounded-xl disabled:opacity-30 text-gray-700 dark:text-white font-medium transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed"
             style={{ fontSize: fontSize.sm }}
             {...backButtonProps}
           >
@@ -147,7 +147,7 @@ export default function Stepper({
 function StepIndicator({ step, currentStep, disableStepIndicators }: { step: number; currentStep: number; disableStepIndicators: boolean }) {
   const status = currentStep === step ? 'active' : currentStep > step ? 'complete' : 'inactive';
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center flex-shrink-0">
       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold transition-colors duration-300 ${
         status === 'active' 
           ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/10 dark:shadow-blue-500/20' 
@@ -162,5 +162,5 @@ function StepIndicator({ step, currentStep, disableStepIndicators }: { step: num
 }
 
 function StepConnector({ isComplete }: { isComplete: boolean }) {
-  return <div className={`flex-1 h-0.5 mx-2 mt-4 transition-colors duration-300 ${isComplete ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-gray-200 dark:bg-zinc-900'}`} />;
+  return <div className={`flex-1 min-w-[24px] h-0.5 mx-1 flex-shrink-0 transition-colors duration-300 ${isComplete ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-gray-200 dark:bg-zinc-900'}`} />;
 }

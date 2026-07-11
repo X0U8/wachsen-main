@@ -9,7 +9,7 @@ interface StepNameProps {
 export default function StepName({ value, onChange, inputCls }: StepNameProps) {
   return (
     <div className="space-y-4">
-      <label className="block font-medium text-zinc-600 dark:text-zinc-350" style={{ fontSize: fontSize.sm }}>What's your name?</label>
+      <label className="block font-medium text-black dark:text-white" style={{ fontSize: fontSize.base }}>What's your name?</label>
       <input
         maxLength={10}
         className={inputCls}

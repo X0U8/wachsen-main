@@ -11,7 +11,7 @@ interface StepUsernameProps {
 export default function StepUsername({ value, onChange, message, verified, inputCls }: StepUsernameProps) {
   return (
     <div className="space-y-4">
-      <label className="block font-medium text-zinc-600 dark:text-zinc-350" style={{ fontSize: fontSize.sm }}>Choose a username</label>
+      <label className="block font-medium text-black dark:text-white" style={{ fontSize: fontSize.base }}>Choose a username</label>
       <div className="relative flex items-center">
         <span className="absolute left-4 text-zinc-500 dark:text-zinc-400 font-medium">@</span>
         <input
@@ -25,7 +25,7 @@ export default function StepUsername({ value, onChange, message, verified, input
         />
       </div>
       {message && (
-        <p className={`text-zinc-500 dark:text-zinc-400 ${verified ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`} style={{ fontSize: fontSize.xs }}>
+        <p className={verified ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'} style={{ fontSize: fontSize.xs }}>
           {message}
         </p>
       )}

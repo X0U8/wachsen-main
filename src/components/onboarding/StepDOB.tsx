@@ -12,7 +12,7 @@ interface StepDOBProps {
 export default function StepDOB({ day, month, year, onChange, selectCls }: StepDOBProps) {
   return (
     <div className="space-y-4">
-      <label className="block font-medium text-zinc-600 dark:text-zinc-350" style={{ fontSize: fontSize.sm }}>Date of Birth</label>
+      <label className="block font-medium text-black dark:text-white" style={{ fontSize: fontSize.base }}>Date of Birth</label>
       <div className="flex gap-3">
         <select
           className={selectCls}
@@ -26,7 +26,7 @@ export default function StepDOB({ day, month, year, onChange, selectCls }: StepD
         <select
           className={selectCls}
           style={{ fontSize: fontSize.sm }}
-          value={month}
+          value={MONTHS[parseInt(month, 10) - 1] || ''}
           onChange={e => {
             const idx = MONTHS.indexOf(e.target.value) + 1;
             onChange('dobMonth', idx ? idx.toString() : '');

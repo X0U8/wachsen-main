@@ -219,7 +219,7 @@ export default function Login() {
                     onKeyDown={(e) => handleKeyDown(idx, e)}
                     onPaste={idx === 0 ? handlePaste : undefined}
                     disabled={busy}
-                    className="w-10 h-12 bg-white dark:bg-zinc-950 border border-blue-200/30 dark:border-blue-900/30 rounded-xl text-black dark:text-white text-center font-semibold focus:outline-none focus:border-blue-500 transition-colors"
+                    className="w-10 h-12 bg-white dark:bg-zinc-950 border border-black/15 dark:border-white/20 rounded-xl text-black dark:text-white text-center font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-white transition-colors"
                     style={{ fontSize: fontSize.lg }}
                   />
                 ))}

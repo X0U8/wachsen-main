@@ -34,7 +34,7 @@ export default function UpcomingTable({ exams, loading, hasMore, onLoadMore }: U
       <div className="bg-white dark:bg-gray-900/30 rounded-xl border border-zinc-200 dark:border-gray-800 shadow-xs overflow-hidden transition-colors">
         <div className="overflow-x-auto">
           <table className="w-full text-left" style={{ fontSize: fontSize.xs }}>
-            <thead className="bg-zinc-50 dark:bg-gray-900/60 text-zinc-500 dark:text-gray-400 uppercase font-semibold tracking-wider border-b border-zinc-200 dark:border-gray-800" style={{ fontSize: '0.625rem' }}>
+            <thead className="bg-zinc-50 dark:bg-gray-900/60 text-zinc-500 dark:text-gray-400 uppercase font-semibold tracking-wider border-b border-zinc-200 dark:border-gray-800" style={{ fontSize: fontSize.xs }}>
               <tr>
                 <th className="px-4 sm:px-5 py-3 sm:py-3.5 font-semibold">Exam Name</th>
                 <th className="px-4 sm:px-5 py-3 sm:py-3.5 font-semibold">Starting Date</th>
@@ -62,7 +62,7 @@ export default function UpcomingTable({ exams, loading, hasMore, onLoadMore }: U
                     <span className={`px-2 py-0.5 rounded-full font-medium ${exam.status === 'Completed' || exam.status === 'Ongoing'
                         ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/40'
                         : 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30'
-                      }`} style={{ fontSize: '0.625rem' }}>
+                      }`} style={{ fontSize: fontSize.xs }}>
                       {exam.status}
                     </span>
                   </td>
@@ -70,7 +70,7 @@ export default function UpcomingTable({ exams, loading, hasMore, onLoadMore }: U
                     <span className={`px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider ${exam.difficulty === 'hard' || exam.difficulty === 'expert'
                         ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-900/30'
                         : 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/40'
-                      }`} style={{ fontSize: '0.625rem' }}>
+                      }`} style={{ fontSize: fontSize.xs }}>
                       {exam.difficulty}
                     </span>
                   </td>

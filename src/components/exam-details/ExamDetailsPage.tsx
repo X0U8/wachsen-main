@@ -238,29 +238,6 @@ export default function ExamDetails() {
   };
 
   const handleSelectExam = async (exam: Exam) => {
-    // Check if expired
-    if (exam.status !== 'Completed' && exam.status !== 'Expired' &&
-      exam.endDateTime && exam.endDateTime !== 'anytime' &&
-      new Date(exam.endDateTime) < new Date()) {
-
-      try {
-        // Update in Supabase
-        const { error } = await supabase
-          .from('exams')
-          .update({ status: 'Expired' })
-          .eq('id', exam.id);
-        if (error) throw error;
-
-        // Update locally
-        const updatedExam = { ...exam, status: 'Expired' as const };
-        setExams(prev => prev.map(e => e.id === exam.id ? updatedExam : e));
-        setSelectedExamForInfo(updatedExam);
-        return;
-      } catch (err) {
-        console.error('Error auto-expiring exam:', err);
-      }
-    }
-
     setSelectedExamForInfo(exam);
   };
 
@@ -288,14 +265,6 @@ export default function ExamDetails() {
     if (!name) return;
     if (editCategoryForm.subjects.length === 0) {
       setEditCategoryForm(f => ({ ...f, subjectError: 'Add at least one subject' }));
-      return;
-    }
-
-    // Check if name is different from current
-    if (name === examType.name &&
-      JSON.stringify(editCategoryForm.subjects) === JSON.stringify(examType.subjects) &&
-      editCategoryForm.academicLevel === examType.academicLevel) {
-      setShowEditCategoryModal(false);
       return;
     }
 
@@ -338,7 +307,6 @@ export default function ExamDetails() {
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100 font-sans antialiased select-none relative">
-      {/* Header */}
       <header className="p-2 flex items-center justify-between border-b border-zinc-200 dark:border-gray-900 bg-white/80 dark:bg-black/50 backdrop-blur-md sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <button
@@ -369,14 +337,12 @@ export default function ExamDetails() {
         </div>
       </header>
 
-      {/* Table Section */}
       <main className="flex-1 p-4 pb-32">
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-zinc-200 dark:border-gray-800 overflow-hidden">
-          {/* Filters */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/15 dark:border-white/20 overflow-hidden dark:shadow-[0_0_35px_rgba(255,255,255,0.06)]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-950/30">
             <div className="flex items-center gap-2">
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                className="bg-zinc-100 dark:bg-gray-950 border border-black/15 dark:border-white/20 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all">
                 <option value="all">All Status</option>
                 <option value="Pending">Pending</option>
                 <option value="active">Active</option>
@@ -384,13 +350,12 @@ export default function ExamDetails() {
                 <option value="Expired">Expired</option>
               </select>
               <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
-                className="bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
+                className="bg-zinc-100 dark:bg-gray-950 border border-black/15 dark:border-white/20 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all">
                 <option value="desc">Newest</option>
                 <option value="asc">Oldest</option>
               </select>
             </div>
 
-            {/* Search Input */}
             <div className="flex items-center gap-1.5 max-w-xs w-full">
               <input
                 type="text"
@@ -402,7 +367,7 @@ export default function ExamDetails() {
                     setActiveSearchQuery(searchInput);
                   }
                 }}
-                className="flex-1 bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-800 dark:text-gray-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 bg-zinc-100 dark:bg-gray-950 border border-black/15 dark:border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-zinc-800 dark:text-gray-200 placeholder-zinc-400 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all"
               />
               <button
                 onClick={() => setActiveSearchQuery(searchInput)}
@@ -430,7 +395,7 @@ export default function ExamDetails() {
           ) : exams.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left" style={{ fontSize: fontSize.sm }}>
-                <thead className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 uppercase font-medium tracking-wider" style={{ fontSize: '0.625rem' }}>
+                <thead className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 uppercase font-medium tracking-wider" style={{ fontSize: fontSize.xs }}>
                   <tr>
                     <th className="px-4 py-3">Exam Name</th>
                     <th className="px-4 py-3">Starting Time</th>
@@ -461,7 +426,7 @@ export default function ExamDetails() {
                           exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
                             exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
                               'bg-yellow-500/10 text-yellow-500'
-                          }`} style={{ fontSize: '0.625rem' }}>
+                          }`} style={{ fontSize: fontSize.xs }}>
                           {exam.status}
                         </span>
                       </td>
@@ -470,7 +435,7 @@ export default function ExamDetails() {
                           exam.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
                             exam.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
                               'bg-red-500/10 text-red-500'
-                          }`} style={{ fontSize: '0.625rem' }}>
+                          }`} style={{ fontSize: fontSize.xs }}>
                           {exam.difficulty}
                         </span>
                       </td>
@@ -492,7 +457,6 @@ export default function ExamDetails() {
           )}
         </div>
 
-        {/* Infinite Scroll Sentinel */}
         {exams.length > 0 && hasMoreExams && (
           <div ref={sentinelRef} className="flex justify-center items-center gap-2 mt-6 py-4 text-zinc-400 dark:text-zinc-550">
             <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
@@ -501,7 +465,6 @@ export default function ExamDetails() {
         )}
       </main>
 
-      {/* Floating Plus Button - Bottom Center */}
       {examType?.name !== 'challenges' && examType?.name !== 'others' && (
         <div className="fixed bottom-10 left-0 right-0 flex justify-center z-20 pointer-events-none">
           <motion.button
@@ -534,19 +497,16 @@ export default function ExamDetails() {
         maxTemplates={maxTemplates}
       />
 
-      {/* Make AI Form Component */}
-      <AnimatePresence>
-        {showMakeAI && (
-          <MakeAIForm
-            show={showMakeAI}
-            onClose={() => setShowMakeAI(false)}
-            mode={'auto'}
-            userProfile={userProfile}
-            categoryId={id || ''}
-            availableSubjects={availableSubjects}
-          />
-        )}
-      </AnimatePresence>
+      {showMakeAI && (
+        <MakeAIForm
+          show={showMakeAI}
+          onClose={() => setShowMakeAI(false)}
+          mode={'auto'}
+          userProfile={userProfile}
+          categoryId={id || ''}
+          availableSubjects={availableSubjects}
+        />
+      )}
 
 
 

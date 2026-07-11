@@ -85,7 +85,7 @@ export default function EditCategoryModal({
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="w-full max-w-md bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto"
+            className="w-full max-w-md bg-white dark:bg-gray-900 border border-black/15 dark:border-white/20 rounded-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl dark:shadow-[0_0_30px_rgba(255,255,255,0.06)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -102,7 +102,7 @@ export default function EditCategoryModal({
                 value={form.examName}
                 onChange={e => updateForm({ examName: e.target.value })}
                 placeholder="e.g. SAT Mathematics or, SAT, JEE , Board Exams"
-                className="w-full bg-zinc-100 dark:bg-gray-800 border border-zinc-200 dark:border-gray-700 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-zinc-400 dark:focus:border-gray-500"
+                className="w-full bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all"
                 style={{ fontSize: fontSize.sm }}
               />
             </div>
@@ -121,13 +121,13 @@ export default function EditCategoryModal({
                   onKeyDown={handleKeyDown}
                   placeholder={form.subjects.length >= maxSubjects ? 'Subject limit reached' : 'Type subject, press Enter'}
                   disabled={form.subjects.length >= maxSubjects}
-                  className="flex-1 bg-zinc-100 dark:bg-gray-800 border border-zinc-200 dark:border-gray-700 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-zinc-400 dark:focus:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex-1 bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{ fontSize: fontSize.sm }}
                 />
                 <button
                   onClick={addSubject}
                   disabled={form.subjects.length >= maxSubjects}
-                  className="px-3 py-2 bg-zinc-200 dark:bg-gray-700 hover:bg-zinc-300 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-zinc-700 dark:text-gray-300"
+                  className="px-3 py-2 bg-zinc-200 dark:bg-zinc-800 border border-black/15 dark:border-white/20 hover:bg-zinc-350 dark:hover:bg-zinc-700 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-zinc-700 dark:text-gray-300"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -164,7 +164,7 @@ export default function EditCategoryModal({
                 onFocus={() => setShowLevelPicker(true)}
                 onBlur={() => setTimeout(() => setShowLevelPicker(false), 150)}
                 placeholder="Type to search level..."
-                className="w-full bg-zinc-100 dark:bg-gray-800 border border-zinc-200 dark:border-gray-700 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-zinc-400 dark:focus:border-gray-500"
+                className="w-full bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all"
                 style={{ fontSize: fontSize.sm }}
               />
               {showLevelPicker && form.academicLevel.trim().length > 0 && (() => {
@@ -172,7 +172,7 @@ export default function EditCategoryModal({
                   l.toLowerCase().startsWith(form.academicLevel.toLowerCase())
                 );
                 return filtered.length > 0 ? (
-                  <div className="absolute bottom-full mb-1 left-0 w-full bg-white dark:bg-gray-800 border border-zinc-200 dark:border-gray-700 rounded-lg overflow-y-auto max-h-48 z-10">
+                  <div className="absolute bottom-full mb-1 left-0 w-full bg-white dark:bg-gray-800 border border-black/15 dark:border-white/20 rounded-lg overflow-y-auto max-h-48 z-10">
                     {filtered.map(level => (
                       <button
                         key={level}

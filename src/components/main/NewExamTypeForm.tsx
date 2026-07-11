@@ -96,7 +96,7 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
     >
       <div className="w-full max-w-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-gray-800 rounded-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto shadow-xl transition-colors">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">New Exam Type</h2>
+          <h2 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.sm }}>New Exam Type</h2>
           <button onClick={onClose} className="text-zinc-400 dark:text-gray-550 hover:text-zinc-650 dark:hover:text-white cursor-pointer">
             <X className="w-4 h-4" />
           </button>

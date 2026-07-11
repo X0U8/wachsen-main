@@ -12,6 +12,8 @@ const FONT_SIZE_VALUES: Record<FontSizeLevel, Record<string, string>> = {
     xl: 'clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem)',
     '2xl': 'clamp(1.5rem, 1.3rem + 1vw, 2rem)',
     '3xl': 'clamp(1.875rem, 1.5rem + 1.5vw, 2.5rem)',
+    '4xl': 'clamp(1.75rem, 1.45rem + 1.5vw, 2.5rem)',
+    '5xl': 'clamp(2.25rem, 1.75rem + 2vw, 3.5rem)',
   },
   medium: {
     xs: '0.75rem',
@@ -21,6 +23,8 @@ const FONT_SIZE_VALUES: Record<FontSizeLevel, Record<string, string>> = {
     xl: '1.375rem',
     '2xl': '1.75rem',
     '3xl': '2.125rem',
+    '4xl': '2.5rem',
+    '5xl': '3.25rem',
   },
   large: {
     xs: '0.85rem',
@@ -30,6 +34,8 @@ const FONT_SIZE_VALUES: Record<FontSizeLevel, Record<string, string>> = {
     xl: '1.65rem',
     '2xl': '2rem',
     '3xl': '2.5rem',
+    '4xl': '2.85rem',
+    '5xl': '3.75rem',
   },
   larger: {
     xs: '1rem',
@@ -39,6 +45,8 @@ const FONT_SIZE_VALUES: Record<FontSizeLevel, Record<string, string>> = {
     xl: '1.85rem',
     '2xl': '2.25rem',
     '3xl': '2.75rem',
+    '4xl': '3.25rem',
+    '5xl': '4.25rem',
   },
 };
 

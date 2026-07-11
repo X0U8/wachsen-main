@@ -31,7 +31,7 @@ export default function TemplateModal({
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl p-6 w-full max-w-md space-y-6 shadow-2xl"
+            className="bg-white dark:bg-gray-900 border border-black/15 dark:border-white/20 rounded-3xl p-6 w-full max-w-md space-y-6 shadow-2xl dark:shadow-[0_0_30px_rgba(255,255,255,0.06)]"
           >
             <div className="text-center space-y-2">
               <h3 className="font-medium text-zinc-900 dark:text-white" style={{ fontSize: fontSize.lg }}>
@@ -43,7 +43,7 @@ export default function TemplateModal({
             </div>
 
             {!isEditing && (
-              <div className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-black/30 border border-zinc-200 dark:border-gray-800 rounded-xl">
+              <div className="flex items-center justify-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-black/30 border border-black/10 dark:border-white/15 rounded-xl">
                 <GraduationCap className="w-3.5 h-3.5 text-zinc-400" />
                 <span className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>
                   {maxTemplates - templateCount} template{maxTemplates - templateCount !== 1 ? 's' : ''} left
@@ -52,7 +52,7 @@ export default function TemplateModal({
             )}
 
             <div className="space-y-2">
-              <label className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>
+              <label className="text-zinc-500 dark:text-gray-550 font-medium" style={{ fontSize: fontSize.xs }}>
                 Template Name (Required, max 50 characters)
               </label>
               <input
@@ -60,7 +60,7 @@ export default function TemplateModal({
                 maxLength={50}
                 value={templateName}
                 onChange={(e) => { onNameChange(e.target.value); }}
-                className="w-full bg-zinc-100 dark:bg-black border border-zinc-200 dark:border-gray-800 rounded-xl p-3 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500"
+                className="w-full bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-xl p-3 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500"
                 style={{ fontSize: fontSize.sm }}
                 placeholder="e.g., Weekly Maths Practice..."
               />

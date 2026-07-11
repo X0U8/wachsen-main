@@ -311,7 +311,6 @@ export default function Exam() {
       ? cat.subjects.some((s: string) => s.toLowerCase() === 'any')
       : typeof cat.subjects === 'string' && (cat.subjects as string).toLowerCase() === 'any';
     
-    // Hide generally if academic level or subjects are 'any'
     if (hasAnyAcademic || hasAnySubject) return true;
     return false;
   };
@@ -331,7 +330,6 @@ export default function Exam() {
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100 font-sans antialiased select-none pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-40 w-full px-4 sm:px-6 py-3 sm:py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-900/80 flex items-center justify-between transition-colors duration-300">
         <div>
           <h1 className="flex items-center gap-2 font-semibold tracking-tight text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.lg }}>
@@ -359,13 +357,11 @@ export default function Exam() {
         const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key');
         if (!key) return null;
         return (
-          <div className="w-full px-3 py-1 bg-[#007AFF]/8 border-b border-[#007AFF]/20 text-[#007AFF] text-center font-medium" style={{ fontSize: '0.625rem' }}>
+          <div className="w-full px-3 py-1 bg-[#007AFF]/8 border-b border-[#007AFF]/20 text-[#007AFF] text-center font-medium" style={{ fontSize: fontSize.xs }}>
             Using your own key with {prov === 'mistral' ? 'Mistral' : 'Mesh API'}
           </div>
         );
       })()}
-
-      {/* Tabs */}
       <div className="flex shrink-0 px-3 sm:px-4 pt-3 pb-2 bg-white dark:bg-black">
         <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
           {(['exams', 'plan', 'upcoming'] as Tab[]).map(t => (
@@ -383,36 +379,28 @@ export default function Exam() {
           ))}
         </div>
       </div>
-
-      {/* Main Content */}
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-5 pb-24 mb-2 overflow-y-auto min-h-0">
         {tab === 'exams' && (
           <>
             {examTypes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-full text-blue-600 dark:text-blue-400 animate-pulse">
-                  <Plus className="w-8 h-8" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-lg font-semibold text-zinc-800 dark:text-gray-100">No Exam Types Yet</h3>
-                  <p className="text-zinc-500 dark:text-gray-400 max-w-sm" style={{ fontSize: fontSize.xs }}>
-                    Create your first exam category to start generating or taking practice tests.
-                  </p>
-                </div>
+                <h3 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>
+                  Create your first exam type
+                </h3>
                 <button
                   onClick={handleDoubleClick}
                   className="bg-[#007AFF] hover:bg-[#0062CC] text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition-all duration-200 cursor-pointer flex items-center gap-2 text-sm mt-2"
                 >
                   <Plus className="w-4 h-4" /> Create Exam Type
                 </button>
-                <p className="text-gray-700 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>{slotsLeft} slots remaining</p>
               </div>
             ) : (
               <>
                 <div className="flex justify-between items-center mb-4 px-1">
                   <p className="font-medium text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>{slotsLeft} slot{slotsLeft !== 1 ? 's' : ''} remaining</p>
                   <button onClick={handleDoubleClick} disabled={slotsLeft <= 0}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-all text-xs ${slotsLeft <= 0 ? 'bg-zinc-200 dark:bg-gray-800 text-zinc-400 dark:text-gray-600 cursor-not-allowed' : 'bg-[#007AFF] hover:bg-[#0062CC] text-white cursor-pointer'}`}>
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-all ${slotsLeft <= 0 ? 'bg-zinc-200 dark:bg-gray-800 text-zinc-400 dark:text-gray-600 cursor-not-allowed' : 'bg-[#007AFF] hover:bg-[#0062CC] text-white cursor-pointer'}`}
+                    style={{ fontSize: fontSize.xs }}>
                     <Plus className="w-3.5 h-3.5" /> New
                   </button>
                 </div>
@@ -440,12 +428,12 @@ export default function Exam() {
                           {exam.subjects.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-3">
                               {exam.subjects.slice(0, 3).map((s, si) => (
-                                <span key={si} className="bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-400 px-2 py-0.5 border border-zinc-200 dark:border-gray-700/60 rounded-full" style={{ fontSize: '0.625rem' }}>
+                                <span key={si} className="bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-400 px-2 py-0.5 border border-zinc-200 dark:border-gray-700/60 rounded-full" style={{ fontSize: fontSize.xs }}>
                                   {s}
                                 </span>
                               ))}
                               {exam.subjects.length > 3 && (
-                                <span className="text-gray-600 dark:text-gray-500 font-medium self-center pl-0.5" style={{ fontSize: '0.625rem' }}>+{exam.subjects.length - 3}</span>
+                                <span className="text-gray-600 dark:text-gray-550 font-medium self-center pl-0.5" style={{ fontSize: fontSize.xs }}>+{exam.subjects.length - 3}</span>
                               )}
                             </div>
                           )}
@@ -470,8 +458,6 @@ export default function Exam() {
           />
         )}
       </main>
-
-      {/* New Exam Form Modal */}
       {showForm && (
         <NewExamTypeForm
           onSave={handleSaveForm}
@@ -480,14 +466,10 @@ export default function Exam() {
           maxNameLength={MAX_EXAM_NAME_LENGTH}
         />
       )}
-
-      {/* Subscription Modal */}
       {showUpgradeModal && (
         <SubscriptionModal name={disabledItemName} onClose={() => setShowUpgradeModal(false)} />
       )}
 
-
-      {/* Notification */}
       {notification && (
         <InfoComponent
           message={notification.message}

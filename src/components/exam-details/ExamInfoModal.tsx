@@ -38,7 +38,7 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl p-6 w-full max-w-md space-y-6 shadow-2xl relative"
+          className="bg-white dark:bg-gray-900 border border-black/15 dark:border-white/20 rounded-3xl p-6 w-full max-w-md space-y-6 shadow-2xl dark:shadow-[0_0_30px_rgba(255,255,255,0.06)] relative"
         >
           <button
             onClick={onClose}
@@ -55,33 +55,33 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
                     exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
                       exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
                         'bg-yellow-500/10 text-yellow-500'
-                  }`} style={{ fontSize: '0.625rem' }}>
+                  }`} style={{ fontSize: fontSize.xs }}>
                   {exam.status}
                 </span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-zinc-200 dark:border-gray-800/50 h-full flex flex-col justify-center">
-                <p className="text-zinc-500 dark:text-gray-500 uppercase tracking-wider mb-1" style={{ fontSize: '0.625rem' }}>Exam Type</p>
+              <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
+                <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1" style={{ fontSize: fontSize.xs }}>Exam Type</p>
                 <p className="font-medium text-zinc-900 dark:text-white capitalize" style={{ fontSize: fontSize.sm }}>{exam.examType || 'N/A'}</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-zinc-200 dark:border-gray-800/50 h-full flex flex-col justify-center">
-                <p className="text-zinc-500 dark:text-gray-500 uppercase tracking-wider mb-1" style={{ fontSize: '0.625rem' }}>Difficulty</p>
+              <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
+                <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1" style={{ fontSize: fontSize.xs }}>Difficulty</p>
                 <p className="font-medium text-zinc-900 dark:text-white capitalize" style={{ fontSize: fontSize.sm }}>{exam.difficulty}</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-zinc-200 dark:border-gray-800/50 h-full flex flex-col justify-center">
-                <p className="text-zinc-500 dark:text-gray-500 uppercase tracking-wider mb-1" style={{ fontSize: '0.625rem' }}>Questions</p>
+              <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
+                <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1" style={{ fontSize: fontSize.xs }}>Questions</p>
                 <p className="font-medium text-zinc-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{exam.totalQuestions}</p>
               </div>
-              <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-zinc-200 dark:border-gray-800/50 h-full flex flex-col justify-center">
-                <p className="text-zinc-500 dark:text-gray-500 uppercase tracking-wider mb-1" style={{ fontSize: '0.625rem' }}>Total Marks</p>
+              <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
+                <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1" style={{ fontSize: fontSize.xs }}>Total Marks</p>
                 <p className="font-medium text-zinc-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{exam.totalMarks}</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-zinc-500 dark:text-gray-500 uppercase tracking-wider" style={{ fontSize: '0.625rem' }}>Subjects</p>
+              <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>Subjects</p>
               <div className="flex flex-wrap gap-2">
                 {exam.subjects.map((sub: any, idx: number) => (
                   <span key={idx} className="bg-blue-500/5 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-xl font-medium" style={{ fontSize: fontSize.xs }}>
@@ -91,7 +91,7 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
               </div>
             </div>
 
-            <div className="pt-2 flex justify-between border-t border-zinc-200 dark:border-gray-800/50" style={{ fontSize: '0.625rem' }}>
+            <div className="pt-2 flex justify-between border-t border-black/10 dark:border-white/10" style={{ fontSize: fontSize.xs }}>
               {exam.startDateTime && exam.startDateTime !== 'anytime' && exam.endDateTime && exam.endDateTime !== 'anytime' ? (
                 <span className="w-full text-center text-zinc-500 dark:text-gray-500">
                   {formatSimpleDate(exam.startDateTime)} — {formatSimpleDate(exam.endDateTime)}

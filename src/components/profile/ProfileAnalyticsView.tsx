@@ -330,7 +330,7 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
             {examsGaveCount}
           </span>
           <span className="text-[9px] sm:text-[10px] text-zinc-500 font-semibold tracking-wider mt-0.5 leading-tight">
-            Exams Gave
+            Exams Completed
           </span>
         </div>
 
@@ -348,7 +348,7 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
             {memberDays}d
           </span>
           <span className="text-[9px] sm:text-[10px] text-zinc-500 font-semibold tracking-wider mt-1 leading-tight">
-            Since Joined
+            Since Joining
           </span>
         </div>
       </div>

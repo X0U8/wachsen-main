@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../lib/ThemeContext.tsx';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
-import { ArrowLeft, Sun, Moon, Type, Key, Check, Eye, EyeOff, Trash2, AlertTriangle, Plus, LogOut, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Sun, Moon, Type, Key, Check, Eye, EyeOff, Trash, AlertTriangle, Plus, LogOut, ChevronRight } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import EditProfileModal from './EditProfileModal';
 
@@ -22,7 +22,7 @@ export default function Settings() {
   const { userProfile, logout } = useUserProfile();
   const [meshKey, setMeshKey] = useState('');
   const [showKey, setShowKey] = useState(false);
-  const [keySaved, setKeySaved] = useState(false);
+  const [savedMeshKey, setSavedMeshKey] = useState('');
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [models, setModels] = useState<string[]>(DEFAULT_MODELS);
@@ -37,7 +37,10 @@ export default function Settings() {
 
   useEffect(() => {
     const savedKey = localStorage.getItem('mesh_api_key');
-    if (savedKey) setMeshKey(savedKey);
+    if (savedKey) {
+      setMeshKey(savedKey);
+      setSavedMeshKey(savedKey);
+    }
     const savedModels = localStorage.getItem('mesh_models');
     if (savedModels) {
       try { const m = JSON.parse(savedModels); if (Array.isArray(m) && m.length > 0) setModels(m); } catch { }
@@ -56,13 +59,13 @@ export default function Settings() {
     const key = meshKey.trim();
     if (key) {
       localStorage.setItem('mesh_api_key', key);
-      setKeySaved(true);
-      setTimeout(() => setKeySaved(false), 2000);
+      setSavedMeshKey(key);
     }
   };
 
   const confirmRemoveKey = () => {
     setMeshKey('');
+    setSavedMeshKey('');
     localStorage.removeItem('mesh_api_key');
     setShowRemoveConfirm(false);
   };
@@ -152,7 +155,7 @@ export default function Settings() {
           <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400 transition-colors cursor-pointer">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.lg }}>Settings</h1>
+          <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>Settings</h1>
         </header>
 
         <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-6 space-y-4">
@@ -200,13 +203,13 @@ export default function Settings() {
                     {showKey ? <EyeOff className="w-3.5 h-3.5 text-zinc-400" /> : <Eye className="w-3.5 h-3.5 text-zinc-400" />}
                   </button>
                 </div>
-                <button onClick={saveKey} disabled={!meshKey.trim()}
+                <button onClick={saveKey} disabled={!meshKey.trim() || meshKey.trim() === savedMeshKey.trim()}
                   className="px-3 py-2 bg-[#007AFF] hover:bg-[#0062CC] disabled:opacity-40 text-white rounded-xl font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
                   style={{ fontSize: fontSize.xs }}>
-                  {keySaved ? <><Check className="w-3.5 h-3.5" />Saved</> : 'Save'}
+                  {meshKey.trim() === savedMeshKey.trim() && savedMeshKey ? <><Check className="w-3.5 h-3.5" />Saved</> : 'Save'}
                 </button>
               </div>
-              {meshKey && (
+              {savedMeshKey && (
                 <button onClick={() => setShowRemoveConfirm(true)} className="text-red-400 hover:text-red-500 font-medium transition-colors cursor-pointer" style={{ fontSize: fontSize.xs }}>Remove key</button>
               )}
             </div>
@@ -223,7 +226,7 @@ export default function Settings() {
                     </div>
                     {models.length > 1 && (
                       <button onClick={(e) => { e.stopPropagation(); confirmRemoveModel(m); }} className="p-1 hover:bg-red-500/10 rounded transition-colors cursor-pointer">
-                        <Trash2 className="w-3 h-3 text-red-400" />
+                        <Trash className="w-3 h-3 text-red-400 fill-current" />
                       </button>
                     )}
                   </div>

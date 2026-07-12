@@ -350,8 +350,8 @@ export default function Exam() {
             <span className="hidden sm:inline">credits</span>
             <button onClick={() => setShowClaim(true)} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Daily credits">+</button>
           </div>
-          <button onClick={() => navigate('/settings')} className="p-1.5 rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Settings">
-            <SettingsIcon size={14} />
+          <button onClick={() => navigate('/settings')} className="p-1.5 w-9 h-9 flex items-center justify-center rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Settings">
+            <SettingsIcon size={17} />
           </button>
         </div>
       </header>

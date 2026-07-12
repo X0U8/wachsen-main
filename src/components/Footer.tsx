@@ -7,7 +7,7 @@ import { HistoryIcon } from '../icons/HistoryIcon';
 import { UsersIcon } from '../icons/UsersIcon';
 import { TelescopeIcon } from '../icons/TelescopeIcon';
 import { fontSize } from '../lib/utils';
-import ProfileCard from './profile/ProfileCard';
+import PublicProfileModal from './profile/PublicProfileModal';
  
 export default function Footer() {
   const location = useLocation();
@@ -104,7 +104,7 @@ export default function Footer() {
         </div>
       </footer>
 
-      {showProfile && <ProfileCard onClose={() => setShowProfile(false)} />}
+      {showProfile && <PublicProfileModal onClose={() => setShowProfile(false)} />}
     </>
   );
 }

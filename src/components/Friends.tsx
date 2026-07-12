@@ -15,7 +15,7 @@ import { ActionConfirmModals } from './friends/ActionConfirmModals';
 import { FriendsTab } from './friends/FriendsTab';
 import { ChallengesTab } from './friends/ChallengesTab';
 import { SearchTab } from './friends/SearchTab';
-import ProfileCard from './profile/ProfileCard';
+import PublicProfileModal from './profile/PublicProfileModal';
 
 interface ProfileData {
   id: string;
@@ -939,7 +939,7 @@ export default function Friends() {
       />
 
       {showPublicProfileModal && selectedProfileForDetails && (
-        <ProfileCard
+        <PublicProfileModal
           onClose={() => {
             setShowPublicProfileModal(false);
             setSelectedProfileForDetails(null);

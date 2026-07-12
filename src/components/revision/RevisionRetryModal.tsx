@@ -71,7 +71,7 @@ export default function RevisionRetryModal({
 
         {!isFinished ? (
           <div className="flex-grow flex flex-col justify-between overflow-hidden mt-4 space-y-4">
-            <div className="flex items-center justify-between text-[10px] text-zinc-500 font-semibold uppercase tracking-wider flex-shrink-0">
+            <div className="flex items-center justify-between text-xs text-zinc-500 font-semibold uppercase tracking-wider flex-shrink-0">
               <span>Question {currentRetryIndex + 1} of {retryData.length}</span>
             </div>
 
@@ -105,7 +105,7 @@ export default function RevisionRetryModal({
                               }`}
                           >
                             <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-250 dark:border-zinc-700 flex items-center justify-center text-[10px] text-zinc-600 dark:text-zinc-400">
+                              <span className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-250 dark:border-zinc-700 flex items-center justify-center text-xs text-zinc-600 dark:text-zinc-400">
                                 {String.fromCharCode(65 + optIdx)}
                               </span>
                               <span><MathText text={option} /></span>

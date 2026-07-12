@@ -48,8 +48,8 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
       <div className="flex justify-between items-center text-zinc-500 dark:text-zinc-400 px-1 font-medium" style={{ fontSize: fontSize.xs }}>
         <span>
           {challengeView === 'received'
-            ? 'The users requested challenges to you'
-            : 'You sent challenge request to them'}
+            ? 'Challenged to you'
+            : 'You sent challenge'}
         </span>
         <span>
           challenges left: {Math.max(0, maxChallengesPerDay - dailyChallengeCount)}/{maxChallengesPerDay}
@@ -81,12 +81,11 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         <h4 className="text-xs font-semibold text-zinc-800 dark:text-white truncate">{challenge.friendName}</h4>
                         <p className="text-[10px] text-zinc-550 dark:text-zinc-400">@{challenge.friendUsername}</p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full font-semibold uppercase ${
-                        challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
+                      <span className={`px-2 py-0.5 rounded-full font-semibold uppercase ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
                         challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
-                        challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
-                        'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
-                      }`} style={{ fontSize: fontSize.xs }}>
+                          challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
+                            'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
+                        }`} style={{ fontSize: fontSize.xs }}>
                         {challenge.status}
                       </span>
                     </div>
@@ -214,12 +213,11 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         <h4 className="text-xs font-semibold text-zinc-800 dark:text-white truncate">{challenge.friendName}</h4>
                         <p className="text-[10px] text-zinc-550 dark:text-zinc-400 truncate">@{challenge.friendUsername}</p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full font-semibold uppercase ${
-                        challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
+                      <span className={`px-2 py-0.5 rounded-full font-semibold uppercase ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
                         challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
-                        challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
-                        'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
-                      }`} style={{ fontSize: fontSize.xs }}>
+                          challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
+                            'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
+                        }`} style={{ fontSize: fontSize.xs }}>
                         {challenge.status}
                       </span>
                     </div>
@@ -242,7 +240,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                             onClick={() => navigate(`/results/${challenge.sender_id}/${challenge.exam_id}`)}
                             className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-blue-200/30"
                           >
-                            See My Performance
+                            My Performance
                           </button>
                         ) : (
                           <button
@@ -258,14 +256,14 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                             onClick={() => navigate(`/results/${challenge.receiver_id}/${challenge.receiver_exam_id}`)}
                             className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-emerald-200/30"
                           >
-                            See Receiver's Performance
+                            Freinds's Performance
                           </button>
                         ) : (
                           <button
                             disabled
                             className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-655 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
                           >
-                            Receiver Has Not Taken Yet
+                            Friend Has Not Taken Yet
                           </button>
                         )}
                       </div>
@@ -300,22 +298,20 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
       <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[150] bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-1 py-1 rounded-full border border-black/10 dark:border-white/10 shadow-lg flex gap-1 w-60 max-w-full">
         <button
           onClick={() => setChallengeView('received')}
-          className={`flex-1 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer text-center ${
-            challengeView === 'received'
-              ? 'bg-[#007AFF] text-white shadow-sm'
-              : 'text-zinc-500 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white'
-          }`}
+          className={`flex-1 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer text-center ${challengeView === 'received'
+            ? 'bg-[#007AFF] text-white shadow-sm'
+            : 'text-zinc-500 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white'
+            }`}
           style={{ fontSize: fontSize.xs }}
         >
           Received
         </button>
         <button
           onClick={() => setChallengeView('sent')}
-          className={`flex-1 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer text-center ${
-            challengeView === 'sent'
-              ? 'bg-[#007AFF] text-white shadow-sm'
-              : 'text-zinc-500 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white'
-          }`}
+          className={`flex-1 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer text-center ${challengeView === 'sent'
+            ? 'bg-[#007AFF] text-white shadow-sm'
+            : 'text-zinc-500 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white'
+            }`}
           style={{ fontSize: fontSize.xs }}
         >
           Sent

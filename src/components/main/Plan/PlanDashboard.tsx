@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, BookOpen, Trash2, ArrowRight, Award, AlertCircle } from 'lucide-react';
+import { Calendar, BookOpen, Trash, ArrowRight, Award, AlertCircle } from 'lucide-react';
 import { fontSize } from '../../../lib/utils';
 
 interface PlanDashboardProps {
@@ -72,7 +72,7 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
             className="p-1.5 hover:bg-red-500/10 text-zinc-400 hover:text-red-500 rounded-xl transition-all cursor-pointer disabled:opacity-40 shrink-0"
             title="Reset study plan"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash className="w-4 h-4 fill-current" />
           </button>
         ) : (
           <div className="w-8" />

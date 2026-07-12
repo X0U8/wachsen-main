@@ -116,7 +116,7 @@ export default function RevisionLog() {
   const [searchInput, setSearchInput] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
 
-  const { data: initialList = [], isLoading: loadingInitialList, error: queryError } = useQuery({
+  const { data: initialList, isLoading: loadingInitialList, error: queryError } = useQuery({
     queryKey: ['revisionLogs', userProfile?.id, selectedExamTypeId, activeSearchQuery],
     queryFn: async () => {
       const sessionData = await supabase.auth.getSession();

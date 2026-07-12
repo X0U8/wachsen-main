@@ -177,6 +177,29 @@ export default function RevisionLog() {
   const [retryResults, setRetryResults] = useState<Record<string, { isCorrect: boolean; explanation?: string; marks?: string }>>({});
   const [checkingAI, setCheckingAI] = useState<Record<string, boolean>>({});
   const [currentRetryIndex, setCurrentRetryIndex] = useState(0);
+  useEffect(() => {
+    if (!generatingCards) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.history.pushState(null, '', window.location.href);
+
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+      showNotification('error', 'Generation in progress. Please wait.');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [generatingCards]);
 
   const handleRetry = () => {
     if (!logData?.questions?.length) return;
@@ -534,8 +557,15 @@ Return ONLY a valid JSON array matching this format:
       {examId ? (
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate(-1)}
-            className="p-1 hover:bg-zinc-150 dark:hover:bg-zinc-900 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+            onClick={() => {
+              if (!generatingCards) {
+                navigate(-1);
+              }
+            }}
+            disabled={generatingCards}
+            className={`p-1 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 ${
+              generatingCards ? 'opacity-40 cursor-not-allowed' : 'hover:bg-zinc-150 dark:hover:bg-zinc-900 cursor-pointer'
+            }`}
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -709,6 +739,17 @@ Return ONLY a valid JSON array matching this format:
         <RevisionQuestionsList questions={logData.questions} />
       </main>
       {showConceptCards && <ConceptCards onClose={() => setShowConceptCards(false)} cards={conceptCards} />}
+      {generatingCards && (
+        <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md z-[295] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 w-full max-w-[280px] text-center space-y-4 shadow-2xl">
+            <Loader2 className="w-10 h-10 border-4 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin mx-auto text-blue-600" />
+            <div className="space-y-1">
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Generating Cards</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 text-xs">Please do not go back or exit</p>
+            </div>
+          </div>
+        </div>
+      )}
       <RevisionRetryModal
         isOpen={showRetry}
         onClose={() => setShowRetry(false)}

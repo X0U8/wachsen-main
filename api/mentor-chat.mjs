@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
-const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/responses';
+const MESH_API_URL = (process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/responses').replace(/\/chat\/completions$/, '/responses');
 const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;

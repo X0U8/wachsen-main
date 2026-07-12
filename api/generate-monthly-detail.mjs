@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { jsonrepair } from 'jsonrepair';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
-const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
+const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/responses';
 const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -126,7 +126,7 @@ STRICT INSTRUCTIONS:
         },
         body: JSON.stringify({
           model: MESH_MODEL,
-          messages: [
+          input: [
             { role: 'system', content: `You are an expert study task breakdown generator. Return only valid JSON. For any math content, use ONLY $...$ delimiters (single dollar signs). NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap expressions like $\\(...\\)$. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.` },
             { role: 'user', content: prompt }
           ],
@@ -162,7 +162,7 @@ STRICT INSTRUCTIONS:
       });
     }
 
-    let content = data.choices?.[0]?.message?.content || '';
+    let content = (data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || '').trim();
     if (!content) {
       await refundCredits();
       return res.status(502).json({ error: `Mesh API returned empty content` });
@@ -180,19 +180,18 @@ STRICT INSTRUCTIONS:
           },
           body: JSON.stringify({
             model: MESH_MODEL,
-            messages: [
+            input: [
               { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors, and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
-            response_format: { type: 'json_object' },
-            reasoning: { enabled: false }
+            response_format: { type: 'json_object' }
           })
         });
 
         if (repairResponse.ok) {
           const repairData = await repairResponse.json();
-          let repairedText = repairData.choices?.[0]?.message?.content || '';
+          let repairedText = (repairData.output?.[0]?.content?.[0]?.text || repairData.choices?.[0]?.message?.content || '').trim();
           repairedText = repairedText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
           return JSON.parse(repairedText);
         }

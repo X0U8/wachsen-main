@@ -55,8 +55,13 @@ export default function Results() {
     staleTime: 1000 * 60 * 5,
   });
 
+  const [hasMore, setHasMore] = useState(false);
+
+  useEffect(() => {
+    setHasMore(initialResults.length === 10);
+  }, [initialResults]);
+
   const results = [...initialResults, ...extraResults];
-  const hasMore = initialResults.length === 10 || (extraResults.length > 0 && extraResults.length % 10 === 0);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore || !userId) return;
@@ -73,6 +78,9 @@ export default function Results() {
       const dataResults = data.results || [];
       if (dataResults.length > 0) {
         setExtraResults(prev => [...prev, ...dataResults]);
+      }
+      if (dataResults.length < 10) {
+        setHasMore(false);
       }
     } catch (err) {
       console.error('Error loading more results:', err);

@@ -108,6 +108,7 @@ export default function RevisionLog() {
   const [revisionList, setRevisionList] = useState<any[]>([]);
   const [extraRevisionLogs, setExtraRevisionLogs] = useState<any[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [examTypes, setExamTypes] = useState<any[]>([]);
@@ -132,6 +133,7 @@ export default function RevisionLog() {
   useEffect(() => {
     if (initialList && !examId) {
       setRevisionList(initialList);
+      setHasMore(initialList.length === 10);
     }
   }, [initialList, examId]);
 
@@ -476,8 +478,6 @@ Return ONLY a valid JSON array matching this format:
 
   const displayList = [...revisionList, ...extraRevisionLogs];
 
-  const hasMore = revisionList.length === 10 || (extraRevisionLogs.length > 0 && extraRevisionLogs.length % 10 === 0);
-
   const loadMore = async () => {
     if (loadingMore || !hasMore || !userProfile?.id) return;
     setLoadingMore(true);
@@ -493,6 +493,9 @@ Return ONLY a valid JSON array matching this format:
       const dataRevisionList = data.revisionList || [];
       if (dataRevisionList.length > 0) {
         setExtraRevisionLogs(prev => [...prev, ...dataRevisionList]);
+      }
+      if (dataRevisionList.length < 10) {
+        setHasMore(false);
       }
     } catch (err) {
       console.error('Error loading more revision logs:', err);

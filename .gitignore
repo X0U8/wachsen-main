@@ -14,7 +14,8 @@ jspm_packages/
 .agents/
 
 
-
+AGENTS.md
+fix-fonts.mjs
 supabase
 .env
 .env.local

@@ -6,6 +6,7 @@ import { fontSize } from '../../lib/utils';
 import { useTheme } from '../../lib/ThemeContext.tsx';
 import { supabase } from '../../services/supabase';
 import ProfileCard from './ProfileCard';
+import ProfileAnalyticsView from './ProfileAnalyticsView';
 
 const EXAMS_PER_PAGE = 5;
 
@@ -37,6 +38,11 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [showProfileCard, setShowProfileCard] = useState(true);
+  
+  const [activeTab, setActiveTab] = useState<'questions' | 'analytics'>('questions');
+
+  const targetUserId = userId || loggedInProfile?.id;
+  const isOwner = targetUserId === loggedInProfile?.id;
 
   const parsePlanSubjectsAndTopicsGrouped = (rawPlan: any) => {
     try {
@@ -46,35 +52,19 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
 
       const grouped: { subject: string; topics: string[] }[] = [];
 
-      subjectsList.forEach((s: any) => {
-        const sName = typeof s === 'string' ? s : (s.name || s.subject || '');
-        if (!sName) return;
-
-        const topics: string[] = [];
-        if (s && typeof s === 'object') {
-          if (Array.isArray(s.segments)) {
-            s.segments.forEach((seg: any) => {
-              if (seg && Array.isArray(seg.topics)) {
-                seg.topics.forEach((t: any) => {
-                  const tLabel = typeof t === 'string' ? t : (t.name || t.topic || '');
-                  if (tLabel && !topics.includes(tLabel)) topics.push(tLabel);
-                });
-              }
-            });
-          }
-          if (Array.isArray(s.topics)) {
-            s.topics.forEach((t: any) => {
-              const tLabel = typeof t === 'string' ? t : (t.name || t.topic || '');
-              if (tLabel && !topics.includes(tLabel)) topics.push(tLabel);
-            });
-          }
-        }
-
-        grouped.push({ subject: sName, topics });
+      subjectsList.forEach((sub: any) => {
+        const subName = sub.subjectName || sub.name || '';
+        if (!subName) return;
+        const topics = sub.topics || [];
+        const topicNames = topics.map((t: any) => typeof t === 'string' ? t : (t?.name || t?.topicName || t?.topic || '')).filter(Boolean);
+        grouped.push({
+          subject: subName,
+          topics: topicNames
+        });
       });
-
       return grouped;
-    } catch {
+    } catch (e) {
+      console.error(e);
       return [];
     }
   };
@@ -122,7 +112,6 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
   }, [userId]);
 
   const fetchUserExams = useCallback(async () => {
-    const targetUserId = userId || loggedInProfile?.id;
     if (!targetUserId) return;
     setExamsLoading(true);
     try {
@@ -139,13 +128,13 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
 
       if (error) throw error;
       setExams(data || []);
-      setTotalCount(count || 0);
+      if (count !== null) setTotalCount(count);
     } catch (err) {
-      console.error('Error fetching exams:', err);
+      console.error('Error fetching public exams:', err);
     } finally {
       setExamsLoading(false);
     }
-  }, [userId, loggedInProfile?.id, page]);
+  }, [targetUserId, page]);
 
   useEffect(() => {
     fetchUserExams();
@@ -366,6 +355,13 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
     }
   };
 
+  const getDifficultyColor = (diff: string) => {
+    const d = String(diff || '').toLowerCase();
+    if (d === 'easy') return 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400';
+    if (d === 'hard') return 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400';
+    return 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400';
+  };
+
   return (
     <>
       <div
@@ -403,182 +399,170 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
               </div>
             )}
 
-            <div className="flex-1 w-full max-w-[360px] sm:max-w-[560px] md:max-w-[660px] lg:max-w-[740px] bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 flex flex-col min-h-0 overflow-hidden">
-              <div className="flex items-center justify-between px-1 mb-2.5 flex-shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <h4 className="font-semibold text-zinc-500" style={{ fontSize: fontSize.xs }}>Public Exams</h4>
-                  <button
-                    onClick={() => setShowProfileCard(!showProfileCard)}
-                    className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-550 dark:text-zinc-450 cursor-pointer flex items-center justify-center"
-                    title={showProfileCard ? "Collapse Card" : "Expand Card"}
-                  >
-                    {showProfileCard ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-                <span className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>Total: {totalCount}</span>
-              </div>
-
-              <div className="flex-grow overflow-y-auto space-y-2 pr-1 min-h-0">
-                {examsLoading ? (
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                    <p className="mt-1 text-[9px] text-zinc-500">Loading Exams...</p>
-                  </div>
-                ) : exams.length > 0 ? (
-                  exams.map((exam) => {
-                    const groupedPlan = parsePlanSubjectsAndTopicsGrouped(exam.ExamPlan);
-                    return (
-                      <div
-                        key={exam.id}
-                        className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-3 flex flex-col gap-2 hover:border-zinc-350 dark:hover:border-zinc-700 transition-colors"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h5 className="font-bold text-zinc-800 dark:text-zinc-200" style={{ fontSize: fontSize.sm }}>
-                              {exam.examName}
-                            </h5>
-                            <div className="flex items-center gap-2 mt-0.5 text-zinc-400" style={{ fontSize: fontSize.xs }}>
-                              <span className="capitalize px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 font-semibold">{exam.difficulty}</span>
-                              <span>•</span>
-                              <span>{exam.totalMarks} Marks</span>
-                              <span>•</span>
-                              <span>{exam.totalTime} Mins</span>
-                            </div>
-                          </div>
-
-                          {loggedInProfile?.id && (
-                            <button
-                              onClick={() => handleImportExamClick(exam)}
-                              disabled={exam.createdBy === loggedInProfile.id}
-                              className="p-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
-                              title="Import to your exams"
-                            >
-                              <Download className="w-3 h-3 text-white" />
-                            </button>
-                          )}
-                        </div>
-
-                        {groupedPlan.length > 0 && (
-                          <div className="w-full bg-zinc-50 dark:bg-zinc-900/60 border border-black/5 dark:border-white/8 rounded-2xl p-2.5 space-y-1.5">
-                            {groupedPlan.map((g, idx) => (
-                              <div key={idx} className="leading-relaxed text-zinc-650 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
-                                <strong className="text-zinc-800 dark:text-zinc-200 uppercase">{g.subject}:</strong>{' '}
-                                {g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-8 border border-dashed border-black/15 dark:border-white/20 rounded-2xl">
-                    <BookOpen className="w-6 h-6 text-zinc-400 mx-auto mb-1.5" />
-                    <p className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>No public exams found.</p>
-                  </div>
-                )}
-              </div>
-
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-2.5 border-t border-black/10 dark:border-white/10 mt-2.5 flex-shrink-0">
-                  <button
-                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                    disabled={page === 0}
-                    className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
-                    style={{ fontSize: fontSize.xs }}
-                  >
-                    <ChevronLeft className="w-3 h-3" />
-                    Prev
-                  </button>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
-                    Page {page + 1} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                    disabled={page >= totalPages - 1}
-                    className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed rounded-lg font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
-                    style={{ fontSize: fontSize.xs }}
-                  >
-                    Next
-                    <ChevronRight className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
+            <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-[280px] mx-auto flex-shrink-0">
+              <button
+                onClick={() => setActiveTab('questions')}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${
+                  activeTab === 'questions'
+                    ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                }`}
+              >
+                Questions
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${
+                  activeTab === 'analytics'
+                    ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                }`}
+              >
+                Analytics
+              </button>
             </div>
+
+            <div className="flex-1 w-full max-w-[360px] sm:max-w-[560px] md:max-w-[660px] lg:max-w-[740px] flex flex-col min-h-0 overflow-y-auto pr-1">
+              
+              {activeTab === 'questions' ? (
+                <div className="flex-grow flex flex-col min-h-0 space-y-4">
+                  <div className="flex items-center justify-between px-1 flex-shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="font-semibold text-zinc-500" style={{ fontSize: fontSize.xs }}>Public Exams</h4>
+                      <button
+                        onClick={() => setShowProfileCard(!showProfileCard)}
+                        className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-550 dark:text-zinc-455 cursor-pointer flex items-center justify-center"
+                        title={showProfileCard ? "Collapse Card" : "Expand Card"}
+                      >
+                        {showProfileCard ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                    <span className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>Total: {totalCount}</span>
+                  </div>
+
+                  <div className="space-y-3 pb-4">
+                    {examsLoading ? (
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                        <p className="mt-1 text-[9px] text-zinc-500">Loading Exams...</p>
+                      </div>
+                    ) : exams.length > 0 ? (
+                      exams.map((exam) => {
+                        const groupedPlan = parsePlanSubjectsAndTopicsGrouped(exam.ExamPlan);
+                        return (
+                          <div
+                            key={exam.id}
+                            className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 flex flex-col gap-2 shadow-xs hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h5 className="font-bold text-zinc-850 dark:text-zinc-205" style={{ fontSize: fontSize.sm }}>
+                                  {exam.examName}
+                                </h5>
+                                <div className="flex items-center gap-2 mt-1 text-zinc-550 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                                  <span className={`capitalize px-2 py-0.5 rounded-lg font-semibold ${getDifficultyColor(exam.difficulty)}`}>
+                                    {exam.difficulty}
+                                  </span>
+                                  <span className="text-zinc-350 dark:text-zinc-600">•</span>
+                                  <span>{exam.totalMarks} Marks</span>
+                                  <span className="text-zinc-350 dark:text-zinc-600">•</span>
+                                  <span>{exam.totalTime} Mins</span>
+                                </div>
+                              </div>
+
+                              {loggedInProfile?.id && (
+                                <button
+                                  onClick={() => handleImportExamClick(exam)}
+                                  disabled={exam.createdBy === loggedInProfile.id}
+                                  className="p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 rounded-xl transition-colors flex items-center justify-center cursor-pointer"
+                                  title="Import to your exams"
+                                >
+                                  <Download className="w-3.5 h-3.5 text-white" />
+                                </button>
+                              )}
+                            </div>
+
+                            {groupedPlan.length > 0 && (
+                              <div className="w-full pt-1.5 space-y-1 text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
+                                {groupedPlan.map((g, idx) => (
+                                  <div key={idx} className="leading-relaxed">
+                                    <strong className="text-zinc-700 dark:text-zinc-300 uppercase">{g.subject}:</strong>{' '}
+                                    <span>{g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8 border border-dashed border-black/15 dark:border-white/20 rounded-2xl">
+                        <BookOpen className="w-6 h-6 text-zinc-400 mx-auto mb-1.5" />
+                        <p className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>No public exams found.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between pt-2.5 border-t border-black/10 dark:border-white/10 mt-auto flex-shrink-0">
+                      <button
+                        onClick={() => setPage(p => Math.max(0, p - 1))}
+                        disabled={page === 0}
+                        className="px-2.5 py-1.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
+                        style={{ fontSize: fontSize.xs }}
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                        Prev
+                      </button>
+                      <span className="text-zinc-500 font-semibold" style={{ fontSize: fontSize.xs }}>
+                        Page {page + 1} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                        disabled={page === totalPages - 1}
+                        className="px-2.5 py-1.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
+                        style={{ fontSize: fontSize.xs }}
+                      >
+                        Next
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <ProfileAnalyticsView userId={targetUserId} isOwner={isOwner} />
+              )}
+
+            </div>
+
           </div>
+
         </div>
       </div>
 
-      {showCreateOthersCategoryModal && (
-        <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 max-w-xs w-full shadow-2xl flex flex-col items-center text-center">
-            <AlertCircle className="w-10 h-10 text-blue-500 mb-3" />
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">Create Category 'others'?</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 leading-relaxed font-medium">
-              You need to create the 'others' exam type category first to import public exams. Create it now?
+      {showConfirmImportModal && importTargetExam && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[260] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 w-full max-w-[340px] shadow-2xl relative overflow-hidden text-center space-y-4">
+            <h4 className="font-bold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Import Exam</h4>
+            <p className="text-zinc-500 font-medium text-xs leading-relaxed">
+              Do you want to import <strong>{importTargetExam.examName}</strong> to your own categories?
             </p>
-
             {importError && (
-              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-[10px] font-medium flex gap-1.5 text-left w-full">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
+              <div className="flex items-center gap-1.5 text-red-500 justify-center font-semibold text-[10px]">
+                <AlertCircle className="w-3.5 h-3.5" />
                 <span>{importError}</span>
               </div>
             )}
-
-            <div className="flex gap-2.5 w-full">
-              <button
-                onClick={() => {
-                  setShowCreateOthersCategoryModal(false);
-                  setImportTargetExam(null);
-                }}
-                disabled={importing}
-                className="flex-1 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-900 rounded-xl text-xs font-semibold cursor-pointer transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateOthersCategory}
-                disabled={importing}
-                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all flex items-center justify-center gap-1.5"
-              >
-                {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showConfirmImportModal && (
-        <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 max-w-xs w-full shadow-2xl flex flex-col items-center text-center">
-            <Check className="w-10 h-10 text-green-500 mb-3" />
-            <h3 className="text-sm font-semibold text-zinc-900 dark:text-white mb-2">Import Exam?</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 leading-relaxed font-medium">
-              Would you like to add <strong>{importTargetExam?.examName}</strong> to your 'others' exams?
-            </p>
-
-            {importError && (
-              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-400 text-[10px] font-medium flex gap-1.5 text-left w-full">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
-                <span>{importError}</span>
-              </div>
-            )}
-
             {importSuccess && (
-              <div className="p-2 mb-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-xl text-green-600 dark:text-green-400 text-[10px] font-medium flex gap-1.5 text-left w-full">
-                <Check className="w-3.5 h-3.5 shrink-0 text-green-500" />
-                <span>{importSuccess}</span>
+              <div className="text-green-500 justify-center font-bold text-xs">
+                {importSuccess}
               </div>
             )}
-
-            <div className="flex gap-2.5 w-full">
+            <div className="flex gap-2.5 pt-1">
               <button
-                onClick={() => {
-                  setShowConfirmImportModal(false);
-                  setImportTargetExam(null);
-                }}
-                disabled={importing}
-                className="flex-1 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-900 rounded-xl text-xs font-semibold cursor-pointer transition-all"
+                onClick={() => { setShowConfirmImportModal(false); setImportTargetExam(null); }}
+                disabled={importing || !!importSuccess}
+                className="flex-1 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-655 dark:text-zinc-300 font-semibold rounded-xl text-xs cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all"
               >
                 Cancel
               </button>
@@ -588,6 +572,39 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                 className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all flex items-center justify-center gap-1.5"
               >
                 {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCreateOthersCategoryModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[260] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 w-full max-w-[340px] shadow-2xl relative overflow-hidden text-center space-y-4">
+            <h4 className="font-bold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Create Category</h4>
+            <p className="text-zinc-500 font-medium text-xs leading-relaxed">
+              We need to initialize a default category named <strong>others</strong> on your account to import this exam.
+            </p>
+            {importError && (
+              <div className="flex items-center gap-1.5 text-red-500 justify-center font-semibold text-[10px]">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>{importError}</span>
+              </div>
+            )}
+            <div className="flex gap-2.5 pt-1">
+              <button
+                onClick={() => setShowCreateOthersCategoryModal(false)}
+                disabled={importing}
+                className="flex-1 py-2 border border-zinc-200 dark:border-zinc-800 text-zinc-655 dark:text-zinc-300 font-semibold rounded-xl text-xs cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateOthersCategory}
+                disabled={importing}
+                className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all flex items-center justify-center gap-1.5"
+              >
+                {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Create'}
               </button>
             </div>
           </div>

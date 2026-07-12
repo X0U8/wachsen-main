@@ -216,7 +216,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const savedCountry = localStorage.getItem('glixup_country');
+    const savedCountry = localStorage.getItem('wachsen_country');
     let countryToSet = countries.find(c => c.code === 'IN') || countries[0];
 
     if (savedCountry) {
@@ -245,7 +245,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
 
   const handleCountryChange = (country: typeof countries[0]) => {
     setSelectedCountry(country);
-    localStorage.setItem('glixup_country', country.code);
+    localStorage.setItem('wachsen_country', country.code);
     setShowCountryDropdown(false);
   };
 

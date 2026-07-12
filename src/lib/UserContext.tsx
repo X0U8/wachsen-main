@@ -25,6 +25,7 @@ export interface UserProfile {
 interface UserContextValue {
   userProfile: UserProfile | null;
   profileLoading: boolean;
+  userPresence: { active_days: number[]; last_opened: string } | null;
   refreshProfile: (force?: boolean) => Promise<void>;
   refreshCredits: () => Promise<void>;
   logout: () => Promise<void>;
@@ -33,6 +34,7 @@ interface UserContextValue {
 const UserContext = createContext<UserContextValue>({
   userProfile: null,
   profileLoading: true,
+  userPresence: null,
   refreshProfile: async () => {},
   refreshCredits: async () => {},
   logout: async () => {},
@@ -42,6 +44,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userPresence, setUserPresence] = useState<{ active_days: number[]; last_opened: string } | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
@@ -62,11 +65,60 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           lastClaimed: data.last_claimed,
         };
         setUserProfile(mapped);
+
+        try {
+          const todayStr = new Date().toLocaleDateString('en-CA');
+          const { data: presenceData, error: presenceErr } = await supabase
+            .from('user_presence')
+            .select('active_days, last_opened')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (!presenceErr) {
+            if (!presenceData) {
+              const newPresence = {
+                user_id: userId,
+                last_opened: todayStr,
+                active_days: [1]
+              };
+              await supabase.from('user_presence').insert(newPresence);
+              setUserPresence({ active_days: [1], last_opened: todayStr });
+            } else {
+              let activeDays = presenceData.active_days || [];
+              if (presenceData.last_opened !== todayStr) {
+                const lastDate = new Date(presenceData.last_opened);
+                const currDate = new Date(todayStr);
+                const diffTime = currDate.getTime() - lastDate.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays > 0) {
+                  const missingDaysCount = diffDays - 1;
+                  const padding = Array.from({ length: missingDaysCount }, () => 0);
+                  activeDays = [...activeDays, ...padding, 1];
+
+                  await supabase
+                    .from('user_presence')
+                    .update({
+                      last_opened: todayStr,
+                      active_days: activeDays
+                    })
+                    .eq('user_id', userId);
+                }
+              }
+              setUserPresence({ active_days: activeDays, last_opened: todayStr });
+            }
+          }
+        } catch (err) {
+          console.error('Error in presence check-in:', err);
+        }
+
       } else {
         setUserProfile(null);
+        setUserPresence(null);
       }
     } catch {
       setUserProfile(null);
+      setUserPresence(null);
     } finally {
       setProfileLoading(false);
     }
@@ -79,6 +131,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       } else {
         setCurrentUserId(null);
         setUserProfile(null);
+        setUserPresence(null);
         setProfileLoading(false);
       }
     });
@@ -89,6 +142,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       } else {
         setCurrentUserId(null);
         setUserProfile(null);
+        setUserPresence(null);
         setProfileLoading(false);
       }
     });
@@ -153,10 +207,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     await supabase.auth.signOut();
+    setUserPresence(null);
   };
 
   return (
-    <UserContext.Provider value={{ userProfile, profileLoading, refreshProfile, refreshCredits, logout }}>
+    <UserContext.Provider value={{ userProfile, profileLoading, userPresence, refreshProfile, refreshCredits, logout }}>
       {children}
     </UserContext.Provider>
   );

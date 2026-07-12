@@ -4,8 +4,9 @@ import Footer from '../Footer';
 import SpotlightCard from '../../ui/SpotlightCard';
 import TextType from '../../ui/TextType';
 import PlanIcon from '../../ui/PlanIcon';
-import { Plus, Lock } from 'lucide-react';
+import { Plus, Lock, BarChart3, ChartNoAxesCombined } from 'lucide-react';
 import { SettingsIcon } from '../../icons/SettingsIcon';
+import AnalyticsModal from '../profile/AnalyticsModal';
 import { supabase } from '../../services/supabase';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUserProfile } from '../../lib/UserContext.tsx';
@@ -42,6 +43,7 @@ export default function Exam() {
   const [disabledItemName, setDisabledItemName] = useState('');
   const [showClaim, setShowClaim] = useState(false);
   const [showIcon, setShowIcon] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [upcomingExams, setUpcomingExams] = useState<any[]>([]);
   const [loadingUpcoming, setLoadingUpcoming] = useState(false);
 
@@ -335,12 +337,15 @@ export default function Exam() {
       <header className="sticky top-0 z-40 w-full px-4 sm:px-6 py-3 sm:py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-900/80 flex items-center justify-between transition-colors duration-300">
         <div>
           <h1 className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-semibold tracking-tight text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>
-            <TextType text={fullGreeting} typingSpeed={200} pauseDuration={2000} showCursor={false} loop={false} />
-            {userProfile?.PremiumType && userProfile.PremiumType !== 'Free' && showIcon && (
-              <span className="animate-fade-in inline-block align-middle">
-                <PlanIcon planName={userProfile.PremiumType} className="ml-1 shrink-0" />
-              </span>
-            )}
+            <span className="sm:hidden">
+              <TextType text={greeting} typingSpeed={200} pauseDuration={2000} showCursor={false} loop={false} />
+            </span>
+            <span className="hidden sm:inline-flex items-center gap-1.5">
+              <TextType text={fullGreeting} typingSpeed={200} pauseDuration={2000} showCursor={false} loop={false} />
+              {userProfile?.PremiumType && userProfile.PremiumType !== 'Free' && showIcon && (
+                <PlanIcon planName={userProfile.PremiumType} className="shrink-0" />
+              )}
+            </span>
           </h1>
           <p className="text-zinc-450 dark:text-gray-550 mt-1" style={{ fontSize: fontSize.sm }}>{today}</p>
         </div>
@@ -350,8 +355,11 @@ export default function Exam() {
             <span className="hidden sm:inline">credits</span>
             <button onClick={() => setShowClaim(true)} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Daily credits">+</button>
           </div>
-          <button onClick={() => navigate('/settings')} className="p-1.5 w-9 h-9 flex items-center justify-center rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Settings">
-            <SettingsIcon size={17} />
+          <button onClick={() => setShowAnalytics(true)} className="p-1 sm:p-1.5 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Analytics">
+            <ChartNoAxesCombined className="w-[14px] h-[14px] sm:w-[17px] sm:h-[17px] fill-current" />
+          </button>
+          <button onClick={() => navigate('/settings')} className="p-1 sm:p-1.5 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Settings">
+            <SettingsIcon className="[&_svg]:w-[14px] [&_svg]:h-[14px] sm:[&_svg]:w-[17px] sm:[&_svg]:h-[17px]" />
           </button>
         </div>
       </header>
@@ -488,6 +496,10 @@ export default function Exam() {
         userProfile={userProfile}
         refreshCredits={refreshCredits}
       />
+
+      {showAnalytics && (
+        <AnalyticsModal onClose={() => setShowAnalytics(false)} />
+      )}
 
       <Footer />
     </div>

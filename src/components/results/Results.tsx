@@ -52,9 +52,7 @@ export default function Results() {
       return data.results || [];
     },
     enabled: !!userId,
-    staleTime: 1000 * 60,
-    refetchOnMount: true,
-    gcTime: 0,
+    staleTime: 1000 * 60 * 5,
   });
 
   const results = [...initialResults, ...extraResults];

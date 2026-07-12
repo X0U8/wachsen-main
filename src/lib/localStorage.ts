@@ -1,6 +1,6 @@
 
 
-const CACHE_PREFIX = 'glixup_';
+const CACHE_PREFIX = 'wachsen_';
 
 export const localStorageCache = {
   get<T>(key: string): T | null {
@@ -21,7 +21,7 @@ export const localStorageCache = {
       localStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(data));
     } catch (error: any) {
       console.error('LocalStorage set error:', error);
-      
+
       if (error.name === 'QuotaExceededError') {
         localStorageCache.clear();
         try {
@@ -43,7 +43,7 @@ export const localStorageCache = {
       .forEach(key => localStorage.removeItem(key));
   },
 
-  
+
   keys: {
     EXAM_CATEGORIES: 'exam_categories',
     EXAM_INSTANCES: (categoryId: string) => `exams_${categoryId}`,

@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
-const MESH_API_URL = (process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/responses').replace(/\/chat\/completions$/, '/responses');
+const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
 const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -113,7 +113,7 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
         },
         body: JSON.stringify({
           model: MESH_MODEL,
-          input: messagesPayload,
+          messages: messagesPayload,
           temperature: 0.7,
           reasoning: { enabled: false }
         })
@@ -145,7 +145,7 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
       });
     }
 
-    const content = (data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || '').trim();
+    const content = data.choices?.[0]?.message?.content || '';
     if (!content) {
       await refundCredits();
       return res.status(502).json({ error: `Mesh API returned empty content` });

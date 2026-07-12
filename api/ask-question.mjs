@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
-const MESH_API_URL = (process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/responses').replace(/\/chat\/completions$/, '/responses');
+const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 const MESH_MODEL = process.env.MESH_MODEL;
 
@@ -96,7 +96,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       },
       body: JSON.stringify({
         model: activeModel,
-        ...(isMistral ? { messages: conversationMessages } : { input: conversationMessages }),
+        messages: conversationMessages,
         temperature: 0.7,
         ...(!isMistral && { reasoning: { enabled: false } })
       })
@@ -108,7 +108,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       return res.status(502).json({ error: `${apiLabel} API request failed`, code: data.error?.code, details: data.error?.message || JSON.stringify(data) });
     }
 
-    const reply = (data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || '').trim();
+    const reply = data.choices?.[0]?.message?.content || '';
 
     let finalCredits = null;
     let creditsDeducted = 0;

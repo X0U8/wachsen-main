@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { jsonrepair } from 'jsonrepair';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
-const MESH_API_URL = (process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/responses').replace(/\/chat\/completions$/, '/responses');
+const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
 const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -126,7 +126,7 @@ STRICT INSTRUCTIONS:
         },
         body: JSON.stringify({
           model: MESH_MODEL,
-          input: [
+          messages: [
             { role: 'system', content: `You are an expert study task breakdown generator. Return only valid JSON. For any math content, use ONLY $...$ delimiters (single dollar signs). NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap expressions like $\\(...\\)$. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.` },
             { role: 'user', content: prompt }
           ],
@@ -136,22 +136,18 @@ STRICT INSTRUCTIONS:
         })
       });
     } catch (fetchErr) {
-      console.error('[MONTH DETAIL] Fetch error calling AI gateway:', fetchErr);
       await refundCredits();
       return res.status(502).json({ error: 'Failed to contact AI gateway', details: fetchErr.message });
     }
 
     const responseText = await response.text();
-    console.log(`[MONTH DETAIL] Response status: ${response.status}`);
 
     let data = {};
     try {
       if (responseText) {
         data = JSON.parse(responseText);
       }
-    } catch (parseErr) {
-      console.error('[MONTH DETAIL] Failed to parse response as JSON:', parseErr);
-    }
+    } catch (parseErr) {}
 
     if (!response.ok) {
       await refundCredits();
@@ -162,7 +158,7 @@ STRICT INSTRUCTIONS:
       });
     }
 
-    let content = (data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || '').trim();
+    let content = data.choices?.[0]?.message?.content || '';
     if (!content) {
       await refundCredits();
       return res.status(502).json({ error: `Mesh API returned empty content` });
@@ -180,18 +176,19 @@ STRICT INSTRUCTIONS:
           },
           body: JSON.stringify({
             model: MESH_MODEL,
-            input: [
+            messages: [
               { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors, and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
-            response_format: { type: 'json_object' }
+            response_format: { type: 'json_object' },
+            reasoning: { enabled: false }
           })
         });
 
         if (repairResponse.ok) {
           const repairData = await repairResponse.json();
-          let repairedText = (repairData.output?.[0]?.content?.[0]?.text || repairData.choices?.[0]?.message?.content || '').trim();
+          let repairedText = repairData.choices?.[0]?.message?.content || '';
           repairedText = repairedText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
           return JSON.parse(repairedText);
         }

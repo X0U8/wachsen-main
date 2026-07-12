@@ -2,7 +2,7 @@ import { jsonrepair } from 'jsonrepair';
 import { createClient } from '@supabase/supabase-js';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
-const MESH_API_URL = (process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/responses').replace(/\/chat\/completions$/, '/responses');
+const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 const MESH_MODEL = process.env.MESH_MODEL;
 
@@ -241,7 +241,7 @@ ${formatExample}`;
         },
         body: JSON.stringify({
           model: activeModel,
-          ...(isMistral ? { messages: messages } : { input: messages }),
+          messages: messages,
           temperature: 0.4,
           response_format: { type: 'json_object' },
           ...(!isMistral && { reasoning: { enabled: false } })
@@ -275,7 +275,7 @@ ${formatExample}`;
       });
     }
 
-    let content = (data.output?.[0]?.content?.[0]?.text || data.choices?.[0]?.message?.content || '').trim();
+    let content = data.choices?.[0]?.message?.content || '';
 
     if (!content) {
       return res.status(502).json({ error: `${apiLabel} API returned no content` });
@@ -293,25 +293,19 @@ ${formatExample}`;
           },
           body: JSON.stringify({
             model: activeModel,
-            ...(isMistral ? {
-              messages: [
-                { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors (like missing commas, unescaped quotes, or mismatched braces), and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
-                { role: 'user', content: brokenContent }
-              ]
-            } : {
-              input: [
-                { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors (like missing commas, unescaped quotes, or mismatched braces), and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
-                { role: 'user', content: brokenContent }
-              ]
-            }),
+            messages: [
+              { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors (like missing commas, unescaped quotes, or mismatched braces), and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
+              { role: 'user', content: brokenContent }
+            ],
             temperature: 0.1,
-            response_format: { type: 'json_object' }
+            response_format: { type: 'json_object' },
+            ...(!isMistral && { reasoning: { enabled: false } })
           })
         });
 
         if (repairResponse.ok) {
           const repairData = await repairResponse.json();
-          let repairedText = (repairData.output?.[0]?.content?.[0]?.text || repairData.choices?.[0]?.message?.content || '').trim();
+          let repairedText = repairData.choices?.[0]?.message?.content || '';
           repairedText = repairedText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
           return JSON.parse(repairedText);
         }

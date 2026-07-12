@@ -185,7 +185,7 @@ export default function Results() {
                 setActiveSearchQuery(searchInput);
               }
             }}
-            className="flex-1 bg-transparent border-none text-zinc-800 dark:text-gray-250 placeholder-zinc-400 focus:outline-none text-xs" />
+            className="flex-1 bg-transparent border-none text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none text-xs" />
           <button
             onClick={() => {
               setExtraResults([]);

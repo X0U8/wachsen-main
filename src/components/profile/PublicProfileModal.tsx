@@ -40,6 +40,13 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
   const [showProfileCard, setShowProfileCard] = useState(true);
   
   const [activeTab, setActiveTab] = useState<'questions' | 'analytics'>('questions');
+  const [expandedExamIds, setExpandedExamIds] = useState<string[]>([]);
+
+  const toggleExamExpanded = (id: string) => {
+    setExpandedExamIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
 
   const targetUserId = userId || loggedInProfile?.id;
   const isOwner = targetUserId === loggedInProfile?.id;
@@ -55,7 +62,10 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       subjectsList.forEach((sub: any) => {
         const subName = sub.subjectName || sub.name || '';
         if (!subName) return;
-        const topics = sub.topics || [];
+        let topics = sub.topics || [];
+        if (Array.isArray(sub.segments)) {
+          topics = sub.segments.flatMap((seg: any) => seg.topics || []);
+        }
         const topicNames = topics.map((t: any) => typeof t === 'string' ? t : (t?.name || t?.topicName || t?.topic || '')).filter(Boolean);
         grouped.push({
           subject: subName,
@@ -479,17 +489,29 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                                 </button>
                               )}
                             </div>
-                            {groupedPlan.length > 0 && (
-                              <div
-                                className="w-full pt-1.5 space-y-1 text-zinc-500 dark:text-zinc-400 text-xs">
-                                {groupedPlan.map((g, idx) => (
-                                  <div key={idx} className="leading-relaxed">
-                                    <strong className="text-zinc-700 dark:text-zinc-300 uppercase">{g.subject}:</strong>{' '}
-                                    <span>{g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'}</span>
+                             {groupedPlan.length > 0 && (() => {
+                              const isExpanded = expandedExamIds.includes(exam.id);
+                              return (
+                                <div className="w-full pt-1.5 flex items-start gap-3">
+                                  <div className={`flex-1 text-zinc-500 dark:text-zinc-400 text-xs overflow-hidden ${isExpanded ? 'space-y-1' : 'line-clamp-1 truncate'}`}>
+                                    {groupedPlan.map((g, idx) => (
+                                      <div key={idx} className={isExpanded ? "leading-relaxed animate-fade-in" : "inline mr-3"}>
+                                        <strong className="text-zinc-700 dark:text-zinc-300 uppercase">{g.subject}:</strong>{' '}
+                                        <span>{g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'}</span>
+                                        {!isExpanded && idx < groupedPlan.length - 1 && <span className="text-zinc-400"> | </span>}
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            )}
+                                  <button
+                                    onClick={() => toggleExamExpanded(exam.id)}
+                                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg text-zinc-450 dark:text-zinc-550 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+                                    title={isExpanded ? "Show Less" : "Show More"}
+                                  >
+                                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                  </button>
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })

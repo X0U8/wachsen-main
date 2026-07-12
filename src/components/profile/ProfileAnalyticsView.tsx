@@ -352,7 +352,7 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
       </div>
       <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800 rounded-2xl p-4 space-y-3">
         <h3 className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">
-          Attendance Heat Map
+          Active Heat Map
         </h3>
         {activeDays.length > 0 ? (
           renderMonthlyCalendar()

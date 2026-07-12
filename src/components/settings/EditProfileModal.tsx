@@ -231,7 +231,7 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
                 {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                 {uploading ? 'Uploading...' : 'Upload image'}
               </button>
-              <p className="text-zinc-400 dark:text-gray-600" style={{ fontSize: '0.6rem' }}>Max 1 MB · auto-compressed</p>
+              <p className="text-zinc-400 dark:text-gray-600" style={{ fontSize: fontSize.xs }}>Max 1 MB · auto-compressed</p>
             </div>
           </div>
 
@@ -239,7 +239,7 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Name</label>
-              <span className="text-zinc-400 dark:text-gray-500 font-mono" style={{ fontSize: '0.6rem' }}>{editName.trim().length}/8</span>
+              <span className="text-zinc-400 dark:text-gray-500 font-mono" style={{ fontSize: fontSize.xs }}>{editName.trim().length}/8</span>
             </div>
             <input type="text" maxLength={8} value={editName} onChange={(e) => setEditName(e.target.value)}
               placeholder="Enter your name" className={inputCls} style={{ fontSize: fontSize.xs }} />

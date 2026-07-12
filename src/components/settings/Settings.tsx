@@ -344,7 +344,7 @@ export default function Settings() {
             <div className="text-center space-y-2">
               <AlertTriangle className="w-7 h-7 text-red-500 mx-auto" />
               <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Remove model?</h3>
-              <p className="text-zinc-505 dark:text-gray-400 truncate" style={{ fontSize: fontSize.xs }}>{modelToDelete}</p>
+              <p className="text-zinc-500 dark:text-gray-400 truncate" style={{ fontSize: fontSize.xs }}>{modelToDelete}</p>
             </div>
             <div className="flex gap-3">
               <button onClick={() => setModelToDelete(null)}

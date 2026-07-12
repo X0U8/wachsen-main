@@ -173,7 +173,7 @@ export default function PlanContainer() {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-        <p className="text-zinc-400" style={{ fontSize: fontSize.xs }}>Loading study plan...</p>
+        <p className="text-zinc-400 text-xs">Loading study plan...</p>
       </div>
     );
   }
@@ -189,7 +189,6 @@ export default function PlanContainer() {
           </button>
         </div>
       )}
-
       {successMsg && (
         <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl flex items-center gap-3 animate-fadeIn">
           <span className="font-medium text-xs leading-relaxed">{successMsg}</span>
@@ -198,7 +197,6 @@ export default function PlanContainer() {
           </button>
         </div>
       )}
-
       {activePlan && viewRoadmap && (
         <PlanView
           planId={activePlan.id}
@@ -209,7 +207,6 @@ export default function PlanContainer() {
           onBack={() => setViewRoadmap(false)}
         />
       )}
-
       {activePlan && !viewRoadmap && (
         <PlanDashboard
           plan={activePlan}
@@ -218,22 +215,18 @@ export default function PlanContainer() {
           isDeleting={deleting}
         />
       )}
-
       {!activePlan && !showWizard && (
         <div className="border border-dashed border-black/15 dark:border-white/20 rounded-3xl p-8 text-center flex flex-col items-center gap-4 bg-white dark:bg-zinc-900/40">
-          <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+          <h3 className="font-semibold text-zinc-900 dark:text-white text-base">
             No active study roadmap
           </h3>
           <button
             onClick={() => setShowWizard(true)}
-            className="px-5 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white font-semibold rounded-xl transition-all shadow-md cursor-pointer"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="px-5 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white font-semibold rounded-xl transition-all shadow-md cursor-pointer text-xs">
             Create Study Plan
           </button>
         </div>
       )}
-
       {!activePlan && showWizard && (
         <PlanWizard
           examName={examName}

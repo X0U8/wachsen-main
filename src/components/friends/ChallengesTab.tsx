@@ -44,8 +44,8 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
 
   return (
     <div className="space-y-4">
-
-      <div className="flex justify-between items-center text-zinc-500 dark:text-zinc-400 px-1 font-medium" style={{ fontSize: fontSize.xs }}>
+      <div
+        className="flex justify-between items-center text-zinc-500 dark:text-zinc-400 px-1 font-medium text-xs">
         <span>
           {challengeView === 'received'
             ? 'Challenged to you'
@@ -55,7 +55,6 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
           challenges left: {Math.max(0, maxChallengesPerDay - dailyChallengeCount)}/{maxChallengesPerDay}
         </span>
       </div>
-
       {challengeView === 'received' && (
         <div className="space-y-3">
           {loadingReceived && receivedChallenges.length === 0 ? (
@@ -81,19 +80,22 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         <h4 className="text-xs font-semibold text-zinc-800 dark:text-white truncate">{challenge.friendName}</h4>
                         <p className="text-[10px] text-zinc-550 dark:text-zinc-400">@{challenge.friendUsername}</p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full font-semibold uppercase ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
-                        challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
-                          challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
-                            'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
-                        }`} style={{ fontSize: fontSize.xs }}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full font-semibold uppercase ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
+                          challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
+                            challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
+                              'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
+                          } text-xs`}>
                         {challenge.status}
                       </span>
                     </div>
                   </div>
 
                   <div className="bg-zinc-50 dark:bg-zinc-950/40 p-2.5 rounded-xl border border-black/5 dark:border-white/8 flex flex-col gap-1">
-                    <div className="font-semibold text-zinc-800 dark:text-zinc-200 truncate" style={{ fontSize: fontSize.xs }}>{challenge.examName}</div>
-                    <div className="flex gap-2 text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                    <div
+                      className="font-semibold text-zinc-800 dark:text-zinc-200 truncate text-xs">{challenge.examName}</div>
+                    <div
+                      className="flex gap-2 text-zinc-500 dark:text-zinc-400 font-medium text-xs">
                       <span>{challenge.totalQuestions} questions</span>
                       <span>•</span>
                       <span className="uppercase">{challenge.difficulty}</span>
@@ -187,7 +189,6 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
           )}
         </div>
       )}
-
       {challengeView === 'sent' && (
         <div className="space-y-3">
           {loadingSent && sentChallenges.length === 0 ? (
@@ -213,19 +214,22 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         <h4 className="text-xs font-semibold text-zinc-800 dark:text-white truncate">{challenge.friendName}</h4>
                         <p className="text-[10px] text-zinc-550 dark:text-zinc-400 truncate">@{challenge.friendUsername}</p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full font-semibold uppercase ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
-                        challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
-                          challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
-                            'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
-                        }`} style={{ fontSize: fontSize.xs }}>
+                      <span
+                        className={`px-2 py-0.5 rounded-full font-semibold uppercase ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
+                          challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
+                            challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
+                              'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
+                          } text-xs`}>
                         {challenge.status}
                       </span>
                     </div>
                   </div>
 
                   <div className="bg-zinc-50 dark:bg-zinc-900/40 p-2.5 rounded-xl border border-black/5 dark:border-white/8 flex flex-col gap-1">
-                    <div className="font-semibold text-zinc-800 dark:text-zinc-200 truncate" style={{ fontSize: fontSize.xs }}>{challenge.examName}</div>
-                    <div className="flex gap-2 text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                    <div
+                      className="font-semibold text-zinc-800 dark:text-zinc-200 truncate text-xs">{challenge.examName}</div>
+                    <div
+                      className="flex gap-2 text-zinc-500 dark:text-zinc-400 font-medium text-xs">
                       <span>{challenge.totalQuestions} questions</span>
                       <span>•</span>
                       <span className="uppercase">{challenge.difficulty}</span>
@@ -301,9 +305,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
           className={`flex-1 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer text-center ${challengeView === 'received'
             ? 'bg-[#007AFF] text-white shadow-sm'
             : 'text-zinc-500 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white'
-            }`}
-          style={{ fontSize: fontSize.xs }}
-        >
+            } text-xs`}>
           Received
         </button>
         <button
@@ -311,9 +313,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
           className={`flex-1 py-1.5 rounded-full font-semibold transition-all duration-200 cursor-pointer text-center ${challengeView === 'sent'
             ? 'bg-[#007AFF] text-white shadow-sm'
             : 'text-zinc-500 dark:text-zinc-450 hover:text-zinc-800 dark:hover:text-white'
-            }`}
-          style={{ fontSize: fontSize.xs }}
-        >
+            } text-xs`}>
           Sent
         </button>
       </div>

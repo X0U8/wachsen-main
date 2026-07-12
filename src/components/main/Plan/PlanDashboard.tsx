@@ -60,7 +60,8 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
     <div className="max-w-xl mx-auto bg-white dark:bg-zinc-900/40 border border-black/15 dark:border-white/20 p-6 rounded-3xl space-y-6 shadow-sm animate-fadeIn relative">
       <div className="flex items-center justify-between border-b border-black/15 dark:border-white/20 pb-4 gap-4">
         <div className="w-8" />
-        <h2 className="font-semibold text-zinc-900 dark:text-white text-center flex-1" style={{ fontSize: fontSize.base }}>
+        <h2
+          className="font-semibold text-zinc-900 dark:text-white text-center flex-1 text-base">
           {plan.exam_name} preparation
         </h2>
         {createdDate.getDate() === currentDate.getDate() &&
@@ -78,12 +79,11 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
           <div className="w-8" />
         )}
       </div>
-
       <div className="space-y-4 py-2">
-        <div className="text-center font-bold text-blue-500 tracking-widest" style={{ fontSize: fontSize.sm }}>
+        <div className="text-center font-bold text-blue-500 tracking-widest text-sm">
           DAY
         </div>
-        <div className="text-center font-bold text-blue-500 tracking-widest" style={{ fontSize: fontSize.xl }}>
+        <div className="text-center font-bold text-blue-500 tracking-widest text-xl">
           {x}/{plan.days}
         </div>
 
@@ -97,22 +97,20 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
         {parsedSubjects.length > 0 && (
           <div className="flex flex-wrap gap-1.5 justify-center pt-2">
             {parsedSubjects.map((sub: any, idx: number) => (
-              <span key={idx} className="bg-zinc-150/50 dark:bg-zinc-800/40 border border-zinc-250 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 px-2.5 py-1 rounded-xl font-medium tracking-wide animate-fade-in" style={{ fontSize: fontSize.xs }}>
+              <span
+                key={idx}
+                className="bg-zinc-150/50 dark:bg-zinc-800/40 border border-zinc-250 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 px-2.5 py-1 rounded-xl font-medium tracking-wide animate-fade-in text-xs">
                 {sub.name}
               </span>
             ))}
           </div>
         )}
       </div>
-
       <button
         onClick={onContinue}
-        className="w-full py-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white font-semibold rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
-        style={{ fontSize: fontSize.xs }}
-      >
+        className="w-full py-2.5 bg-[#007AFF] hover:bg-[#0062CC] text-white font-semibold rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 text-xs">
         Continue
       </button>
-
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-sm p-6 bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-gray-800 rounded-3xl shadow-xl space-y-6">

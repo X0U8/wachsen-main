@@ -9,13 +9,11 @@ interface StepGenderProps {
 export default function StepGender({ value, onChange, selectCls }: StepGenderProps) {
   return (
     <div className="space-y-4">
-      <label className="block font-medium text-black dark:text-white" style={{ fontSize: fontSize.base }}>Gender</label>
+      <label className="block font-medium text-black dark:text-white text-base">Gender</label>
       <select
-        className={selectCls}
-        style={{ fontSize: fontSize.sm }}
+        className={`${selectCls} text-sm`}
         value={value}
-        onChange={e => onChange(e.target.value)}
-      >
+        onChange={e => onChange(e.target.value)}>
         <option value="" disabled>Select Gender</option>
         <option value="Male">Male</option>
         <option value="Female">Female</option>

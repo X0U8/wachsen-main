@@ -799,10 +799,9 @@ export default function Friends() {
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h2 className="font-semibold text-zinc-800 dark:text-white" style={{ fontSize: fontSize.base }}>Friends</h2>
+        <h2 className="font-semibold text-zinc-800 dark:text-white text-base">Friends</h2>
         <div className="w-8" />
       </header>
-
       <main className="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-5 space-y-6">
         <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
           <button
@@ -810,9 +809,7 @@ export default function Friends() {
             className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold  tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'friends'
               ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-650 dark:hover:text-gray-300'
-              }`}
-            style={{ fontSize: fontSize.xs }}
-          >
+              } text-xs`}>
             Friends
           </button>
           <button
@@ -820,9 +817,7 @@ export default function Friends() {
             className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold  tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'challenges'
               ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-650 dark:hover:text-gray-300'
-              }`}
-            style={{ fontSize: fontSize.xs }}
-          >
+              } text-xs`}>
             Challenges
           </button>
           <button
@@ -830,9 +825,7 @@ export default function Friends() {
             className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold  tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'search'
               ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-zinc-400 dark:text-gray-550 hover:text-zinc-650 dark:hover:text-gray-300'
-              }`}
-            style={{ fontSize: fontSize.xs }}
-          >
+              } text-xs`}>
             Search
           </button>
         </div>
@@ -894,13 +887,11 @@ export default function Friends() {
           />
         )}
       </main>
-
       <MissingCategoryModal
         isOpen={showMissingCategoryModal}
         creating={creatingCategory}
         onCreate={handleCreateChallengesCategory}
       />
-
       <ExamSelectorModal
         isOpen={showExamSelector}
         onClose={() => {
@@ -921,7 +912,6 @@ export default function Friends() {
           setConfirmSendExamId(examId);
         }}
       />
-
       <ActionConfirmModals
         confirmSendExamId={confirmSendExamId}
         setConfirmSendExamId={setConfirmSendExamId}
@@ -937,7 +927,6 @@ export default function Friends() {
         setConfirmDeclineChallengeId={setConfirmDeclineChallengeId}
         onDeclineChallenge={handleDeclineChallenge}
       />
-
       {showPublicProfileModal && selectedProfileForDetails && (
         <PublicProfileModal
           onClose={() => {
@@ -947,7 +936,6 @@ export default function Friends() {
           userId={selectedProfileForDetails.id}
         />
       )}
-
       <Footer />
     </div>
   );

@@ -316,7 +316,7 @@ export default function ExamDetails() {
             <ChevronLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="font-medium text-zinc-900 dark:text-gray-100" style={{ fontSize: fontSize.base }}>{examType?.name || 'Exam Details'}</h1>
+            <h1 className="font-medium text-zinc-900 dark:text-gray-100 text-base">{examType?.name || 'Exam Details'}</h1>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -336,7 +336,6 @@ export default function ExamDetails() {
           )}
         </div>
       </header>
-
       <main className="flex-1 p-4 pb-32">
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/15 dark:border-white/20 overflow-hidden dark:shadow-[0_0_35px_rgba(255,255,255,0.06)]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-950/30">
@@ -394,8 +393,9 @@ export default function ExamDetails() {
             </div>
           ) : exams.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left" style={{ fontSize: fontSize.sm }}>
-                <thead className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 font-semibold tracking-wider" style={{ fontSize: fontSize.sm }}>
+              <table className="w-full text-left text-sm">
+                <thead
+                  className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 font-semibold tracking-wider text-sm">
                   <tr>
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Start</th>
@@ -422,20 +422,22 @@ export default function ExamDetails() {
                         {exam.endDateTime?.toLowerCase() === 'anytime' || !exam.endDateTime ? 'Anytime' : formatSimpleDate(exam.endDateTime)}
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`px-2 py-0.5 rounded-full font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
-                          exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
-                            exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
-                              'bg-yellow-500/10 text-yellow-500'
-                          }`} style={{ fontSize: fontSize.xs }}>
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
+                            exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
+                              exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
+                                'bg-yellow-500/10 text-yellow-500'
+                            } text-xs`}>
                           {exam.status}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <span className={`px-2 py-0.5 rounded-full font-medium uppercase ${exam.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
-                          exam.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
-                            exam.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
-                              'bg-red-500/10 text-red-500'
-                          }`} style={{ fontSize: fontSize.xs }}>
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-medium uppercase ${exam.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
+                            exam.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
+                              exam.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
+                                'bg-red-500/10 text-red-500'
+                            } text-xs`}>
                           {exam.difficulty}
                         </span>
                       </td>
@@ -449,9 +451,9 @@ export default function ExamDetails() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>No exams found for this type.</p>
+              <p className="text-zinc-500 dark:text-gray-400 text-sm">No exams found for this type.</p>
               {examType?.name !== 'challenges' && examType?.name !== 'others' && (
-                <p className="mt-1 text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Click the plus icon to create your first exam.</p>
+                <p className="mt-1 text-zinc-400 dark:text-gray-500 text-xs">Click the plus icon to create your first exam.</p>
               )}
             </div>
           )}
@@ -464,7 +466,6 @@ export default function ExamDetails() {
           </div>
         )}
       </main>
-
       {examType?.name !== 'challenges' && examType?.name !== 'others' && (
         <div className="fixed bottom-10 left-0 right-0 flex justify-center z-20 pointer-events-none">
           <motion.button
@@ -477,13 +478,11 @@ export default function ExamDetails() {
           </motion.button>
         </div>
       )}
-
       <ExamInfoModal
         exam={selectedExamForInfo}
         onClose={() => setSelectedExamForInfo(null)}
         formatSimpleDate={formatSimpleDate}
       />
-
       <TemplateModal
         show={showTemplateModal}
         isEditing={isEditingTemplate}
@@ -496,7 +495,6 @@ export default function ExamDetails() {
         templateCount={templateCount}
         maxTemplates={maxTemplates}
       />
-
       {showMakeAI && (
         <MakeAIForm
           show={showMakeAI}
@@ -507,9 +505,6 @@ export default function ExamDetails() {
           availableSubjects={availableSubjects}
         />
       )}
-
-
-
       <EditCategoryModal
         show={showEditCategoryModal}
         form={editCategoryForm}
@@ -519,7 +514,6 @@ export default function ExamDetails() {
         onClose={() => setShowEditCategoryModal(false)}
         onFormChange={(f) => setEditCategoryForm(f)}
       />
-
       {notification && (
         <Notification
           type={notification.type}

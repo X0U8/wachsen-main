@@ -119,15 +119,14 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
         </div>
 
         <div className="text-center md:text-left space-y-1">
-          <h4 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+          <h4 className="font-semibold text-zinc-900 dark:text-white text-base">
             Syllabus completion
           </h4>
-          <p className="text-zinc-550 dark:text-zinc-400 font-semibold" style={{ fontSize: fontSize.sm }}>
+          <p className="text-zinc-550 dark:text-zinc-400 font-semibold text-sm">
             {completedCount}/{totalChaptersCount}
           </p>
         </div>
       </div>
-
       <div className="flex gap-2 overflow-x-auto whitespace-nowrap pb-2 scrollbar-none border-b border-zinc-200/60 dark:border-gray-800/80">
         {subjectsList.map((sub) => (
           <button
@@ -142,7 +141,6 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
           </button>
         ))}
       </div>
-
       <div className="space-y-5 max-h-[380px] overflow-y-auto pr-1">
         {subjectsToShow.map((subName) => {
           if (!groupedSubjects[subName]) return null;

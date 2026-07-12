@@ -191,7 +191,7 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-gray-800 pb-3">
           <div className="flex items-center gap-3">
 
-            <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Edit profile</h3>
+            <h3 className="font-semibold text-zinc-900 dark:text-white text-base">Edit profile</h3>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-zinc-100 dark:hover:bg-gray-800 rounded-lg text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer">
             <X className="w-4 h-4" />
@@ -199,7 +199,8 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
         </div>
 
         {error && (
-          <div className="p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-500 dark:text-red-400 flex gap-2 items-start" style={{ fontSize: fontSize.xs }}>
+          <div
+            className="p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-500 dark:text-red-400 flex gap-2 items-start text-xs">
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -208,7 +209,8 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
         <div className="space-y-3.5 max-h-[60vh] overflow-y-auto pr-1">
 
           <div className="flex items-center gap-4 bg-zinc-50 dark:bg-gray-950 p-3 rounded-2xl border border-zinc-200/80 dark:border-gray-800">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold overflow-hidden shadow-sm shrink-0" style={{ fontSize: fontSize.lg }}>
+            <div
+              className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold overflow-hidden shadow-sm shrink-0 text-lg">
               {editPicUrl.trim() ? (
                 <img src={editPicUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
               ) : (
@@ -216,33 +218,39 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
               )}
             </div>
             <div className="flex-1 space-y-1.5">
-              <p className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Profile photo</p>
+              <p className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Profile photo</p>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-zinc-300 dark:border-gray-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 cursor-pointer"
-                style={{ fontSize: fontSize.xs }}
-              >
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 border border-zinc-300 dark:border-gray-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 cursor-pointer text-xs">
                 {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                 {uploading ? 'Uploading...' : 'Upload image'}
               </button>
-              <p className="text-zinc-400 dark:text-gray-600" style={{ fontSize: fontSize.xs }}>Max 1 MB · auto-compressed</p>
+              <p className="text-zinc-400 dark:text-gray-600 text-xs">Max 1 MB · auto-compressed</p>
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Name</label>
-              <span className="text-zinc-400 dark:text-gray-500 font-mono" style={{ fontSize: fontSize.xs }}>{editName.trim().length}/8</span>
+              <label className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Name</label>
+              <span className="text-zinc-400 dark:text-gray-500 font-mono text-xs">{editName.trim().length}/8</span>
             </div>
-            <input type="text" maxLength={8} value={editName} onChange={(e) => setEditName(e.target.value)}
-              placeholder="Enter your name" className={inputCls} style={{ fontSize: fontSize.xs }} />
+            <input
+              type="text"
+              maxLength={8}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Enter your name"
+              className={`${inputCls} text-xs`} />
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Gender</label>
-            <select value={editGender} onChange={(e) => setEditGender(e.target.value)} className={selectCls} style={{ fontSize: fontSize.xs }}>
+            <label className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Gender</label>
+            <select
+              value={editGender}
+              onChange={(e) => setEditGender(e.target.value)}
+              className={`${selectCls} text-xs`}>
               <option value="">Select gender</option>
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -252,27 +260,37 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Country</label>
-            <select value={editCountry} onChange={(e) => setEditCountry(e.target.value)} className={selectCls} style={{ fontSize: fontSize.xs }}>
+            <label className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Country</label>
+            <select
+              value={editCountry}
+              onChange={(e) => setEditCountry(e.target.value)}
+              className={`${selectCls} text-xs`}>
               <option value="">Select country</option>
               {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
           <div className="space-y-1">
-            <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Date of birth</label>
+            <label className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Date of birth</label>
             <div className="flex gap-2">
-              <select className={selectCls} style={{ fontSize: fontSize.xs }} value={dobDay} onChange={e => setDobDay(e.target.value)}>
+              <select
+                className={`${selectCls} text-xs`}
+                value={dobDay}
+                onChange={e => setDobDay(e.target.value)}>
                 <option value="">Day</option>
                 {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
-              <select className={selectCls} style={{ fontSize: fontSize.xs }}
+              <select
+                className={`${selectCls} text-xs`}
                 value={dobMonth ? MONTHS[parseInt(dobMonth, 10) - 1] || '' : ''}
                 onChange={e => { const idx = MONTHS.indexOf(e.target.value) + 1; setDobMonth(idx ? idx.toString() : ''); }}>
                 <option value="">Month</option>
                 {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
-              <select className={selectCls} style={{ fontSize: fontSize.xs }} value={dobYear} onChange={e => setDobYear(e.target.value)}>
+              <select
+                className={`${selectCls} text-xs`}
+                value={dobYear}
+                onChange={e => setDobYear(e.target.value)}>
                 <option value="">Year</option>
                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
@@ -281,12 +299,13 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
         </div>
 
         <div className="flex gap-3 pt-1">
-          <button onClick={onClose}
-            className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors hover:bg-zinc-200 dark:hover:bg-gray-700 cursor-pointer"
-            style={{ fontSize: fontSize.sm }}>Cancel</button>
-          <button onClick={handleSave} disabled={saving || uploading || !editName.trim()}
-            className="flex-1 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] disabled:opacity-40 text-white rounded-xl font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-            style={{ fontSize: fontSize.sm }}>
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors hover:bg-zinc-200 dark:hover:bg-gray-700 cursor-pointer text-sm">Cancel</button>
+          <button
+            onClick={handleSave}
+            disabled={saving || uploading || !editName.trim()}
+            className="flex-1 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] disabled:opacity-40 text-white rounded-xl font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 text-sm">
             {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving...</> : 'Save changes'}
           </button>
         </div>

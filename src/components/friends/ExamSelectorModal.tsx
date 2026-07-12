@@ -40,10 +40,10 @@ export const ExamSelectorModal: React.FC<ExamSelectorModalProps> = ({
           <X className="w-4 h-4" />
         </button>
 
-        <h3 className="font-semibold text-zinc-900 dark:text-white mb-1" style={{ fontSize: fontSize.sm }}>
+        <h3 className="font-semibold text-zinc-900 dark:text-white mb-1 text-sm">
           Select Exam to Send
         </h3>
-        <p className="text-zinc-500 dark:text-zinc-400 mb-4 font-medium" style={{ fontSize: fontSize.xs }}>
+        <p className="text-zinc-500 dark:text-zinc-400 mb-4 font-medium text-xs">
           Choose an exam to challenge <strong>{friendName}</strong>.
         </p>
 
@@ -58,15 +58,11 @@ export const ExamSelectorModal: React.FC<ExamSelectorModalProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'Enter') onSearch();
               }}
-              className="w-full pl-9 pr-3 py-2 bg-zinc-50 dark:bg-zinc-900/50 border border-black/15 dark:border-white/20 rounded-xl text-zinc-800 dark:text-zinc-100 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all placeholder-zinc-400 font-medium"
-              style={{ fontSize: fontSize.xs }}
-            />
+              className="w-full pl-9 pr-3 py-2 bg-zinc-50 dark:bg-zinc-900/50 border border-black/15 dark:border-white/20 rounded-xl text-zinc-800 dark:text-zinc-100 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all placeholder-zinc-400 font-medium text-xs" />
           </div>
           <button
             onClick={onSearch}
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all cursor-pointer shadow-xs shrink-0"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all cursor-pointer shadow-xs shrink-0 text-xs">
             Search
           </button>
         </div>
@@ -84,10 +80,12 @@ export const ExamSelectorModal: React.FC<ExamSelectorModalProps> = ({
                   onClick={() => onSelectExam(exam.id)}
                   className="w-full text-left bg-zinc-50 dark:bg-zinc-900/40 hover:bg-zinc-100 dark:hover:bg-zinc-850 border border-black/10 dark:border-white/15 p-3 rounded-xl transition-all cursor-pointer flex flex-col gap-1"
                 >
-                  <span className="font-semibold text-zinc-800 dark:text-gray-100 line-clamp-1" style={{ fontSize: fontSize.xs }}>
+                  <span
+                    className="font-semibold text-zinc-800 dark:text-gray-100 line-clamp-1 text-xs">
                     {exam.examName || 'Untitled Exam'}
                   </span>
-                  <span className="text-zinc-500 dark:text-zinc-400 font-medium uppercase" style={{ fontSize: fontSize.xs }}>
+                  <span
+                    className="text-zinc-500 dark:text-zinc-400 font-medium uppercase text-xs">
                     {exam.totalQuestions} Questions • {exam.difficulty}
                   </span>
                 </button>
@@ -98,9 +96,7 @@ export const ExamSelectorModal: React.FC<ExamSelectorModalProps> = ({
               <button
                 onClick={onLoadMore}
                 disabled={loadingMyExams}
-                className="w-full mt-3 py-2 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-850 border border-black/10 dark:border-white/15 rounded-xl font-semibold text-zinc-650 dark:text-zinc-450 transition-all cursor-pointer flex justify-center items-center gap-1.5"
-                style={{ fontSize: fontSize.xs }}
-              >
+                className="w-full mt-3 py-2 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-850 border border-black/10 dark:border-white/15 rounded-xl font-semibold text-zinc-650 dark:text-zinc-450 transition-all cursor-pointer flex justify-center items-center gap-1.5 text-xs">
                 {loadingMyExams ? (
                   <Loader2 className="w-3.5 h-3.5 text-zinc-500 animate-spin" />
                 ) : (

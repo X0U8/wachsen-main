@@ -141,20 +141,23 @@ export default function Login() {
         <Aurora colorStops={['#7cff67', '#B497CF', '#5227FF']} blend={0.5} amplitude={1.0} speed={1} />
       </div>
       <div className="absolute inset-0 bg-gradient-to-br from-blue-950/20 to-purple-950/20 blur-[120px] z-0" />
-
       <div className="w-full max-w-sm relative z-10 flex flex-col items-center">
         <div className="text-center mb-10">
-          <h2 className="text-black dark:text-white tracking-normal font-normal leading-none" style={{ fontSize: fontSize['5xl'], fontFamily: '"Times New Roman", Times, serif' }}>WACHSEN</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-4 font-sans" style={{ fontSize: fontSize.xs }}>Plan . Execute . Revise all in one place</p>
+          <h2 className="text-black dark:text-white tracking-normal font-normal leading-none text-5xl" style={{
+            fontFamily: '"Times New Roman", Times, serif'
+          }}>WACHSEN</h2>
+          <p className="text-zinc-500 dark:text-zinc-400 mt-4 font-sans text-xs">Plan . Execute . Revise all in one place</p>
         </div>
 
         {error && (
-          <p className="mb-4 text-blue-800 dark:text-blue-200 p-3 bg-blue-100/60 dark:bg-blue-950/40 border border-blue-200/30 dark:border-blue-900/35 rounded-xl w-full text-center animate-fade-in" style={{ fontSize: fontSize.sm }}>
+          <p
+            className="mb-4 text-blue-800 dark:text-blue-200 p-3 bg-blue-100/60 dark:bg-blue-950/40 border border-blue-200/30 dark:border-blue-900/35 rounded-xl w-full text-center animate-fade-in text-sm">
             {error}
           </p>
         )}
         {infoMsg && (
-          <p className="mb-4 text-purple-800 dark:text-purple-200 p-3 bg-purple-100/60 dark:bg-purple-950/40 border border-purple-200/30 dark:border-purple-900/35 rounded-xl w-full text-center animate-fade-in" style={{ fontSize: fontSize.sm }}>
+          <p
+            className="mb-4 text-purple-800 dark:text-purple-200 p-3 bg-purple-100/60 dark:bg-purple-950/40 border border-purple-200/30 dark:border-purple-900/35 rounded-xl w-full text-center animate-fade-in text-sm">
             {infoMsg}
           </p>
         )}
@@ -174,26 +177,23 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={busy}
                   required
-                  className={inputCls}
-                  style={{ fontSize: fontSize.sm }}
-                />
-                <button type="submit" disabled={busy} className={primaryBtnCls} style={{ fontSize: fontSize.sm }}>
+                  className={`${inputCls} text-sm`} />
+                <button type="submit" disabled={busy} className={`${primaryBtnCls} text-sm`}>
                   {otpLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send OTP'}
                 </button>
               </form>
 
               <div className="flex items-center justify-between gap-4 py-2">
                 <div className="h-px bg-zinc-200/60 dark:bg-zinc-900/60 flex-1" />
-                <span className="font-medium font-sans text-zinc-400 dark:text-zinc-600" style={{ fontSize: fontSize.xs }}>or</span>
+                <span
+                  className="font-medium font-sans text-zinc-400 dark:text-zinc-600 text-xs">or</span>
                 <div className="h-px bg-zinc-200/60 dark:bg-zinc-900/60 flex-1" />
               </div>
 
               <button
                 onClick={handleGoogleLogin}
                 disabled={busy}
-                className="flex w-full items-center justify-center gap-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 px-4 py-4 text-black dark:text-white font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 cursor-pointer"
-                style={{ fontSize: fontSize.sm }}
-              >
+                className="flex w-full items-center justify-center gap-3 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:bg-black/10 dark:hover:bg-white/10 px-4 py-4 text-black dark:text-white font-medium transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 cursor-pointer text-sm">
                 {googleLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
@@ -219,21 +219,17 @@ export default function Login() {
                     onKeyDown={(e) => handleKeyDown(idx, e)}
                     onPaste={idx === 0 ? handlePaste : undefined}
                     disabled={busy}
-                    className="w-10 h-12 bg-white dark:bg-zinc-950 border border-black/15 dark:border-white/20 rounded-xl text-black dark:text-white text-center font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-white transition-colors"
-                    style={{ fontSize: fontSize.lg }}
-                  />
+                    className="w-10 h-12 bg-white dark:bg-zinc-950 border border-black/15 dark:border-white/20 rounded-xl text-black dark:text-white text-center font-semibold focus:outline-none focus:border-blue-500 dark:focus:border-white transition-colors text-lg" />
                 ))}
               </div>
-              <button type="submit" disabled={busy} className={primaryBtnCls} style={{ fontSize: fontSize.sm }}>
+              <button type="submit" disabled={busy} className={`${primaryBtnCls} text-sm`}>
                 {verifyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign In'}
               </button>
               <button
                 type="button"
                 onClick={() => setOtpSent(false)}
                 disabled={busy}
-                className="w-full text-zinc-500 dark:text-zinc-500 hover:text-black dark:hover:text-white font-medium py-1 transition-colors cursor-pointer disabled:opacity-50"
-                style={{ fontSize: fontSize.xs }}
-              >
+                className="w-full text-zinc-500 dark:text-zinc-500 hover:text-black dark:hover:text-white font-medium py-1 transition-colors cursor-pointer disabled:opacity-50 text-xs">
                 Go Back
               </button>
             </form>

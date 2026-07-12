@@ -70,11 +70,11 @@ export default function TiltedCard({
       onMouseLeave={handleMouseLeave}
     >
       {showMobileWarning && (
-        <div className="absolute top-4 text-center block sm:hidden text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
+        <div
+          className="absolute top-4 text-center block sm:hidden text-gray-500 dark:text-gray-400 text-sm">
           This effect is not optimized for mobile. Check on desktop.
         </div>
       )}
-
       <motion.div
         className="relative w-full h-full [transform-style:preserve-3d]"
         style={{

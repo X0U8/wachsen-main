@@ -211,7 +211,6 @@ export default function PlanViewDaily({
           );
         })}
       </div>
-
       {isMonthLocked ? (
         <div className="border border-zinc-300 dark:border-gray-850 rounded-3xl p-12 text-center flex flex-col items-center gap-3 bg-white/20 dark:bg-gray-900/20">
           <div className="p-4 bg-zinc-100 dark:bg-zinc-900 text-zinc-400 dark:text-gray-650 rounded-full border border-zinc-200 dark:border-gray-800">
@@ -219,7 +218,7 @@ export default function PlanViewDaily({
           </div>
           <div className="space-y-1">
             <h4 className="font-semibold text-zinc-805 dark:text-gray-250 text-sm">Month {selectedMonthNum} is Locked</h4>
-            <p className="text-zinc-450 dark:text-gray-450 mt-1" style={{ fontSize: fontSize.xs }}>
+            <p className="text-zinc-450 dark:text-gray-450 mt-1 text-xs">
               Syllabus schedule will unlock on <strong className="text-zinc-705 dark:text-white">{getUnlockDateString(selectedMonthNum)}</strong> ({getMonthDateRange(createdAt, selectedMonthNum)}).
             </p>
           </div>
@@ -276,10 +275,10 @@ export default function PlanViewDaily({
           ) : (
             <>
               <div className="space-y-1.5 max-w-sm">
-                <h4 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+                <h4 className="font-semibold text-zinc-900 dark:text-white text-base">
                   Generate tasks for Month {selectedMonthNum}
                 </h4>
-                <p className="text-zinc-500 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                <p className="text-zinc-500 dark:text-zinc-400 font-medium text-xs">
                   {getMonthDateRange(createdAt, selectedMonthNum)}
                 </p>
                 {selectedMonthNum !== currentActiveMonth && (
@@ -289,16 +288,14 @@ export default function PlanViewDaily({
                 )}
               </div>
 
-              <div className="text-zinc-550 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+              <div className="text-zinc-550 dark:text-zinc-400 font-medium text-xs">
                 planning cost: <strong className="text-blue-600 dark:text-blue-400 font-bold">15 credits</strong>
               </div>
 
               <button
                 onClick={handleGenerateDetailedTasks}
                 disabled={selectedMonthNum !== currentActiveMonth}
-                className="px-5 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-550 disabled:border-transparent text-white font-bold rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ fontSize: fontSize.xs }}
-              >
+                className="px-5 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-550 disabled:border-transparent text-white font-bold rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed text-xs">
                 Generate Tasks
               </button>
             </>

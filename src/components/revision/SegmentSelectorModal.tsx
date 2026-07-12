@@ -55,8 +55,9 @@ export default function SegmentSelectorModal({
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg h-[500px] flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white">
         <div className="flex items-center justify-between flex-shrink-0">
           <div>
-            <h3 className="font-semibold text-zinc-800 dark:text-white tracking-wider" style={{ fontSize: fontSize.base }}>Select Subtopic</h3>
-            <p className="text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>Choose a topic range to generate 10 concept cards</p>
+            <h3
+              className="font-semibold text-zinc-800 dark:text-white tracking-wider text-base">Select Subtopic</h3>
+            <p className="text-zinc-500 dark:text-zinc-400 text-xs">Choose a topic range to generate 10 concept cards</p>
           </div>
           <button
             onClick={onClose}
@@ -68,13 +69,14 @@ export default function SegmentSelectorModal({
 
         <div className="flex-grow overflow-y-auto pr-1 my-4 space-y-5">
           {Object.keys(segmentsBySubject).length === 0 ? (
-            <div className="text-center py-12 text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
+            <div className="text-center py-12 text-zinc-500 dark:text-zinc-400 text-xs">
               No segments found in this exam plan.
             </div>
           ) : (
             Object.entries(segmentsBySubject).map(([subject, list]) => (
               <div key={subject} className="space-y-2">
-                <div className="font-bold text-zinc-500 dark:text-zinc-400 tracking-widest pl-1" style={{ fontSize: fontSize.xs }}>
+                <div
+                  className="font-bold text-zinc-500 dark:text-zinc-400 tracking-widest pl-1 text-xs">
                   {subject}
                 </div>
                 <div className="space-y-2">
@@ -89,10 +91,11 @@ export default function SegmentSelectorModal({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="space-y-1">
-                          <div className="font-medium text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" style={{ fontSize: fontSize.sm }}>
+                          <div
+                            className="font-medium text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-sm">
                             {seg.topics || 'General Review'}
                           </div>
-                          <div className="text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
+                          <div className="text-zinc-500 dark:text-zinc-400 text-xs">
                             Questions {seg.range}
                           </div>
                         </div>
@@ -108,9 +111,7 @@ export default function SegmentSelectorModal({
         <div className="flex-shrink-0 border-t border-zinc-150 dark:border-zinc-900 pt-3">
           <button
             onClick={onClose}
-            className="w-full py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl font-semibold text-zinc-700 dark:text-white transition-all cursor-pointer"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="w-full py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl font-semibold text-zinc-700 dark:text-white transition-all cursor-pointer text-xs">
             Cancel
           </button>
         </div>

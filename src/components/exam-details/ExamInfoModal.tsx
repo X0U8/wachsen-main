@@ -49,13 +49,14 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
 
           <div className="space-y-4">
             <div className="space-y-1">
-              <h3 className="font-medium text-zinc-900 dark:text-gray-100" style={{ fontSize: fontSize.lg }}>{exam.name}</h3>
+              <h3 className="font-medium text-zinc-900 dark:text-gray-100 text-lg">{exam.name}</h3>
               <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 rounded-full uppercase tracking-wider font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
-                    exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
-                      exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
-                        'bg-yellow-500/10 text-yellow-500'
-                  }`} style={{ fontSize: fontSize.xs }}>
+                <span
+                  className={`px-2 py-0.5 rounded-full uppercase tracking-wider font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
+                      exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
+                        exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
+                          'bg-yellow-500/10 text-yellow-500'
+                    } text-xs`}>
                   {exam.status}
                 </span>
               </div>
@@ -63,35 +64,43 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
-                <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1" style={{ fontSize: fontSize.xs }}>Exam Type</p>
-                <p className="font-medium text-zinc-900 dark:text-white capitalize" style={{ fontSize: fontSize.sm }}>{exam.examType || 'N/A'}</p>
+                <p
+                  className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1 text-xs">Exam Type</p>
+                <p className="font-medium text-zinc-900 dark:text-white capitalize text-sm">{exam.examType || 'N/A'}</p>
               </div>
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
-                <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1" style={{ fontSize: fontSize.xs }}>Difficulty</p>
-                <p className="font-medium text-zinc-900 dark:text-white capitalize" style={{ fontSize: fontSize.sm }}>{exam.difficulty}</p>
+                <p
+                  className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1 text-xs">Difficulty</p>
+                <p className="font-medium text-zinc-900 dark:text-white capitalize text-sm">{exam.difficulty}</p>
               </div>
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
-                <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1" style={{ fontSize: fontSize.xs }}>Questions</p>
-                <p className="font-medium text-zinc-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{exam.totalQuestions}</p>
+                <p
+                  className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1 text-xs">Questions</p>
+                <p className="font-medium text-zinc-900 dark:text-white text-sm">{exam.totalQuestions}</p>
               </div>
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
-                <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1" style={{ fontSize: fontSize.xs }}>Total Marks</p>
-                <p className="font-medium text-zinc-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{exam.totalMarks}</p>
+                <p
+                  className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1 text-xs">Total Marks</p>
+                <p className="font-medium text-zinc-900 dark:text-white text-sm">{exam.totalMarks}</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>Subjects</p>
+              <p
+                className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider text-xs">Subjects</p>
               <div className="flex flex-wrap gap-2">
                 {exam.subjects.map((sub: any, idx: number) => (
-                  <span key={idx} className="bg-blue-500/5 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-xl font-medium" style={{ fontSize: fontSize.xs }}>
+                  <span
+                    key={idx}
+                    className="bg-blue-500/5 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-xl font-medium text-xs">
                     {sub.name}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="pt-2 flex justify-between border-t border-black/10 dark:border-white/10" style={{ fontSize: fontSize.xs }}>
+            <div
+              className="pt-2 flex justify-between border-t border-black/10 dark:border-white/10 text-xs">
               {exam.startDateTime && exam.startDateTime !== 'anytime' && exam.endDateTime && exam.endDateTime !== 'anytime' ? (
                 <span className="w-full text-center text-zinc-500 dark:text-gray-500">
                   {formatSimpleDate(exam.startDateTime)} — {formatSimpleDate(exam.endDateTime)}
@@ -115,7 +124,7 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
                   return (
                     <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-center gap-3 text-red-500">
                       <AlertCircle className="w-5 h-5 shrink-0" />
-                      <p className="font-medium" style={{ fontSize: fontSize.xs }}>{message}</p>
+                      <p className="font-medium text-xs">{message}</p>
                     </div>
                   );
                 }
@@ -123,11 +132,8 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
                 return (
                   <button
                     onClick={() => navigate(`/exam/${exam.id}`)}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group"
-                    style={{ fontSize: fontSize.base }}
-                  >
-                    Start Exam Now
-                    <ChevronLeft className="w-5 h-5 rotate-180 group-hover:translate-x-1 transition-transform" />
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group text-base">Start Exam Now
+                                        <ChevronLeft className="w-5 h-5 rotate-180 group-hover:translate-x-1 transition-transform" />
                   </button>
                 );
               })()}

@@ -555,7 +555,6 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
           onClose={() => setNotification(null)}
         />
       )}
-
       <div className="fixed inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
@@ -564,7 +563,8 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
 
           <div className="px-6 sm:px-10 pt-6 pb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-gray-900 dark:text-white tracking-tight font-semibold" style={{ fontSize: fontSize.xl }}>
+              <h2
+                className="text-gray-900 dark:text-white tracking-tight font-semibold text-xl">
                 Ready to <span className="text-blue-600 dark:text-blue-500">Level Up?</span>
               </h2>
             </div>
@@ -581,15 +581,15 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${currentPlan && currentPlan !== 'Free' && isPremiumActive() ? 'bg-green-500' : 'bg-gray-400'}`} />
                 <div>
-                  <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Current plan</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-xs">Current plan</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{currentPlan || 'Free'}</span>
+                    <span className="font-semibold text-gray-900 dark:text-white text-sm">{currentPlan || 'Free'}</span>
                     {currentPlan && currentPlan !== 'Free' && isPremiumActive() ? (
-                      <span className="text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.xs }}>
+                      <span className="text-blue-600 dark:text-blue-400 text-xs">
                         Expires {new Date(premiumEnds || '').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     ) : (
-                      <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>No expiry</span>
+                      <span className="text-gray-400 dark:text-gray-500 text-xs">No expiry</span>
                     )}
                   </div>
                 </div>
@@ -597,14 +597,14 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
 
               {currentPlan && currentPlan !== 'Free' && isPremiumActive() && premiumEnds ? (
                 <div className="flex flex-col items-end">
-                  <span className="font-semibold text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.sm }}>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400 text-sm">
                     {Math.max(0, Math.ceil((new Date(premiumEnds).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days
                   </span>
                   <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: '0.625rem' }}>remaining</span>
                 </div>
               ) : (
                 <div className="flex flex-col items-end">
-                  <span className="font-bold text-gray-400 dark:text-gray-500" style={{ fontSize: fontSize.base }}>∞</span>
+                  <span className="font-bold text-gray-400 dark:text-gray-500 text-base">∞</span>
                 </div>
               )}
             </div>
@@ -628,7 +628,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                       onClick={() => handleCountryChange(country)}
                       className={`w-full flex items-center justify-between px-4 py-2 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-all ${selectedCountry.code === country.code ? 'bg-black/10 dark:bg-white/10' : ''}`}
                     >
-                      <span className="text-gray-900 dark:text-white" style={{ fontSize: fontSize.xs }}>{country.name}</span>
+                      <span className="text-gray-900 dark:text-white text-xs">{country.name}</span>
                       <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: '0.625rem' }}>({country.currency})</span>
                     </button>
                   ))}
@@ -639,16 +639,12 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
             <div className="flex items-center bg-gray-200/40 dark:bg-black/40 rounded-xl p-1 border border-black/5 dark:border-white/5">
               <button
                 onClick={() => setIsYearly(false)}
-                className={`px-6 py-1.5 rounded-lg font-medium transition-all ${!isYearly ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-                style={{ fontSize: fontSize.xs }}
-              >
+                className={`px-6 py-1.5 rounded-lg font-medium transition-all ${!isYearly ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'} text-xs`}>
                 Monthly
               </button>
               <button
                 onClick={() => setIsYearly(true)}
-                className={`px-6 py-1.5 rounded-lg font-medium transition-all ${isYearly ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
-                style={{ fontSize: fontSize.xs }}
-              >
+                className={`px-6 py-1.5 rounded-lg font-medium transition-all ${isYearly ? 'bg-white text-black shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'} text-xs`}>
                 Yearly
               </button>
             </div>
@@ -674,41 +670,42 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                   )}
 
                   <div className="mb-4">
-                    <div className={`inline-block px-4 py-1 rounded-full uppercase bg-gradient-to-r ${tier.color || 'from-gray-600 to-gray-700'} text-white`} style={{ fontSize: fontSize.xs }}>
+                    <div
+                      className={`inline-block px-4 py-1 rounded-full uppercase bg-gradient-to-r ${tier.color || 'from-gray-600 to-gray-700'} text-white text-xs`}>
                       {tier.name}
                     </div>
                     {isYearly ? (
                       <div className="mt-2">
                         {selectedCountry.currency === 'INR' && tier.name !== 'Free' && (
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-gray-600 dark:text-gray-500 line-through" style={{ fontSize: fontSize.xs }}>
+                            <span className="text-gray-600 dark:text-gray-500 line-through text-xs">
                               {getCurrencySymbol(selectedCountry.currency)}{calculateOriginalPrice(tier.name, selectedCountry.currency, isYearly, exchangeRates).toFixed(2)}
                             </span>
-                            <span className="text-green-600 dark:text-green-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                            <span className="text-green-600 dark:text-green-400 font-medium text-xs">
                               {Math.round(((calculateOriginalPrice(tier.name, selectedCountry.currency, isYearly, exchangeRates) - tier.price) / calculateOriginalPrice(tier.name, selectedCountry.currency, isYearly, exchangeRates)) * 100)}% off
                             </span>
                           </div>
                         )}
-                        <div className="text-gray-900 dark:text-white" style={{ fontSize: fontSize['2xl'] }}>{getCurrencySymbol(selectedCountry.currency)}{tier.price.toFixed(2)}</div>
-                        <div className="text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.xs }}>
+                        <div className="text-gray-900 dark:text-white text-2xl">{getCurrencySymbol(selectedCountry.currency)}{tier.price.toFixed(2)}</div>
+                        <div className="text-blue-600 dark:text-blue-400 text-xs">
                           {getCurrencySymbol(selectedCountry.currency)}{calculatePrice(tier.name, selectedCountry.currency, false, exchangeRates).toFixed(2)}/month × 10 months + 2 months free
                         </div>
-                        <div className="text-gray-600 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Total {getCurrencySymbol(selectedCountry.currency)}{tier.price.toFixed(2)} for 12 months</div>
+                        <div className="text-gray-600 dark:text-gray-500 text-xs">Total {getCurrencySymbol(selectedCountry.currency)}{tier.price.toFixed(2)} for 12 months</div>
                       </div>
                     ) : (
                       <div className="mt-2">
                         {selectedCountry.currency === 'INR' && tier.name !== 'Free' && (
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-gray-600 dark:text-gray-500 line-through" style={{ fontSize: fontSize.xs }}>
+                            <span className="text-gray-600 dark:text-gray-500 line-through text-xs">
                               {getCurrencySymbol(selectedCountry.currency)}{calculateOriginalPrice(tier.name, selectedCountry.currency, false, exchangeRates).toFixed(2)}
                             </span>
-                            <span className="text-green-600 dark:text-green-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                            <span className="text-green-600 dark:text-green-400 font-medium text-xs">
                               {Math.round(((calculateOriginalPrice(tier.name, selectedCountry.currency, false, exchangeRates) - tier.price) / calculateOriginalPrice(tier.name, selectedCountry.currency, false, exchangeRates)) * 100)}% off
                             </span>
                           </div>
                         )}
-                        <div className="text-gray-900 dark:text-white" style={{ fontSize: fontSize['2xl'] }}>{getCurrencySymbol(selectedCountry.currency)}{tier.price.toFixed(2)}</div>
-                        <div className="text-gray-600 dark:text-gray-500" style={{ fontSize: fontSize.sm }}>/mo</div>
+                        <div className="text-gray-900 dark:text-white text-2xl">{getCurrencySymbol(selectedCountry.currency)}{tier.price.toFixed(2)}</div>
+                        <div className="text-gray-600 dark:text-gray-500 text-sm">/mo</div>
                       </div>
                     )}
                   </div>
@@ -717,50 +714,51 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
                       <div>
-                        <span className="bg-yellow-400/30 text-yellow-600 dark:text-yellow-300 px-1 rounded" style={{ fontSize: fontSize.sm }}><b>{tier.totalCredits.toLocaleString()}</b> credits</span>
-                        <span className="text-gray-500 dark:text-gray-400 ml-2" style={{ fontSize: fontSize.xs }}>(<b>{tier.creditsPerDay}</b> credits/day)</span>
+                        <span
+                          className="bg-yellow-400/30 text-yellow-600 dark:text-yellow-300 px-1 rounded text-sm"><b>{tier.totalCredits.toLocaleString()}</b> credits</span>
+                        <span className="text-gray-500 dark:text-gray-400 ml-2 text-xs">(<b>{tier.creditsPerDay}</b> credits/day)</span>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.maxQuestions}</b> questions per exam</span>
+                      <span className="text-gray-600 dark:text-gray-300 text-xs"><b>{tier.maxQuestions}</b> questions per exam</span>
                     </div>
 
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.maxExamTypes}</b> exam types</span>
+                      <span className="text-gray-600 dark:text-gray-300 text-xs"><b>{tier.maxExamTypes}</b> exam types</span>
                     </div>
 
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.maxSubjects}</b> subjects per exam</span>
+                      <span className="text-gray-600 dark:text-gray-300 text-xs"><b>{tier.maxSubjects}</b> subjects per exam</span>
                     </div>
 
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.maxFriends}</b> max friends</span>
+                      <span className="text-gray-600 dark:text-gray-300 text-xs"><b>{tier.maxFriends}</b> max friends</span>
                     </div>
 
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.dailyChallenges}</b> challenges/day</span>
+                      <span className="text-gray-600 dark:text-gray-300 text-xs"><b>{tier.dailyChallenges}</b> challenges/day</span>
                     </div>
 
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{tier.dailyImports}</b> exam imports/day</span>
+                      <span className="text-gray-600 dark:text-gray-300 text-xs"><b>{tier.dailyImports}</b> exam imports/day</span>
                     </div>
 
                     <div className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                      <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}><b>{(tier as any).maxScanPages}</b> scan pages/images</span>
+                      <span className="text-gray-600 dark:text-gray-300 text-xs"><b>{(tier as any).maxScanPages}</b> scan pages/images</span>
                     </div>
 
                     {tier.name === 'Free' && (
                       <div className="flex items-start gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                        <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>Use left over credits today</span>
+                        <span className="text-gray-600 dark:text-gray-300 text-xs">Use left over credits today</span>
                       </div>
                     )}
 
@@ -768,16 +766,16 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                       <>
                         <div className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                          <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>Use left over credits</span>
+                          <span className="text-gray-600 dark:text-gray-300 text-xs">Use left over credits</span>
                         </div>
                         <div className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
-                          <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>Make private exams</span>
+                          <span className="text-gray-600 dark:text-gray-300 text-xs">Make private exams</span>
                         </div>
                         <div className="flex items-start gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5 shrink-0" />
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>Exclusive badge</span>
+                            <span className="text-gray-600 dark:text-gray-300 text-xs">Exclusive badge</span>
                             <PlanIcon planName={tier.name} />
                           </div>
                         </div>
@@ -794,9 +792,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                         : tier.popular
                           ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-900/20 hover:brightness-110 cursor-pointer'
                           : 'bg-white text-black hover:bg-gray-200 cursor-pointer'}
-                      disabled:opacity-50`}
-                    style={{ fontSize: fontSize.xs }}
-                  >
+                      disabled:opacity-50 text-xs`}>
                     {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : isCurrentPlan(tier.name) || (!isPremium && tier.name === 'Free') ? 'IN USE' : getTierLevel(tier.name) < getTierLevel(currentPlan?.replace(/_monthly|_yearly|_month|_year$/, '') || '') ? 'DOWNGRADE' : 'UPGRADE'}
                   </button>
                 </div>
@@ -806,23 +802,22 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
 
           <div className="bg-black/[0.02] dark:bg-white/[0.02] p-8 border-t border-black/5 dark:border-white/5 flex flex-col items-center justify-between gap-4">
 
-            <p className="text-gray-600 dark:text-gray-500 text-center w-full" style={{ fontSize: fontSize.xs }}>
+            <p className="text-gray-600 dark:text-gray-500 text-center w-full text-xs">
               When you upgrade to any different plan, the plan will start instantly and does not wait for your current subscription to end.
             </p>
           </div>
 
         </div>
       </div>
-
       {showUpgradeWarning && (
         <div className="fixed inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-xl z-[60] flex items-center justify-center p-4">
           <div className="bg-gray-100 dark:bg-gray-900 border border-black/10 dark:border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3" style={{ fontSize: fontSize.xl }}>Upgrade Warning</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4" style={{ fontSize: fontSize.sm }}>
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-xl">Upgrade Warning</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
               Your current plan is already running and will end on {new Date(premiumEnds || '').toLocaleDateString()}.
               Upgrading to a new plan will take effect immediately.
             </p>
-            <p className="text-yellow-600 dark:text-yellow-500 mb-6" style={{ fontSize: fontSize.xs }}>
+            <p className="text-yellow-600 dark:text-yellow-500 mb-6 text-xs">
               Are you sure you want to proceed with the upgrade?
             </p>
             <div className="flex gap-3">

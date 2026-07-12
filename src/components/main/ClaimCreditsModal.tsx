@@ -89,17 +89,18 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
           <X className="w-4 h-4 text-zinc-400" />
         </button>
         <div className="flex items-center gap-2.5">
-          <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-gray-800 overflow-hidden flex items-center justify-center text-zinc-500 dark:text-gray-400 font-semibold shrink-0" style={{ fontSize: fontSize.base }}>
+          <div
+            className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-gray-800 overflow-hidden flex items-center justify-center text-zinc-500 dark:text-gray-400 font-semibold shrink-0 text-base">
             {userProfile?.profile_picture
               ? <img src={userProfile.profile_picture} alt="" className="w-full h-full object-cover" />
               : (userProfile?.name?.charAt(0)?.toUpperCase() || '?')}
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-zinc-900 dark:text-white truncate" style={{ fontSize: fontSize.sm }}>{userProfile?.name || 'User'}</p>
+            <p className="font-semibold text-zinc-900 dark:text-white truncate text-sm">{userProfile?.name || 'User'}</p>
             {userProfile?.PremiumType && userProfile.PremiumType !== 'Free' ? (
-              <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>{userProfile.PremiumType}</span>
+              <span className="text-zinc-400 dark:text-gray-500 text-xs">{userProfile.PremiumType}</span>
             ) : (
-              <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Free Plan</span>
+              <span className="text-zinc-400 dark:text-gray-500 text-xs">Free Plan</span>
             )}
           </div>
         </div>
@@ -108,7 +109,7 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>{getTimeLeft()} for next claim</span>
+            <span className="text-zinc-400 dark:text-gray-500 text-xs">{getTimeLeft()} for next claim</span>
           </div>
           <div className="w-full bg-zinc-200 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
             <div className="h-full bg-[#007AFF] rounded-full transition-all duration-1000"
@@ -117,20 +118,22 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
         </div>
 
         <div className="bg-zinc-50 dark:bg-gray-950 rounded-xl p-3 text-center">
-          <p className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>Available</p>
+          <p className="text-zinc-400 dark:text-gray-500 text-xs">Available</p>
           <p className="font-bold text-[#007AFF]" style={{ fontSize: fontSize['2xl'] || '1.5rem' }}>{dailyCredits}</p>
-          <p className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>credits</p>
+          <p className="text-zinc-400 dark:text-gray-500 text-xs">credits</p>
         </div>
 
         {msg && (
-          <div className={`text-center p-2 rounded-lg font-medium ${msg.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-400'}`} style={{ fontSize: fontSize.xs }}>
+          <div
+            className={`text-center p-2 rounded-lg font-medium ${msg.type === 'success' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-400'} text-xs`}>
             {msg.text}
           </div>
         )}
 
-        <button onClick={handleClaim} disabled={claimed || claiming}
-          className={`w-full py-2.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${claimed ? 'bg-zinc-100 dark:bg-gray-800 text-zinc-400 dark:text-gray-500 cursor-not-allowed' : 'bg-[#007AFF] hover:bg-[#0062CC] text-white'}`}
-          style={{ fontSize: fontSize.sm }}>
+        <button
+          onClick={handleClaim}
+          disabled={claimed || claiming}
+          className={`w-full py-2.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${claimed ? 'bg-zinc-100 dark:bg-gray-800 text-zinc-400 dark:text-gray-500 cursor-not-allowed' : 'bg-[#007AFF] hover:bg-[#0062CC] text-white'} text-sm`}>
           {claiming ? <><Loader2 className="w-4 h-4 animate-spin" /> Claiming...</>
             : claimed ? 'Claimed'
               : <>Claim</>}

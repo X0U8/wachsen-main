@@ -410,19 +410,19 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             <button onClick={onClose} className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors">
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h2 style={{ fontSize: fontSize.base }}>Make Exam</h2>
+            <h2 className="text-base">Make Exam</h2>
           </div>
           <div className="flex items-center gap-2">
             <button data-template-btn onClick={() => { fetchTemplates(); setShowTemplateList(!showTemplateList); }}
               className="flex items-center gap-1.5 bg-zinc-200/80 dark:bg-gray-800/80 backdrop-blur-sm border border-zinc-300 dark:border-gray-700 rounded-lg px-2 py-1 hover:bg-zinc-300 dark:hover:bg-gray-700 transition-colors"
               title="Select a template">
               <GraduationCap className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-              <span className="text-zinc-600 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>Templates</span>
+              <span className="text-zinc-600 dark:text-zinc-400 font-medium text-xs">Templates</span>
             </button>
 
 
             <div className="flex items-center bg-zinc-200/80 dark:bg-gray-800/80 backdrop-blur-sm border border-zinc-300 dark:border-gray-700 rounded-lg px-2 py-1">
-              <span className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.xs }}>
+              <span className="font-semibold text-zinc-900 dark:text-white text-xs">
                 {userProfile?.credits || 0}
                 <span className="hidden sm:inline"> credits</span>
               </span>
@@ -434,7 +434,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           <div data-template-dropdown className="fixed z-[70] top-16 right-4 w-72 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden"
             style={{ maxHeight: '300px' }}>
             <div className="p-2 border-b border-zinc-200 dark:border-gray-800 flex items-center justify-between">
-              <h4 className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Your Templates</h4>
+              <h4 className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Your Templates</h4>
               <span className="text-zinc-400 dark:text-gray-500" style={{ fontSize: '0.625rem' }}>{templates.length}/{getMaxTemplates()}</span>
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: '250px' }}>
@@ -443,14 +443,14 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                   <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
                 </div>
               ) : templates.length === 0 ? (
-                <p className="text-zinc-400 dark:text-gray-500 text-center py-6" style={{ fontSize: fontSize.xs }}>No templates saved yet</p>
+                <p className="text-zinc-400 dark:text-gray-500 text-center py-6 text-xs">No templates saved yet</p>
               ) : (
                 templates.map((tmpl, idx) => {
                   const overLimit = idx >= getMaxTemplates();
                   return (
                     <button key={tmpl.id} onClick={() => overLimit ? (setDisabledItemName(tmpl.name), setShowUpgradeModal(true)) : setTemplateToApply(tmpl)}
                       className={`w-full text-left px-3 py-2.5 transition-colors border-b border-zinc-100 dark:border-gray-800/50 last:border-0 ${overLimit ? 'opacity-40 cursor-not-allowed' : 'hover:bg-zinc-100 dark:hover:bg-gray-800'}`}>
-                      <p className="font-medium text-zinc-900 dark:text-white truncate" style={{ fontSize: fontSize.sm }}>{tmpl.name}</p>
+                      <p className="font-medium text-zinc-900 dark:text-white truncate text-sm">{tmpl.name}</p>
                     </button>
                   );
                 })
@@ -464,42 +464,52 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             <>
               <section className="space-y-4">
                 <div className="flex items-center gap-2 text-blue-500 mb-2">
-                  <h3 className="font-medium tracking-wider" style={{ fontSize: fontSize.xs }}>Basic Details</h3>
+                  <h3 className="font-medium tracking-wider text-xs">Basic Details</h3>
                 </div>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label htmlFor="examName" className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Exam Name (Required)</label>
-                      <input id="examName" name="examName" type="text" maxLength={50} required value={examName} onChange={(e) => setExamName(e.target.value)}
-                        className="w-full bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl p-3 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all" style={{ fontSize: fontSize.sm }}
+                      <label
+                        htmlFor="examName"
+                        className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Exam Name (Required)</label>
+                      <input
+                        id="examName"
+                        name="examName"
+                        type="text"
+                        maxLength={50}
+                        required
+                        value={examName}
+                        onChange={(e) => setExamName(e.target.value)}
+                        className="w-full bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl p-3 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all text-sm"
                         placeholder="Enter exam name manually..." />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Correct Marks</label>
+                        <label className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Correct Marks</label>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setDefaultCorrectMarks(Math.max(1, defaultCorrectMarks - 1))}
-                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium"
-                            style={{ fontSize: fontSize.sm }}>-</button>
-                          <span className="flex-1 text-center font-semibold text-green-500 bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-700 rounded-lg py-2.5" style={{ fontSize: fontSize.sm }}>{defaultCorrectMarks}</span>
-                          <button onClick={() => setDefaultCorrectMarks(Math.min(5, defaultCorrectMarks + 1))}
-                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium"
-                            style={{ fontSize: fontSize.sm }}>+</button>
+                          <button
+                            onClick={() => setDefaultCorrectMarks(Math.max(1, defaultCorrectMarks - 1))}
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium text-sm">-</button>
+                          <span
+                            className="flex-1 text-center font-semibold text-green-500 bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-700 rounded-lg py-2.5 text-sm">{defaultCorrectMarks}</span>
+                          <button
+                            onClick={() => setDefaultCorrectMarks(Math.min(5, defaultCorrectMarks + 1))}
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium text-sm">+</button>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Negative Marks</label>
+                        <label className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Negative Marks</label>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setDefaultNegativeMarks(Math.max(0, defaultNegativeMarks - 1))}
-                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium"
-                            style={{ fontSize: fontSize.sm }}>-</button>
+                          <button
+                            onClick={() => setDefaultNegativeMarks(Math.max(0, defaultNegativeMarks - 1))}
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium text-sm">-</button>
                           <div className="flex-1 flex items-center bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-700 rounded-lg py-2.5">
-                            <span className="text-red-500 font-semibold pl-3" style={{ fontSize: fontSize.sm }}>-</span>
-                            <span className="flex-1 text-center font-semibold text-red-500" style={{ fontSize: fontSize.sm }}>{defaultNegativeMarks}</span>
+                            <span className="text-red-500 font-semibold pl-3 text-sm">-</span>
+                            <span className="flex-1 text-center font-semibold text-red-500 text-sm">{defaultNegativeMarks}</span>
                           </div>
-                          <button onClick={() => setDefaultNegativeMarks(Math.min(5, defaultNegativeMarks + 1))}
-                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium"
-                            style={{ fontSize: fontSize.sm }}>+</button>
+                          <button
+                            onClick={() => setDefaultNegativeMarks(Math.min(5, defaultNegativeMarks + 1))}
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium text-sm">+</button>
                         </div>
                       </div>
                     </div>
@@ -507,103 +517,149 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Visibility (Public)</label>
+                        <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Visibility (Public)</label>
                         {!userProfile?.isPremium && <span className="text-[9px] text-amber-500 flex items-center gap-1">Premium required to hide</span>}
                       </div>
                       <div className="flex bg-zinc-100 dark:bg-gray-900 rounded-xl p-1 border border-zinc-300 dark:border-gray-800">
-                        <button type="button" onClick={() => setIsPublic(true)} className={`flex-1 py-2 font-medium rounded-lg transition-all ${isPublic ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'}`} style={{ fontSize: fontSize.xs }}>Public</button>
-                        <button type="button" disabled={!userProfile?.isPremium} onClick={() => setIsPublic(false)} className={`flex-1 py-2 font-medium rounded-lg transition-all ${!isPublic ? 'bg-red-600 text-white' : 'text-zinc-500 dark:text-gray-500'} ${!userProfile?.isPremium ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:bg-zinc-300 dark:hover:bg-gray-800'}`} style={{ fontSize: fontSize.xs }}>Private</button>
+                        <button
+                          type="button"
+                          onClick={() => setIsPublic(true)}
+                          className={`flex-1 py-2 font-medium rounded-lg transition-all ${isPublic ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'} text-xs`}>Public</button>
+                        <button
+                          type="button"
+                          disabled={!userProfile?.isPremium}
+                          onClick={() => setIsPublic(false)}
+                          className={`flex-1 py-2 font-medium rounded-lg transition-all ${!isPublic ? 'bg-red-600 text-white' : 'text-zinc-500 dark:text-gray-500'} ${!userProfile?.isPremium ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:bg-zinc-300 dark:hover:bg-gray-800'} text-xs`}>Private</button>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Difficulty Level</label>
+                      <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Difficulty Level</label>
                       <div className="flex bg-zinc-100 dark:bg-gray-900 rounded-xl p-1 border border-zinc-300 dark:border-gray-800">
                         {(['easy', 'medium', 'hard', 'advance'] as const).map((level) => (
-                          <button key={level} onClick={() => setDifficulty(level)} className={`flex-1 py-2 font-medium rounded-lg transition-all ${difficulty === level ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'}`} style={{ fontSize: fontSize.xs }}>{level.charAt(0).toUpperCase() + level.slice(1)}</button>
+                          <button
+                            key={level}
+                            onClick={() => setDifficulty(level)}
+                            className={`flex-1 py-2 font-medium rounded-lg transition-all ${difficulty === level ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'} text-xs`}>{level.charAt(0).toUpperCase() + level.slice(1)}</button>
                         ))}
                       </div>
                     </div>
                   </div>
                   <div className="space-y-4 pt-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2"><Clock className="w-4 h-4" /><label htmlFor="totalTime" className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Total Time Limit</label></div>
+                      <div className="flex items-center gap-2"><Clock className="w-4 h-4" /><label
+                        htmlFor="totalTime"
+                        className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Total Time Limit</label></div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
-                        <button onClick={() => setTotalTime(Math.max(5, totalTime - 5))} className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all" style={{ fontSize: fontSize.sm }}>-</button>
+                        <button
+                          onClick={() => setTotalTime(Math.max(5, totalTime - 5))}
+                          className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all text-sm">-</button>
                         <input id="totalTime" name="totalTime" type="range" min="5" max="600" step="5" value={totalTime} onChange={(e) => setTotalTime(parseInt(e.target.value))} className="flex-1 accent-blue-600" />
-                        <button onClick={() => setTotalTime(Math.min(600, totalTime + 5))} className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all" style={{ fontSize: fontSize.sm }}>+</button>
+                        <button
+                          onClick={() => setTotalTime(Math.min(600, totalTime + 5))}
+                          className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all text-sm">+</button>
                       </div>
-                      <div className="flex justify-between" style={{ fontSize: fontSize.xs }}><span>5 min</span><span className="text-blue-500" style={{ fontSize: fontSize.sm }}>{totalTime} minutes</span><span>600 min</span></div>
+                      <div className="flex justify-between text-xs"><span>5 min</span><span className="text-blue-500 text-sm">{totalTime} minutes</span><span>600 min</span></div>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Access Schedule</label>
+                    <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Access Schedule</label>
                     <div className="flex bg-zinc-100 dark:bg-gray-900 rounded-xl p-1 border border-zinc-300 dark:border-gray-800">
-                      <button onClick={() => { setAccessType('anytime'); setStartDateTime('anytime'); setEndDateTime('anytime'); }} className={`flex-1 py-2 font-medium rounded-lg transition-all ${accessType === 'anytime' ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'}`} style={{ fontSize: fontSize.xs }}>Anytime</button>
-                      <button onClick={() => { setAccessType('specific'); syncScheduleInputs(); }} className={`flex-1 py-2 font-medium rounded-lg transition-all ${accessType === 'specific' ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'}`} style={{ fontSize: fontSize.xs }}>Specific Window</button>
+                      <button
+                        onClick={() => { setAccessType('anytime'); setStartDateTime('anytime'); setEndDateTime('anytime'); }}
+                        className={`flex-1 py-2 font-medium rounded-lg transition-all ${accessType === 'anytime' ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'} text-xs`}>Anytime</button>
+                      <button
+                        onClick={() => { setAccessType('specific'); syncScheduleInputs(); }}
+                        className={`flex-1 py-2 font-medium rounded-lg transition-all ${accessType === 'specific' ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'} text-xs`}>Specific Window</button>
                     </div>
                     {accessType === 'specific' && (
                       <div className="space-y-4">
                         <div>
-                          <label className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Starting Date & Time</label>
+                          <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Starting Date & Time</label>
                           <div className="flex gap-2 mt-1.5">
-                            <input type="date" value={startDate} onChange={(e) => {
-                              setStartDate(e.target.value);
-                              setStartDateTime(toISO(e.target.value, startHour, startMinute, startAmPm));
-                              const newEnd = new Date(new Date(toISO(e.target.value, startHour, startMinute, startAmPm)).getTime() + Math.max(30, totalTime) * 60000);
-                              setEndDate(newEnd.toISOString().slice(0, 10));
-                              setEndDateTime(newEnd.toISOString());
-                            }} className="flex-1 bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all [color-scheme:dark]" style={{ fontSize: fontSize.sm }} />
-                            <select value={startHour} onChange={(e) => {
-                              const h = parseInt(e.target.value);
-                              setStartHour(h);
-                              setStartDateTime(toISO(startDate, h, startMinute, startAmPm));
-                            }} className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none" style={{ fontSize: fontSize.sm }}>
+                            <input
+                              type="date"
+                              value={startDate}
+                              onChange={(e) => {
+                                setStartDate(e.target.value);
+                                setStartDateTime(toISO(e.target.value, startHour, startMinute, startAmPm));
+                                const newEnd = new Date(new Date(toISO(e.target.value, startHour, startMinute, startAmPm)).getTime() + Math.max(30, totalTime) * 60000);
+                                setEndDate(newEnd.toISOString().slice(0, 10));
+                                setEndDateTime(newEnd.toISOString());
+                              }}
+                              className="flex-1 bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all [color-scheme:dark] text-sm" />
+                            <select
+                              value={startHour}
+                              onChange={(e) => {
+                                const h = parseInt(e.target.value);
+                                setStartHour(h);
+                                setStartDateTime(toISO(startDate, h, startMinute, startAmPm));
+                              }}
+                              className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-sm">
                               {Array.from({ length: 12 }, (_, i) => i + 1).map(h => <option key={h} value={h}>{String(h).padStart(2, '0')}</option>)}
                             </select>
-                            <select value={startMinute} onChange={(e) => {
-                              const m = parseInt(e.target.value);
-                              setStartMinute(m);
-                              setStartDateTime(toISO(startDate, startHour, m, startAmPm));
-                            }} className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none" style={{ fontSize: fontSize.sm }}>
+                            <select
+                              value={startMinute}
+                              onChange={(e) => {
+                                const m = parseInt(e.target.value);
+                                setStartMinute(m);
+                                setStartDateTime(toISO(startDate, startHour, m, startAmPm));
+                              }}
+                              className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-sm">
                               {[0, 15, 30, 45].map(m => <option key={m} value={m}>{String(m).padStart(2, '0')}</option>)}
                             </select>
-                            <select value={startAmPm} onChange={(e) => {
-                              const ap = e.target.value as 'AM' | 'PM';
-                              setStartAmPm(ap);
-                              setStartDateTime(toISO(startDate, startHour, startMinute, ap));
-                            }} className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none" style={{ fontSize: fontSize.sm }}>
+                            <select
+                              value={startAmPm}
+                              onChange={(e) => {
+                                const ap = e.target.value as 'AM' | 'PM';
+                                setStartAmPm(ap);
+                                setStartDateTime(toISO(startDate, startHour, startMinute, ap));
+                              }}
+                              className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-sm">
                               <option value="AM">AM</option><option value="PM">PM</option>
                             </select>
                           </div>
                         </div>
                         <div>
-                          <label className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Ending Date & Time</label>
+                          <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Ending Date & Time</label>
                           <div className="flex gap-2 mt-1.5">
-                            <input type="date" value={endDate} onChange={(e) => {
-                              setEndDate(e.target.value);
-                              setEndDateTime(toISO(e.target.value, endHour, endMinute, endAmPm));
-                            }} className="flex-1 bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all [color-scheme:dark]" style={{ fontSize: fontSize.sm }} />
-                            <select value={endHour} onChange={(e) => {
-                              const h = parseInt(e.target.value);
-                              setEndHour(h);
-                              setEndDateTime(toISO(endDate, h, endMinute, endAmPm));
-                            }} className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none" style={{ fontSize: fontSize.sm }}>
+                            <input
+                              type="date"
+                              value={endDate}
+                              onChange={(e) => {
+                                setEndDate(e.target.value);
+                                setEndDateTime(toISO(e.target.value, endHour, endMinute, endAmPm));
+                              }}
+                              className="flex-1 bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-3 py-2.5 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all [color-scheme:dark] text-sm" />
+                            <select
+                              value={endHour}
+                              onChange={(e) => {
+                                const h = parseInt(e.target.value);
+                                setEndHour(h);
+                                setEndDateTime(toISO(endDate, h, endMinute, endAmPm));
+                              }}
+                              className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-sm">
                               {Array.from({ length: 12 }, (_, i) => i + 1).map(h => <option key={h} value={h}>{String(h).padStart(2, '0')}</option>)}
                             </select>
-                            <select value={endMinute} onChange={(e) => {
-                              const m = parseInt(e.target.value);
-                              setEndMinute(m);
-                              setEndDateTime(toISO(endDate, endHour, m, endAmPm));
-                            }} className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none" style={{ fontSize: fontSize.sm }}>
+                            <select
+                              value={endMinute}
+                              onChange={(e) => {
+                                const m = parseInt(e.target.value);
+                                setEndMinute(m);
+                                setEndDateTime(toISO(endDate, endHour, m, endAmPm));
+                              }}
+                              className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-sm">
                               {[0, 15, 30, 45].map(m => <option key={m} value={m}>{String(m).padStart(2, '0')}</option>)}
                             </select>
-                            <select value={endAmPm} onChange={(e) => {
-                              const ap = e.target.value as 'AM' | 'PM';
-                              setEndAmPm(ap);
-                              setEndDateTime(toISO(endDate, endHour, endMinute, ap));
-                            }} className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none" style={{ fontSize: fontSize.sm }}>
+                            <select
+                              value={endAmPm}
+                              onChange={(e) => {
+                                const ap = e.target.value as 'AM' | 'PM';
+                                setEndAmPm(ap);
+                                setEndDateTime(toISO(endDate, endHour, endMinute, ap));
+                              }}
+                              className="bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-800 rounded-xl px-2 py-2.5 text-zinc-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-sm">
                               <option value="AM">AM</option><option value="PM">PM</option>
                             </select>
                           </div>
@@ -611,7 +667,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                       </div>
                     )}
                     {!isScheduleValid && accessType === 'specific' && (
-                      <p className="text-red-500 font-medium mt-1 flex items-center gap-1" style={{ fontSize: fontSize.xs }}><AlertCircle className="w-3 h-3" /> Ending time must be after starting time</p>
+                      <p className="text-red-500 font-medium mt-1 flex items-center gap-1 text-xs"><AlertCircle className="w-3 h-3" /> Ending time must be after starting time</p>
                     )}
                   </div>
                 </div>
@@ -619,7 +675,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
 
               <section className="space-y-4">
                 <div className="flex items-center gap-2 text-blue-500">
-                  <h3 className="font-medium tracking-wider" style={{ fontSize: fontSize.xs }}>Question Types</h3>
+                  <h3 className="font-medium tracking-wider text-xs">Question Types</h3>
                 </div>
                 <div className="space-y-4">
                   {(['mcq', 'integer', 'true_false'] as const).map((type) => {
@@ -653,7 +709,8 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                           }));
                         }
                       }} className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${isActive ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' : 'bg-zinc-100/50 dark:bg-gray-900/50 border-zinc-200 dark:border-gray-800 opacity-60 hover:opacity-80'}`}>
-                        <span className={`font-medium ${isActive ? 'text-zinc-800 dark:text-gray-100' : 'text-zinc-500 dark:text-gray-400'}`} style={{ fontSize: fontSize.sm }}>
+                        <span
+                          className={`font-medium ${isActive ? 'text-zinc-800 dark:text-gray-100' : 'text-zinc-500 dark:text-gray-400'} text-sm`}>
                           {type === 'mcq' ? 'Multiple Choice' : type === 'integer' ? 'Integer' : 'True / False'}
                         </span>
                         {isActive && (
@@ -669,7 +726,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                             >
                               -
                             </button>
-                            <span className="w-8 text-center font-bold text-[#007AFF]" style={{ fontSize: fontSize.sm }}>{count}</span>
+                            <span className="w-8 text-center font-bold text-[#007AFF] text-sm">{count}</span>
                             <button
                               type="button"
                               onMouseDown={() => startAdjusting(type, 'up', count)}
@@ -681,7 +738,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                             >
                               +
                             </button>
-                            <span className="text-zinc-400 dark:text-gray-500 font-medium ml-1" style={{ fontSize: fontSize.xs }}>Qs</span>
+                            <span className="text-zinc-400 dark:text-gray-500 font-medium ml-1 text-xs">Qs</span>
                           </div>
                         )}
                       </div>
@@ -696,8 +753,8 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             <section className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-blue-500">
-                  <h3 className="font-medium" style={{ fontSize: fontSize.xs }}>Subject Selection</h3>
-                  <span className="text-zinc-400 dark:text-gray-500 font-medium ml-2" style={{ fontSize: fontSize.xs }}>
+                  <h3 className="font-medium text-xs">Subject Selection</h3>
+                  <span className="text-zinc-400 dark:text-gray-500 font-medium ml-2 text-xs">
                     ({subjects.length}/{maxSubjects})
                   </span>
                 </div>
@@ -723,8 +780,8 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                       <div className="p-5 bg-red-500/5 dark:bg-red-500/10 border border-red-500/20 text-red-500 rounded-3xl flex items-start gap-3.5 shadow-sm animate-fadeIn">
                         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                         <div>
-                          <h5 className="font-semibold" style={{ fontSize: fontSize.xs }}>Credit System Required</h5>
-                          <p className="text-zinc-500 dark:text-gray-400 mt-1 leading-relaxed" style={{ fontSize: fontSize.xs }}>
+                          <h5 className="font-semibold text-xs">Credit System Required</h5>
+                          <p className="text-zinc-500 dark:text-gray-400 mt-1 leading-relaxed text-xs">
                             Scanned reference file uploads are only supported via our default credit system. Please disable "Use Own Key" in Settings to unlock the scanner.
                           </p>
                         </div>
@@ -743,10 +800,11 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                   const isSelected = subjects.find(s => s.id === sub.id);
                   const isDisabled = !isSelected && subjects.length >= maxSubjects;
                   return (
-                    <button key={sub.id} onClick={() => isDisabled ? (setDisabledItemName(sub.name), setShowUpgradeModal(true)) : isSelected ? setSubjects(subjects.filter(s => s.id !== sub.id)) : addSubject(sub)}
+                    <button
+                      key={sub.id}
+                      onClick={() => isDisabled ? (setDisabledItemName(sub.name), setShowUpgradeModal(true)) : isSelected ? setSubjects(subjects.filter(s => s.id !== sub.id)) : addSubject(sub)}
                       disabled={isDisabled}
-                      className={`px-2.5 py-1 rounded-lg font-semibold border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isSelected ? 'bg-blue-600/10 border-blue-600 text-blue-500' : isDisabled ? 'bg-zinc-100 dark:bg-gray-900 border-zinc-300 dark:border-gray-800 text-zinc-500 dark:text-gray-500 opacity-50 cursor-not-allowed' : 'bg-zinc-100 dark:bg-gray-900 border-zinc-300 dark:border-gray-800 text-zinc-505 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-gray-700'}`}
-                      style={{ fontSize: fontSize.xs }}>
+                      className={`px-2.5 py-1 rounded-lg font-semibold border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isSelected ? 'bg-blue-600/10 border-blue-600 text-blue-500' : isDisabled ? 'bg-zinc-100 dark:bg-gray-900 border-zinc-300 dark:border-gray-800 text-zinc-500 dark:text-gray-500 opacity-50 cursor-not-allowed' : 'bg-zinc-100 dark:bg-gray-900 border-zinc-300 dark:border-gray-800 text-zinc-505 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-gray-700'} text-xs`}>
                       {sub.name}
                     </button>
                   );
@@ -756,15 +814,23 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                 {subjects.map((sub, sIdx) => (
                   <motion.div key={sub.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white/50 dark:bg-gray-900/50 border border-black/8 dark:border-white/10 rounded-xl p-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.xs }}>{sub.name}</h4>
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 dark:bg-gray-800 rounded-md" style={{ fontSize: fontSize.xs }}><span className="font-medium text-zinc-650 dark:text-gray-400">{sub.academicLevel.charAt(0).toUpperCase() + sub.academicLevel.slice(1)}</span></div>
+                      <h4 className="font-semibold text-zinc-900 dark:text-white text-xs">{sub.name}</h4>
+                      <div
+                        className="flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 dark:bg-gray-800 rounded-md text-xs"><span className="font-medium text-zinc-650 dark:text-gray-400">{sub.academicLevel.charAt(0).toUpperCase() + sub.academicLevel.slice(1)}</span></div>
                     </div>
                     <div className="space-y-1.5">
-                      <label htmlFor={`chapters-${sub.id}`} className="text-zinc-450 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Chapters / Topics <span className="text-red-400">*</span></label>
-                      <input id={`chapters-${sub.id}`} name={`chapters-${sub.id}`} type="text" value={sub.chapters} onChange={(e) => {
-                        if (e.target.value.length <= 200) updateSubject(sIdx, { chapters: e.target.value });
-                      }}
-                        className="w-full bg-zinc-100 dark:bg-gray-950 border border-black/10 dark:border-white/10 rounded-xl p-2.5 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600" style={{ fontSize: fontSize.xs }}
+                      <label
+                        htmlFor={`chapters-${sub.id}`}
+                        className="text-zinc-450 dark:text-gray-500 font-medium text-xs">Chapters / Topics <span className="text-red-400">*</span></label>
+                      <input
+                        id={`chapters-${sub.id}`}
+                        name={`chapters-${sub.id}`}
+                        type="text"
+                        value={sub.chapters}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 200) updateSubject(sIdx, { chapters: e.target.value });
+                        }}
+                        className="w-full bg-zinc-100 dark:bg-gray-950 border border-black/10 dark:border-white/10 rounded-xl p-2.5 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 text-xs"
                         placeholder="Chapter's or Topics's Name  or  FUll syllabus. e.g.  AMC MAths Full Syllabus" />
                       <div className="flex justify-between">
                         {!sub.chapters && <p className="text-[9px] text-red-400">Required</p>}
@@ -791,32 +857,38 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           <div className="max-w-md mx-auto">
             {step === 'details' ? (
               <div className="flex gap-2">
-                <button onClick={() => setShowTemplateModal(true)} disabled={!examName}
-                  className="px-4 py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:opacity-40 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-all border border-zinc-300 dark:border-gray-700"
-                  style={{ fontSize: fontSize.sm }}>
+                <button
+                  onClick={() => setShowTemplateModal(true)}
+                  disabled={!examName}
+                  className="px-4 py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:opacity-40 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-all border border-zinc-300 dark:border-gray-700 text-sm">
                   Save Template
                 </button>
-                <button onClick={() => { setStep('subjects'); setTimeout(() => document.querySelector('.no-scrollbar')?.scrollTo({ top: 9999, behavior: 'smooth' }), 100); }} disabled={!examName}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-xl font-medium transition-all"
-                  style={{ fontSize: fontSize.sm }}>
+                <button
+                  onClick={() => { setStep('subjects'); setTimeout(() => document.querySelector('.no-scrollbar')?.scrollTo({ top: 9999, behavior: 'smooth' }), 100); }}
+                  disabled={!examName}
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white rounded-xl font-medium transition-all text-sm">
                   Continue
                 </button>
               </div>
             ) : (
               <div className="space-y-3">
                 {scannedFiles.length > 0 && scannedFiles.some(f => !f.subjectId) && (
-                  <p className="text-red-500 font-medium text-center flex items-center justify-center gap-1 text-[11px]" style={{ fontSize: fontSize.xs }}>
+                  <p
+                    className="text-red-500 font-medium text-center flex items-center justify-center gap-1 text-[11px] text-xs">
                     <AlertCircle className="w-3.5 h-3.5" />
                     Please map all uploaded files to a subject before generating.
                   </p>
                 )}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex gap-4">
-                    <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Questions</span><span className={`font-mono font-medium ${totalQuestions > maxQuestions ? 'text-red-500' : 'text-blue-500'}`} style={{ fontSize: fontSize.base }}>{totalQuestions}<span className={`text-sm ${totalQuestions > maxQuestions ? 'text-red-400' : 'text-zinc-400 dark:text-gray-600'}`}>/{maxQuestions}</span></span></div>
-                    <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Marks</span><span className="font-mono font-medium text-blue-500" style={{ fontSize: fontSize.base }}>{totalMarks}</span></div>
+                    <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Questions</span><span
+                      className={`font-mono font-medium ${totalQuestions > maxQuestions ? 'text-red-500' : 'text-blue-500'} text-base`}>{totalQuestions}<span className={`text-sm ${totalQuestions > maxQuestions ? 'text-red-400' : 'text-zinc-400 dark:text-gray-600'}`}>/{maxQuestions}</span></span></div>
+                    <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Marks</span><span className="font-mono font-medium text-blue-500 text-base">{totalMarks}</span></div>
                   </div>
-                  <button onClick={handleGenerate} disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid || hasConflict || (scannedFiles.length > 0 && scannedFiles.some(f => !f.subjectId))}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2" style={{ fontSize: fontSize.sm }}>
+                  <button
+                    onClick={handleGenerate}
+                    disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid || hasConflict || (scannedFiles.length > 0 && scannedFiles.some(f => !f.subjectId))}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 text-sm">
                     {(() => {
                       const useOwn = localStorage.getItem('use_own_key') === 'true';
                       const prov = localStorage.getItem('provider') || 'mesh';
@@ -841,22 +913,25 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             onClick={(e) => { if (e.target === e.currentTarget) { setShowTemplateModal(false); setTemplateName(''); } }}>
             <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-gray-800 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-xl"
               onClick={(e) => e.stopPropagation()}>
-              <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.lg }}>Save as Template</h3>
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-lg">Save as Template</h3>
               <div className="space-y-2">
-                <label className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Template Name</label>
-                <input type="text" maxLength={50} value={templateName}
+                <label className="text-zinc-500 dark:text-gray-400 text-xs">Template Name</label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   placeholder="e.g. Weekly Math Practice"
-                  className="w-full bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  style={{ fontSize: fontSize.sm }} />
+                  className="w-full bg-zinc-100 dark:bg-gray-900 border border-zinc-300 dark:border-gray-700 rounded-xl px-4 py-2.5 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm" />
               </div>
               <div className="flex gap-3 pt-1">
-                <button onClick={() => { setShowTemplateModal(false); setTemplateName(''); }}
-                  className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors"
-                  style={{ fontSize: fontSize.sm }}>Cancel</button>
-                <button onClick={handleSaveTemplate} disabled={!templateName.trim() || isSavingTemplate}
-                  className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
-                  style={{ fontSize: fontSize.sm }}>
+                <button
+                  onClick={() => { setShowTemplateModal(false); setTemplateName(''); }}
+                  className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors text-sm">Cancel</button>
+                <button
+                  onClick={handleSaveTemplate}
+                  disabled={!templateName.trim() || isSavingTemplate}
+                  className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-40 transition-colors flex items-center justify-center gap-2 text-sm">
                   {isSavingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
                 </button>
               </div>
@@ -864,7 +939,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           </div>
         )}
       </motion.div>
-
       <FinalizeExam
         show={showFinalizeExam}
         onClose={onFinalizeClose}
@@ -885,8 +959,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
         }}
         userId={userProfile?.$id || ''}
       />
-
-
       {showUpgradeModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-sm space-y-4">
@@ -902,7 +974,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           </div>
         </div>
       )}
-
       {notification && (
         <Notification
           type={notification.type}
@@ -910,20 +981,21 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           onClose={() => setNotification(null)}
         />
       )}
-
       {templateToApply && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
           onClick={(e) => { if (e.target === e.currentTarget) setTemplateToApply(null); }}>
           <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
-            <h3 className="font-semibold text-zinc-900 dark:text-white text-center" style={{ fontSize: fontSize.base }}>Apply Template</h3>
-            <p className="text-zinc-500 dark:text-gray-400 text-center" style={{ fontSize: fontSize.sm }}>Use "{templateToApply.name}" for this exam?</p>
+            <h3
+              className="font-semibold text-zinc-900 dark:text-white text-center text-base">Apply Template</h3>
+            <p className="text-zinc-500 dark:text-gray-400 text-center text-sm">Use "{templateToApply.name}" for this exam?</p>
             <div className="flex gap-3">
-              <button onClick={() => setTemplateToApply(null)}
-                className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors"
-                style={{ fontSize: fontSize.sm }}>Cancel</button>
-              <button onClick={confirmApplyTemplate} disabled={applyingTemplate}
-                className="flex-1 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] disabled:opacity-40 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
-                style={{ fontSize: fontSize.sm }}>
+              <button
+                onClick={() => setTemplateToApply(null)}
+                className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors text-sm">Cancel</button>
+              <button
+                onClick={confirmApplyTemplate}
+                disabled={applyingTemplate}
+                className="flex-1 py-2.5 bg-[#007AFF] hover:bg-[#0062CC] disabled:opacity-40 text-white rounded-xl font-medium transition-colors flex items-center justify-center gap-2 text-sm">
                 {applyingTemplate ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
               </button>
             </div>

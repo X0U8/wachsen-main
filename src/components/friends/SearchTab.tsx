@@ -51,16 +51,12 @@ export const SearchTab: React.FC<SearchTabProps> = ({
             onKeyDown={(e) => {
               if (e.key === 'Enter') onSearch();
             }}
-            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl text-zinc-800 dark:text-zinc-100 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none placeholder-zinc-400 font-medium transition-all shadow-xs"
-            style={{ fontSize: fontSize.xs }}
-          />
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl text-zinc-800 dark:text-zinc-100 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none placeholder-zinc-400 font-medium transition-all shadow-xs text-xs" />
         </div>
         <button
           onClick={onSearch}
           disabled={searchLoading}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center min-w-[70px]"
-          style={{ fontSize: fontSize.xs }}
-        >
+          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl font-bold transition-all cursor-pointer shadow-sm flex items-center justify-center min-w-[70px] text-xs">
           {searchLoading ? (
             <Loader2 className="w-4 h-4 animate-spin text-white" />
           ) : (
@@ -68,13 +64,11 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           )}
         </button>
       </div>
-
       {requestError && (
         <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-2xl text-red-600 dark:text-red-400 text-xs font-medium">
           {requestError}
         </div>
       )}
-
       {hasSearched && (
         <div className="pt-2">
           {searchResult ? (

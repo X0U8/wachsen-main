@@ -170,9 +170,8 @@ export default function Onboarding({
   return (
     <div className="min-h-screen bg-white dark:bg-black flex flex-col items-center justify-center p-6 text-black dark:text-white selection:bg-blue-500/30 font-sans">
       <div className="w-full max-w-lg mb-6">
-        <p className="text-black dark:text-white font-light tracking-tight" style={{ fontSize: fontSize.lg }}>Let's set up your profile</p>
+        <p className="text-black dark:text-white font-light tracking-tight text-lg">Let's set up your profile</p>
       </div>
-
       <div className="w-full max-w-lg bg-zinc-50/60 dark:bg-zinc-950/60 border border-black/15 dark:border-white/20 dark:shadow-[0_0_35px_rgba(255,255,255,0.06)] rounded-3xl p-6 backdrop-blur-xl">
         <Stepper
           onFinalStepCompleted={handleSave}
@@ -191,7 +190,6 @@ export default function Onboarding({
           <StepSource value={data.source} onChange={v => updateData('source', v)} selectCls={selectCls} />
         </Stepper>
       </div>
-
       {alert && (
         <InfoComponent message={alert.message} type={alert.type} onClose={() => setAlert(null)} />
       )}

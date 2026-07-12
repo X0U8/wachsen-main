@@ -25,8 +25,8 @@ export default function SubscriptionModal({ name, onClose }: SubscriptionModalPr
 
         <div className="text-center pt-2">
           <Lock className="w-10 h-10 text-zinc-400 dark:text-gray-600 mx-auto mb-3" />
-          <h3 className="font-semibold text-zinc-900 dark:text-white mb-2" style={{ fontSize: fontSize.lg }}>Upgrade Required</h3>
-          <p className="text-zinc-500 dark:text-gray-400 leading-relaxed" style={{ fontSize: fontSize.sm }}>
+          <h3 className="font-semibold text-zinc-900 dark:text-white mb-2 text-lg">Upgrade Required</h3>
+          <p className="text-zinc-500 dark:text-gray-400 leading-relaxed text-sm">
             "{name}" is locked. Upgrade your subscription plan to unlock all features.
           </p>
         </div>
@@ -34,16 +34,12 @@ export default function SubscriptionModal({ name, onClose }: SubscriptionModalPr
         <div className="flex gap-3 pt-1">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-            style={{ fontSize: fontSize.sm }}
-          >
+            className="flex-1 py-2.5 rounded-xl bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors cursor-pointer text-sm">
             Cancel
           </button>
           <button
             onClick={() => { onClose(); navigate('/settings'); }}
-            className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors cursor-pointer"
-            style={{ fontSize: fontSize.sm }}
-          >
+            className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors cursor-pointer text-sm">
             View Plans
           </button>
         </div>

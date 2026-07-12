@@ -89,26 +89,24 @@ export default function EditCategoryModal({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 style={{ fontSize: fontSize.base }} className="text-zinc-900 dark:text-gray-100">Edit Category</h2>
+              <h2 className="text-zinc-900 dark:text-gray-100 text-base">Edit Category</h2>
               <button onClick={onClose} className="text-zinc-400 dark:text-gray-500 hover:text-zinc-900 dark:hover:text-white">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div>
-              <label className="text-zinc-500 dark:text-gray-500 mb-1 block" style={{ fontSize: fontSize.xs }}>Category Name</label>
+              <label className="text-zinc-500 dark:text-gray-500 mb-1 block text-xs">Category Name</label>
               <input
                 autoFocus
                 value={form.examName}
                 onChange={e => updateForm({ examName: e.target.value })}
                 placeholder="e.g. SAT Mathematics or, SAT, JEE , Board Exams"
-                className="w-full bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all"
-                style={{ fontSize: fontSize.sm }}
-              />
+                className="w-full bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all text-sm" />
             </div>
 
             <div>
-              <label className="text-zinc-500 dark:text-gray-500 mb-1 block" style={{ fontSize: fontSize.xs }}>
+              <label className="text-zinc-500 dark:text-gray-500 mb-1 block text-xs">
                 Subjects{' '}
                 <span className={form.subjects.length >= maxSubjects ? 'text-red-400' : 'text-zinc-400 dark:text-gray-600'}>
                   ({form.subjects.length}/{maxSubjects})
@@ -121,9 +119,7 @@ export default function EditCategoryModal({
                   onKeyDown={handleKeyDown}
                   placeholder={form.subjects.length >= maxSubjects ? 'Subject limit reached' : 'Type subject, press Enter'}
                   disabled={form.subjects.length >= maxSubjects}
-                  className="flex-1 bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  style={{ fontSize: fontSize.sm }}
-                />
+                  className="flex-1 bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm" />
                 <button
                   onClick={addSubject}
                   disabled={form.subjects.length >= maxSubjects}
@@ -133,16 +129,14 @@ export default function EditCategoryModal({
                 </button>
               </div>
               {form.subjectError && (
-                <p className="text-red-400 mt-1" style={{ fontSize: fontSize.xs }}>{form.subjectError}</p>
+                <p className="text-red-400 mt-1 text-xs">{form.subjectError}</p>
               )}
               {form.subjects.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {form.subjects.map((s, i) => (
                     <span
                       key={i}
-                      className="flex items-center gap-1 bg-zinc-200 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 px-2 py-1 rounded-full"
-                      style={{ fontSize: fontSize.xs }}
-                    >
+                      className="flex items-center gap-1 bg-zinc-200 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 px-2 py-1 rounded-full text-xs">
                       {s}
                       <button onClick={() => removeSubject(i)} className="text-zinc-400 dark:text-gray-500 hover:text-red-400">
                         <X className="w-3 h-3" />
@@ -154,7 +148,7 @@ export default function EditCategoryModal({
             </div>
 
             <div className="relative">
-              <label className="text-zinc-500 dark:text-gray-500 mb-1 block" style={{ fontSize: fontSize.xs }}>Academic Level</label>
+              <label className="text-zinc-500 dark:text-gray-500 mb-1 block text-xs">Academic Level</label>
               <input
                 value={form.academicLevel}
                 onChange={e => {
@@ -164,9 +158,7 @@ export default function EditCategoryModal({
                 onFocus={() => setShowLevelPicker(true)}
                 onBlur={() => setTimeout(() => setShowLevelPicker(false), 150)}
                 placeholder="Type to search level..."
-                className="w-full bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all"
-                style={{ fontSize: fontSize.sm }}
-              />
+                className="w-full bg-zinc-100 dark:bg-black border border-black/15 dark:border-white/20 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all text-sm" />
               {showLevelPicker && form.academicLevel.trim().length > 0 && (() => {
                 const filtered = ACADEMIC_LEVELS.filter(l =>
                   l.toLowerCase().startsWith(form.academicLevel.toLowerCase())
@@ -182,9 +174,7 @@ export default function EditCategoryModal({
                         }}
                         className={`w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-gray-700 transition-colors ${
                           form.academicLevel === level ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-gray-400'
-                        }`}
-                        style={{ fontSize: fontSize.sm }}
-                      >
+                        } text-sm`}>
                         {level}
                       </button>
                     ))}
@@ -196,18 +186,14 @@ export default function EditCategoryModal({
             <div className="flex gap-2 pt-1">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 rounded-lg bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors"
-                style={{ fontSize: fontSize.sm }}
-                disabled={isEditing}
-              >
+                className="flex-1 py-2 rounded-lg bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors text-sm"
+                disabled={isEditing}>
                 Cancel
               </button>
               <button
                 onClick={onSave}
                 disabled={isEditing || !form.examName.trim()}
-                className="flex-1 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40"
-                style={{ fontSize: fontSize.sm }}
-              >
+                className="flex-1 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 text-sm">
                 {isEditing ? 'Saving...' : 'Save'}
               </button>
             </div>

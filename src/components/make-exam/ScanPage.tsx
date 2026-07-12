@@ -505,12 +505,11 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
   return (
     <div className="bg-white/40 dark:bg-gray-900/40 border border-black/15 dark:border-white/20 p-5 space-y-4 transition-all">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Upload the study material</h4>
-        <span className="text-zinc-450 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>
+        <h4 className="font-semibold text-zinc-900 dark:text-white text-base">Upload the study material</h4>
+        <span className="text-zinc-450 dark:text-gray-500 font-medium text-xs">
           {totalPages}/{scanLimit} pages
         </span>
       </div>
-
       {validationError && (
         <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl flex items-center gap-2">
           <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -519,13 +518,11 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
           <span className="font-medium text-xs">{validationError}</span>
         </div>
       )}
-
       <canvas ref={canvasRef} className="hidden" />
-
       {currentCropItem && (
         <div className="relative border border-black/15 dark:border-white/20 rounded-2xl bg-zinc-950 flex flex-col items-center p-4 gap-4">
           <div className="flex items-center justify-between w-full">
-            <p className="text-white font-semibold" style={{ fontSize: fontSize.xs }}>
+            <p className="text-white font-semibold text-xs">
               crop
             </p>
             <button type="button" onClick={cancelCrop} className="text-zinc-400 hover:text-white transition-all cursor-pointer">
@@ -582,14 +579,11 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
           <button
             type="button"
             onClick={cropImage}
-            className="px-6 py-2 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-xl font-semibold transition-all cursor-pointer mx-auto block w-fit"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="px-6 py-2 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-xl font-semibold transition-all cursor-pointer mx-auto block w-fit text-xs">
             Apply Crop
           </button>
         </div>
       )}
-
       {!cameraActive && !currentCropItem && (
         <div className="flex flex-col gap-2">
           {isPdfProcessing ? (
@@ -598,7 +592,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                 <div className="w-10 h-10 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin" />
               </div>
               <div className="text-center">
-                <p className="font-semibold text-blue-500" style={{ fontSize: fontSize.xs }}>Processing PDF…</p>
+                <p className="font-semibold text-blue-500 text-xs">Processing PDF…</p>
                 <p className="text-zinc-400 dark:text-gray-500 mt-1" style={{ fontSize: '0.65rem' }}>Rendering pages, this may take a moment</p>
               </div>
             </div>
@@ -626,7 +620,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                 <Upload className="w-5 h-5" />
               </div>
               <div className="text-center">
-                <p className="font-medium text-zinc-700 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>
+                <p className="font-medium text-zinc-700 dark:text-gray-300 text-xs">
                   Drag & drop files here, or <span className="text-blue-500 underline">browse</span>
                 </p>
                 <p className="text-zinc-400 dark:text-gray-550 mt-1" style={{ fontSize: '0.65rem' }}>
@@ -640,15 +634,12 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
             type="button"
             onClick={startCamera}
             disabled={isPdfProcessing}
-            className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl font-semibold border border-blue-500/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="flex items-center justify-center gap-2 w-full py-2.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 rounded-xl font-semibold border border-blue-500/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-xs">
             <Camera className="w-4 h-4" />
             Take Photo with Camera
           </button>
         </div>
       )}
-
       {cameraActive && !currentCropItem && (
         <div className="relative border border-zinc-200 dark:border-gray-800 rounded-2xl bg-black overflow-hidden flex flex-col items-center justify-center p-4 min-h-[340px]">
           <div className="relative w-full max-w-[280px] aspect-square rounded-xl overflow-hidden bg-zinc-950 border border-zinc-800">
@@ -709,7 +700,6 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
           )}
         </div>
       )}
-
       {files.length > 0 && !currentCropItem && (
         <div className="space-y-3">
           <div className="grid gap-2 max-h-48 overflow-y-auto pr-1 animate-fadeIn">
@@ -731,7 +721,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-zinc-700 dark:text-gray-300 font-medium truncate" style={{ fontSize: fontSize.xs }}>
+                    <p className="text-zinc-700 dark:text-gray-300 font-medium truncate text-xs">
                       {file.name}
                     </p>
                     <p className="text-zinc-400 dark:text-gray-550 shrink-0" style={{ fontSize: '0.65rem' }}>
@@ -765,9 +755,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                       max="100"
                       value={file.pagesCount}
                       onChange={(e) => updatePages(file.id, parseInt(e.target.value) || 1)}
-                      className="w-8 bg-transparent text-center font-semibold text-blue-500 focus:outline-none"
-                      style={{ fontSize: fontSize.xs }}
-                    />
+                      className="w-8 bg-transparent text-center font-semibold text-blue-500 focus:outline-none text-xs" />
                   </div>
                 )}
 
@@ -806,7 +794,8 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
             </div>
           )}
 
-          <div className="text-center text-zinc-400 dark:text-zinc-500 font-medium py-1" style={{ fontSize: fontSize.xs }}>
+          <div
+            className="text-center text-zinc-400 dark:text-zinc-500 font-medium py-1 text-xs">
             every 2 pages will increase 1 credit , +{extraCreditsCost} credits will increase {useOwnKey && '(ignore if using own key)'}
           </div>
         </div>

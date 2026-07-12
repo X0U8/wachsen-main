@@ -95,7 +95,8 @@ export default function Footer() {
                     }}
                   />
                 ) : null}
-                <div className="w-full h-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-medium tracking-wider" style={{ fontSize: fontSize.xs }}>
+                <div
+                  className="w-full h-full bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-medium tracking-wider text-xs">
                   {userProfile.name ? userProfile.name[0].toUpperCase() : 'U'}
                 </div>
               </div>
@@ -110,7 +111,6 @@ export default function Footer() {
           <NavLink to="/revision" icon={<TelescopeIcon ref={revisionRef} size={iconSize} />} />
         </div>
       </footer>
-
       {showProfile && <PublicProfileModal onClose={() => setShowProfile(false)} />}
     </>
   );

@@ -285,7 +285,6 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
 
   return (
     <div className="flex-grow flex flex-col min-h-0 space-y-6 pb-4">
-
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center h-28">
           <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center mb-1">
@@ -323,7 +322,6 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
           </span>
         </div>
       </div>
-
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-3 flex flex-col items-center justify-center text-center h-24">
           <span className="font-extrabold text-zinc-800 dark:text-zinc-200 text-base">
@@ -352,38 +350,34 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
           </span>
         </div>
       </div>
-
       <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800 rounded-2xl p-4 space-y-3">
-        <h3 className="font-bold text-zinc-800 dark:text-zinc-100" style={{ fontSize: fontSize.sm }}>
+        <h3 className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">
           Attendance Heat Map
         </h3>
         {activeDays.length > 0 ? (
           renderMonthlyCalendar()
         ) : (
-          <div className="text-center py-8 text-zinc-500 font-semibold" style={{ fontSize: fontSize.xs }}>
+          <div className="text-center py-8 text-zinc-500 font-semibold text-xs">
             No activity recorded yet.
           </div>
         )}
       </div>
-
       {isOwner && (
         <>
           <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800 rounded-2xl p-4 space-y-4">
-            <h3 className="font-bold text-zinc-800 dark:text-zinc-100" style={{ fontSize: fontSize.sm }}>
+            <h3 className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">
               Performance History
             </h3>
 
             <div className="flex items-center gap-3">
-              <span className="text-zinc-550 font-semibold" style={{ fontSize: fontSize.xs }}>Category:</span>
+              <span className="text-zinc-550 font-semibold text-xs">Category:</span>
               <select
                 value={selectedCatId}
                 onChange={(e) => {
                   setSelectedCatId(e.target.value);
                   setChartOffset(0);
                 }}
-                className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-white rounded-xl px-3 py-1.5 font-medium outline-none cursor-pointer"
-                style={{ fontSize: fontSize.xs }}
-              >
+                className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-white rounded-xl px-3 py-1.5 font-medium outline-none cursor-pointer text-xs">
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -433,28 +427,25 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
                   <button
                     onClick={handlePageBack}
                     disabled={!canPageBack}
-                    className="px-3 py-1.5 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 disabled:opacity-40 rounded-xl text-zinc-650 dark:text-zinc-400 font-bold transition-all flex items-center gap-1 cursor-pointer"
-                    style={{ fontSize: fontSize.xs }}
-                  >
+                    className="px-3 py-1.5 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 disabled:opacity-40 rounded-xl text-zinc-650 dark:text-zinc-400 font-bold transition-all flex items-center gap-1 cursor-pointer text-xs">
                     <ChevronLeft className="w-4 h-4" /> Prev 10
                   </button>
 
-                  <span className="text-zinc-550 dark:text-zinc-450 font-semibold" style={{ fontSize: fontSize.xs }}>
+                  <span className="text-zinc-550 dark:text-zinc-450 font-semibold text-xs">
                     Showing {rawPercentages.length - chartOffset - chartData.length + 1} - {rawPercentages.length - chartOffset} of {rawPercentages.length}
                   </span>
 
                   <button
                     onClick={handlePageForward}
                     disabled={!canPageForward}
-                    className="px-3 py-1.5 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 disabled:opacity-40 rounded-xl text-zinc-650 dark:text-zinc-400 font-bold transition-all flex items-center gap-1 cursor-pointer"
-                    style={{ fontSize: fontSize.xs }}
-                  >
+                    className="px-3 py-1.5 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 disabled:opacity-40 rounded-xl text-zinc-650 dark:text-zinc-400 font-bold transition-all flex items-center gap-1 cursor-pointer text-xs">
                     Next 10 <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-10 text-center text-zinc-500 font-semibold" style={{ fontSize: fontSize.xs }}>
+              <div
+                className="flex flex-col items-center justify-center py-10 text-center text-zinc-500 font-semibold text-xs">
                 No exam score history found for this category.
               </div>
             )}
@@ -462,7 +453,7 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
 
           <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800 rounded-2xl p-4 space-y-3">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-zinc-800 dark:text-zinc-100" style={{ fontSize: fontSize.sm }}>
+              <h3 className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">
                 Category Summary
               </h3>
               <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
@@ -552,14 +543,13 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="text-center py-8 text-zinc-500 font-semibold" style={{ fontSize: fontSize.xs }}>
+              <div className="text-center py-8 text-zinc-500 font-semibold text-xs">
                 No categories available.
               </div>
             )}
           </div>
         </>
       )}
-
     </div>
   );
 }

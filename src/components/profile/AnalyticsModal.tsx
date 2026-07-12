@@ -21,7 +21,7 @@ export default function AnalyticsModal({
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl w-full max-w-[420px] sm:max-w-[620px] md:max-w-[720px] lg:max-w-[800px] h-[640px] max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden animate-fade-in">
         
         <div className="flex justify-between items-center px-5 py-4 border-b border-black/10 dark:border-white/10 flex-shrink-0">
-          <h1 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+          <h1 className="font-semibold text-zinc-900 dark:text-white text-base">
             Personal Analytics
           </h1>
           <button

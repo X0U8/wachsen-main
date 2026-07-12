@@ -539,11 +539,11 @@ Return ONLY a valid JSON array matching this format:
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>Revision Log</h1>
+          <h1 className="font-semibold text-zinc-800 dark:text-gray-100 text-base">Revision Log</h1>
         </div>
       ) : (
         <>
-          <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>Revision Logs</h1>
+          <h1 className="font-semibold text-zinc-800 dark:text-gray-100 text-base">Revision Logs</h1>
           <div className="relative">
             <button
               onClick={() => setShowFilterDropdown(!showFilterDropdown)}
@@ -559,7 +559,8 @@ Return ONLY a valid JSON array matching this format:
                   onClick={() => setShowFilterDropdown(false)}
                 />
                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="font-semibold text-zinc-400 dark:text-zinc-500 px-3 py-1.5 uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>
+                  <div
+                    className="font-semibold text-zinc-400 dark:text-zinc-500 px-3 py-1.5 uppercase tracking-wider text-xs">
                     Filter by Exam Type
                   </div>
                   <div className="space-y-0.5 max-h-48 overflow-y-auto">
@@ -571,9 +572,7 @@ Return ONLY a valid JSON array matching this format:
                       className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${!selectedExamTypeId
                         ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                        }`}
-                      style={{ fontSize: fontSize.xs }}
-                    >
+                        } text-xs`}>
                       <span>All Exam Types</span>
                       {!selectedExamTypeId && <Check className="w-3.5 h-3.5" />}
                     </button>
@@ -588,9 +587,7 @@ Return ONLY a valid JSON array matching this format:
                         className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${selectedExamTypeId === type.id
                           ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
                           : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                          }`}
-                        style={{ fontSize: fontSize.xs }}
-                      >
+                          } text-xs`}>
                         <span className="truncate">{type.name}</span>
                         {selectedExamTypeId === type.id && <Check className="w-3.5 h-3.5" />}
                       </button>
@@ -672,9 +669,7 @@ Return ONLY a valid JSON array matching this format:
           <button
             onClick={() => resultId && navigate(`/results/${resultId}`)}
             disabled={!resultId}
-            className="py-2.5 px-2 sm:px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-2xl font-semibold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="py-2.5 px-2 sm:px-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900/40 dark:hover:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-2xl font-semibold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-xs">
             View Result
           </button>
 
@@ -691,9 +686,7 @@ Return ONLY a valid JSON array matching this format:
               }
             }}
             disabled={generatingCards}
-            className="py-2.5 px-2 sm:px-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-2xl font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="py-2.5 px-2 sm:px-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-2xl font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-xs">
             {generatingCards ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 border-2 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin mr-1 sm:mr-2" />
@@ -708,16 +701,13 @@ Return ONLY a valid JSON array matching this format:
 
           <button
             onClick={handleRetry}
-            className="py-2.5 px-2 sm:px-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl font-semibold text-green-600 dark:text-green-400 hover:bg-green-500/20 transition-all flex items-center justify-center cursor-pointer"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="py-2.5 px-2 sm:px-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl font-semibold text-green-600 dark:text-green-400 hover:bg-green-500/20 transition-all flex items-center justify-center cursor-pointer text-xs">
             Retry Questions
           </button>
         </div>
 
         <RevisionQuestionsList questions={logData.questions} />
       </main>
-
       {showConceptCards && <ConceptCards onClose={() => setShowConceptCards(false)} cards={conceptCards} />}
       <RevisionRetryModal
         isOpen={showRetry}
@@ -732,7 +722,6 @@ Return ONLY a valid JSON array matching this format:
         handleAISelfCheck={handleAISelfCheck}
         checkingAI={checkingAI}
       />
-
       {showSegmentSelector && (
         <SegmentSelectorModal
           isOpen={showSegmentSelector}
@@ -741,7 +730,6 @@ Return ONLY a valid JSON array matching this format:
           onSelectSegment={(topics) => generateConceptCards(topics)}
         />
       )}
-
       {notification && (
         <Notification
           type={notification.type}

@@ -32,7 +32,7 @@ export default function InfoComponent({
   return (
     <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-md shadow-2xl animate-fade-in ${bgCls} max-w-sm w-full mx-4`}>
       <Icon className="w-5 h-5 flex-shrink-0" />
-      <p className="font-medium leading-normal flex-1" style={{ fontSize: fontSize.sm }}>{message}</p>
+      <p className="font-medium leading-normal flex-1 text-sm">{message}</p>
       <button onClick={onClose} className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-colors cursor-pointer">
         <X className="w-4 h-4" />
       </button>

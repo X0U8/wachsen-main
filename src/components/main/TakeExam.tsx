@@ -576,9 +576,7 @@ export default function TakeExam() {
           </div>
           <button
             onClick={() => navigate('/exam')}
-            className="w-full py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 text-zinc-900 dark:text-white rounded-xl font-medium transition-all"
-            style={{ fontSize: fontSize.sm }}
-          >
+            className="w-full py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 text-zinc-900 dark:text-white rounded-xl font-medium transition-all text-sm">
             Go Back
           </button>
         </div>
@@ -592,8 +590,8 @@ export default function TakeExam() {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-red-400" style={{ fontSize: fontSize.lg }}>This exam has no questions.</p>
-          <p className="text-zinc-400 dark:text-gray-500" style={{ fontSize: fontSize.sm }}>The exam may not have been generated correctly.</p>
+          <p className="text-red-400 text-lg">This exam has no questions.</p>
+          <p className="text-zinc-400 dark:text-gray-500 text-sm">The exam may not have been generated correctly.</p>
         </div>
       </div>
     );
@@ -629,8 +627,8 @@ export default function TakeExam() {
                   </motion.div>
                 ) : (
                   <div className="space-y-4">
-                    <h3 className="text-zinc-900 dark:text-white" style={{ fontSize: fontSize['2xl'] }}>Ready to Start?</h3>
-                    <p className="text-zinc-500 dark:text-gray-400 leading-relaxed" style={{ fontSize: fontSize.sm }}>
+                    <h3 className="text-zinc-900 dark:text-white text-2xl">Ready to Start?</h3>
+                    <p className="text-zinc-500 dark:text-gray-400 leading-relaxed text-sm">
                       You are about to start <span className="text-zinc-900 dark:text-white font-medium">{examData?.examName}</span>.
                     </p>
                   </div>
@@ -641,16 +639,12 @@ export default function TakeExam() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => navigate('/exam')}
-                    className="flex-1 py-2.5 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 text-zinc-900 dark:text-white rounded-xl transition-all font-medium"
-                    style={{ fontSize: fontSize.sm }}
-                  >
+                    className="flex-1 py-2.5 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 text-zinc-900 dark:text-white rounded-xl transition-all font-medium text-sm">
                     Cancel
                   </button>
                   <button
                     onClick={startExamFlow}
-                    className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-500/20 font-medium"
-                    style={{ fontSize: fontSize.sm }}
-                  >
+                    className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-500/20 font-medium text-sm">
                     Start Now
                   </button>
                 </div>
@@ -659,13 +653,12 @@ export default function TakeExam() {
           </motion.div>
         )}
       </AnimatePresence>
-
       {isExamStarted && (
         <>
           <header className="px-4 py-3 bg-zinc-100/50 dark:bg-gray-900/50 backdrop-blur-md border-b border-zinc-200 dark:border-gray-800 sticky top-0 z-10 flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
               <div>
-                <h1 className="text-zinc-900 dark:text-white truncate max-w-[150px]" style={{ fontSize: fontSize.sm }}>{examData?.examName}</h1>
+                <h1 className="text-zinc-900 dark:text-white truncate max-w-[150px] text-sm">{examData?.examName}</h1>
                 <div className="flex items-center gap-2">
                   {examData?.examType === 'casual' && (
                     <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-500/10 rounded text-[8px] text-blue-500 uppercase">
@@ -688,7 +681,7 @@ export default function TakeExam() {
                   return (
                     <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/50 bg-zinc-200/30 dark:bg-gray-800/30">
                       <Clock className="w-3 h-3 text-blue-500" />
-                      <span className="text-zinc-900 dark:text-white font-mono" style={{ fontSize: fontSize.xs }}>{timeStr}</span>
+                      <span className="text-zinc-900 dark:text-white font-mono text-xs">{timeStr}</span>
                     </div>
                   );
                 } else {
@@ -701,7 +694,7 @@ export default function TakeExam() {
                       : 'border-red-500/50 text-red-500';
                   return (
                     <div className={`flex items-center gap-2 px-3 py-1 rounded-full border bg-zinc-200/30 dark:bg-gray-800/30 ${borderClass}`}>
-                      <span className="text-zinc-900 dark:text-white font-mono" style={{ fontSize: fontSize.xs }}>{formatTime(timeLeft)}</span>
+                      <span className="text-zinc-900 dark:text-white font-mono text-xs">{formatTime(timeLeft)}</span>
                     </div>
                   );
                 }
@@ -711,9 +704,7 @@ export default function TakeExam() {
             <div className="flex items-center justify-end flex-1">
               <button
                 onClick={() => setShowExitConfirm(true)}
-                className="px-4 py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg tracking-wider transition-all"
-                style={{ fontSize: fontSize.xs }}
-              >
+                className="px-4 py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg tracking-wider transition-all text-xs">
                 Finish
               </button>
             </div>
@@ -761,7 +752,7 @@ export default function TakeExam() {
                           {reviewList.has(currentQuestionIdx) ? 'In Review' : 'Mark for review'}
                         </button>
                       </div>
-                      <h2 className="font-medium leading-relaxed" style={{ fontSize: fontSize.base }}>
+                      <h2 className="font-medium leading-relaxed text-base">
                         <MathText text={currentQuestion.text} />
                       </h2>
                     </div>
@@ -777,13 +768,14 @@ export default function TakeExam() {
                             : 'bg-zinc-100 dark:bg-gray-900 border-zinc-200 dark:border-gray-800 text-zinc-900 dark:text-white hover:border-zinc-300 dark:hover:border-gray-700'
                             }`}
                         >
-                          <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${answers[currentQuestion.id] === option
-                            ? 'bg-blue-600 border-blue-600 text-white'
-                            : 'border-zinc-300 dark:border-gray-700'
-                            }`} style={{ fontSize: fontSize.xs }}>
+                          <div
+                            className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${answers[currentQuestion.id] === option
+                              ? 'bg-blue-600 border-blue-600 text-white'
+                              : 'border-zinc-300 dark:border-gray-700'
+                              } text-xs`}>
                             {String.fromCharCode(65 + idx)}
                           </div>
-                          <span className="font-medium leading-relaxed" style={{ fontSize: fontSize.sm }}>
+                          <span className="font-medium leading-relaxed text-sm">
                             <MathText text={option} />
                           </span>
                         </button>
@@ -799,9 +791,7 @@ export default function TakeExam() {
                               className={`p-8 rounded-2xl border text-center transition-all capitalize ${answers[currentQuestion.id] === val
                                 ? 'bg-blue-600/10 border-blue-600 text-zinc-900 dark:text-white'
                                 : 'bg-zinc-100 dark:bg-gray-900 border-zinc-200 dark:border-gray-800 text-zinc-900 dark:text-white hover:border-zinc-300 dark:hover:border-gray-700'
-                                }`}
-                              style={{ fontSize: fontSize.lg }}
-                            >
+                                } text-lg`}>
                               {val}
                             </button>
                           ))}
@@ -833,7 +823,8 @@ export default function TakeExam() {
 
               <aside className="hidden md:block w-64 shrink-0">
                 <div className="bg-zinc-100/50 dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 max-h-[calc(100vh-8rem)] flex flex-col">
-                  <h3 className="font-medium uppercase text-zinc-400 dark:text-gray-500 mb-4 shrink-0" style={{ fontSize: fontSize.xs }}>Questions</h3>
+                  <h3
+                    className="font-medium uppercase text-zinc-400 dark:text-gray-500 mb-4 shrink-0 text-xs">Questions</h3>
 
                   {subjects.length > 1 && (
                     <div className="mb-4 shrink-0">
@@ -884,9 +875,7 @@ export default function TakeExam() {
                               : answers[questions[idx].id]
                                 ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                                 : 'bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 border border-zinc-300 dark:border-gray-700 hover:border-zinc-400 dark:hover:border-gray-600'
-                            }`}
-                          style={{ fontSize: fontSize.sm }}
-                        >
+                            } text-sm`}>
                           {idx + 1}
                         </button>
                       ))}
@@ -919,9 +908,7 @@ export default function TakeExam() {
               <button
                 disabled={currentQuestionIdx === 0}
                 onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
-                className="flex-1 py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:opacity-30 rounded-xl transition-all flex items-center justify-center gap-2"
-                style={{ fontSize: fontSize.xs }}
-              >
+                className="flex-1 py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 disabled:opacity-30 rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
@@ -946,9 +933,7 @@ export default function TakeExam() {
                     setCurrentQuestionIdx(prev => prev + 1);
                   }
                 }}
-                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
-                style={{ fontSize: fontSize.xs }}
-              >
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 text-xs">
                 {currentQuestionIdx === questions.length - 1 ? 'Finish' : ''}
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -969,8 +954,8 @@ export default function TakeExam() {
                   className="bg-zinc-100 dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl p-8 w-full max-w-md space-y-6 shadow-2xl text-center"
                 >
                   <div className="space-y-2">
-                    <h3 className="text-zinc-900 dark:text-white" style={{ fontSize: fontSize['2xl'] }}>Finish Exam?</h3>
-                    <p className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
+                    <h3 className="text-zinc-900 dark:text-white text-2xl">Finish Exam?</h3>
+                    <p className="text-zinc-500 dark:text-gray-400 text-sm">
                       You have answered {Object.keys(answers).length} out of {questions.length} questions.
                       {reviewList.size > 0 && <span className="block text-amber-500 mt-1 font-medium">{reviewList.size} questions are still marked for review.</span>}
                     </p>
@@ -1014,8 +999,8 @@ export default function TakeExam() {
                     <AlertCircle className="w-8 h-8 text-red-500" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-zinc-900 dark:text-white" style={{ fontSize: fontSize['2xl'] }}>Time's Up!</h3>
-                    <p className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
+                    <h3 className="text-zinc-900 dark:text-white text-2xl">Time's Up!</h3>
+                    <p className="text-zinc-500 dark:text-gray-400 text-sm">
                       Your exam time has ended. You have answered {Object.keys(answers).length} out of {questions.length} questions.
                       {reviewList.size > 0 && <span className="block text-amber-500 mt-1 font-medium">{reviewList.size} questions are still marked for review.</span>}
                     </p>
@@ -1050,7 +1035,8 @@ export default function TakeExam() {
                   className="bg-zinc-100 dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl p-4 md:p-6 w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl"
                 >
                   <div className="flex items-center justify-between mb-4 shrink-0">
-                    <h3 className="font-medium uppercase text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>Questions</h3>
+                    <h3
+                      className="font-medium uppercase text-zinc-500 dark:text-gray-400 text-sm">Questions</h3>
                     <button
                       onClick={() => setShowQuestionModal(false)}
                       className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -1108,9 +1094,7 @@ export default function TakeExam() {
                               : answers[questions[idx].id]
                                 ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                                 : 'bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 border border-zinc-300 dark:border-gray-700 hover:border-zinc-400 dark:hover:border-gray-600'
-                            }`}
-                          style={{ fontSize: fontSize.sm }}
-                        >
+                            } text-sm`}>
                           {idx + 1}
                         </button>
                       ))}

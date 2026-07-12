@@ -64,7 +64,7 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
             <ChevronLeft className="w-5 h-5" />
           </button>
 
-          <h2 className="font-semibold text-zinc-800 dark:text-white" style={{ fontSize: fontSize.base }}>
+          <h2 className="font-semibold text-zinc-800 dark:text-white text-base">
             {examName} roadmap
           </h2>
 

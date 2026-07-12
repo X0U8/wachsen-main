@@ -570,7 +570,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h2 className="font-base" style={{ fontSize: fontSize.base }}>Finalize Exam</h2>
+            <h2 className="font-base text-base">Finalize Exam</h2>
           </div>
         </header>
 
@@ -586,14 +586,12 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             <div className="flex flex-col items-center justify-center h-full gap-4">
               <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400" />
               <p className="text-zinc-900 dark:text-gray-100 font-medium text-center">Generation Failed</p>
-              <p className="text-zinc-500 dark:text-gray-400 text-center max-w-sm" style={{ fontSize: fontSize.sm }}>
+              <p className="text-zinc-500 dark:text-gray-400 text-center max-w-sm text-sm">
                 {failureMessage}
               </p>
               <button
                 onClick={handleRestart}
-                className="mt-4 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all"
-                style={{ fontSize: fontSize.sm }}
-              >
+                className="mt-4 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all text-sm">
                 Try Again
               </button>
             </div>
@@ -603,12 +601,12 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             <div className="space-y-4">
               <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-blue-500 dark:text-blue-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                  <h4 className="text-blue-500 dark:text-blue-400 font-medium text-xs">
                     {segmentCountdown !== null
                       ? `thinking, generating in ${segmentCountdown}s`
                       : (status === 'generating' ? 'generating questions' : 'generation complete')}
                   </h4>
-                  <span className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>
+                  <span className="text-zinc-500 dark:text-gray-400 text-xs">
                     {completedSegments.size}/{totalSegments} segments
                   </span>
                 </div>
@@ -623,7 +621,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
               <div className="space-y-4">
                 {examBlueprint.map((item: any, idx: number) => (
                   <div key={idx} className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-4 space-y-3">
-                    <h4 className="text-zinc-900 dark:text-gray-100 font-medium" style={{ fontSize: fontSize.sm }}>{item.name}</h4>
+                    <h4 className="text-zinc-900 dark:text-gray-100 font-medium text-sm">{item.name}</h4>
                     <div className="space-y-2">
                       {item.segments.map((seg: any, sIdx: number) => {
                         const segKey = `${idx}-${sIdx}`;
@@ -633,7 +631,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
                         return (
                           <div key={sIdx} className="bg-zinc-50 dark:bg-gray-950 rounded-lg p-3 border border-zinc-200 dark:border-gray-700">
                             <div className="flex items-center justify-between mb-2">
-                              <div className="text-amber-500 dark:text-amber-400 font-medium" style={{ fontSize: fontSize.xs }}>Questions {seg.range}</div>
+                              <div className="text-amber-500 dark:text-amber-400 font-medium text-xs">Questions {seg.range}</div>
                               <div className="flex items-center gap-1">
                                 {isCompleted && <CheckCircle2 className="w-3 h-3 text-green-500 dark:text-green-400" />}
                                 {isCurrentSegment && <Loader2 className="w-3 h-3 text-blue-500 dark:text-blue-400 animate-spin" />}
@@ -645,7 +643,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
                             </div>
                             <div className="space-y-1">
                               {seg.topics.map((topic: string, tIdx: number) => (
-                                <div key={tIdx} className="text-gray-400 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>• {topic}</div>
+                                <div key={tIdx} className="text-gray-400 dark:text-gray-400 text-xs">• {topic}</div>
                               ))}
                             </div>
                           </div>
@@ -664,8 +662,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             <button
               onClick={handleSaveExam}
               disabled={isSaving}
-              className="w-full bg-blue-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed" style={{ fontSize: fontSize.sm }}
-            >
+              className="w-full bg-blue-600 hover:bg-green-700 disabled:opacity-50 text-white py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed text-sm">
               {isSaving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -678,7 +675,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
           </footer>
         )}
       </motion.div>
-
       {notification && (
         <Notification
           type={notification.type}

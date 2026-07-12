@@ -88,7 +88,6 @@ export default function Stepper({
           );
         })}
       </div>
-
       <div className={`relative overflow-hidden ${contentClassName}`}>
         <AnimatePresence initial={false} mode="wait" custom={direction}>
           <motion.div
@@ -108,16 +107,13 @@ export default function Stepper({
           </motion.div>
         </AnimatePresence>
       </div>
-
       {!isCompleted && (
         <div className={`mt-4 flex justify-between gap-3 max-w-[280px] mx-auto ${footerClassName}`}>
           <button
             onClick={handleBack}
             disabled={currentStep === 1}
-            className="flex-1 px-3 py-2 bg-gray-100 dark:bg-zinc-900/60 border border-gray-300/50 dark:border-white/20 hover:bg-gray-200 dark:hover:bg-zinc-800/80 rounded-xl disabled:opacity-30 text-gray-700 dark:text-white font-medium transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed"
-            style={{ fontSize: fontSize.sm }}
-            {...backButtonProps}
-          >
+            className="flex-1 px-3 py-2 bg-gray-100 dark:bg-zinc-900/60 border border-gray-300/50 dark:border-white/20 hover:bg-gray-200 dark:hover:bg-zinc-800/80 rounded-xl disabled:opacity-30 text-gray-700 dark:text-white font-medium transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:cursor-not-allowed text-sm"
+            {...backButtonProps}>
             {backButtonText}
           </button>
           <button
@@ -132,10 +128,8 @@ export default function Stepper({
                 handleNext();
               }
             }}
-            className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl text-white font-medium transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{ fontSize: fontSize.sm }}
-            {...nextButtonProps}
-          >
+            className="flex-1 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl text-white font-medium transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed text-sm"
+            {...nextButtonProps}>
             {isLastStep ? 'Complete' : nextButtonText}
           </button>
         </div>
@@ -148,13 +142,14 @@ function StepIndicator({ step, currentStep, disableStepIndicators }: { step: num
   const status = currentStep === step ? 'active' : currentStep > step ? 'complete' : 'inactive';
   return (
     <div className="flex flex-col items-center flex-shrink-0">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold transition-colors duration-300 ${
-        status === 'active' 
-          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/10 dark:shadow-blue-500/20' 
-          : status === 'complete' 
-            ? 'bg-purple-100/60 dark:bg-purple-800/40 border border-purple-400 dark:border-purple-500 text-purple-700 dark:text-purple-200' 
-            : 'bg-gray-100 dark:bg-zinc-900 border border-gray-300/50 dark:border-white/10 text-gray-400 dark:text-zinc-500'
-      }`} style={{ fontSize: fontSize.sm }}>
+      <div
+        className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold transition-colors duration-300 ${
+          status === 'active' 
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md shadow-blue-500/10 dark:shadow-blue-500/20' 
+            : status === 'complete' 
+              ? 'bg-purple-100/60 dark:bg-purple-800/40 border border-purple-400 dark:border-purple-500 text-purple-700 dark:text-purple-200' 
+              : 'bg-gray-100 dark:bg-zinc-900 border border-gray-300/50 dark:border-white/10 text-gray-400 dark:text-zinc-500'
+        } text-sm`}>
         {status === 'complete' ? "\u2713" : step}
       </div>
     </div>

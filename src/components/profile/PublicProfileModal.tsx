@@ -165,7 +165,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
         onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       >
         <div className="flex justify-between items-center px-6 pt-6 pb-2 flex-shrink-0">
-          <h1 className="font-medium tracking-tight text-white" style={{ fontSize: fontSize.xl }}>Wachsen</h1>
+          <h1 className="font-medium tracking-tight text-white text-xl">Wachsen</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={copyId}
@@ -176,14 +176,11 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
             </button>
           </div>
         </div>
-
         <div className="flex-1 flex flex-col items-center justify-center px-6">
           <ProfileCard userProfile={userProfile} variant="preview" />
           <button
             onClick={onClose}
-            className="mt-8 px-6 py-2.5 bg-white/10 hover:bg-white/15 transition-colors rounded-xl text-white font-medium cursor-pointer"
-            style={{ fontSize: fontSize.sm }}
-          >
+            className="mt-8 px-6 py-2.5 bg-white/10 hover:bg-white/15 transition-colors rounded-xl text-white font-medium cursor-pointer text-sm">
             Close
           </button>
         </div>
@@ -371,7 +368,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl w-full max-w-[420px] sm:max-w-[620px] md:max-w-[720px] lg:max-w-[800px] h-[640px] max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden animate-fade-in">
 
           <div className="flex justify-between items-center px-5 py-4 border-b border-black/10 dark:border-white/10 flex-shrink-0">
-            <h1 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+            <h1 className="font-semibold text-zinc-900 dark:text-white text-base">
               Public profile
             </h1>
             <div className="flex items-center gap-2">
@@ -428,7 +425,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                 <div className="flex-grow flex flex-col min-h-0 space-y-4">
                   <div className="flex items-center justify-between px-1 flex-shrink-0">
                     <div className="flex items-center gap-1.5">
-                      <h4 className="font-semibold text-zinc-500" style={{ fontSize: fontSize.xs }}>Public Exams</h4>
+                      <h4 className="font-semibold text-zinc-500 text-xs">Public Exams</h4>
                       <button
                         onClick={() => setShowProfileCard(!showProfileCard)}
                         className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-550 dark:text-zinc-455 cursor-pointer flex items-center justify-center"
@@ -437,7 +434,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                         {showProfileCard ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                       </button>
                     </div>
-                    <span className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>Total: {totalCount}</span>
+                    <span className="text-zinc-500 font-medium text-xs">Total: {totalCount}</span>
                   </div>
 
                   <div className="space-y-3 pb-4">
@@ -456,10 +453,11 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                           >
                             <div className="flex justify-between items-start">
                               <div>
-                                <h5 className="font-bold text-zinc-850 dark:text-zinc-205" style={{ fontSize: fontSize.sm }}>
+                                <h5 className="font-bold text-zinc-850 dark:text-zinc-205 text-sm">
                                   {exam.examName}
                                 </h5>
-                                <div className="flex items-center gap-2 mt-1 text-zinc-550 dark:text-zinc-400 font-medium" style={{ fontSize: fontSize.xs }}>
+                                <div
+                                  className="flex items-center gap-2 mt-1 text-zinc-550 dark:text-zinc-400 font-medium text-xs">
                                   <span className={`capitalize px-2 py-0.5 rounded-lg font-semibold ${getDifficultyColor(exam.difficulty)}`}>
                                     {exam.difficulty}
                                   </span>
@@ -481,9 +479,9 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                                 </button>
                               )}
                             </div>
-
                             {groupedPlan.length > 0 && (
-                              <div className="w-full pt-1.5 space-y-1 text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
+                              <div
+                                className="w-full pt-1.5 space-y-1 text-zinc-500 dark:text-zinc-400 text-xs">
                                 {groupedPlan.map((g, idx) => (
                                   <div key={idx} className="leading-relaxed">
                                     <strong className="text-zinc-700 dark:text-zinc-300 uppercase">{g.subject}:</strong>{' '}
@@ -498,7 +496,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                     ) : (
                       <div className="text-center py-8 border border-dashed border-black/15 dark:border-white/20 rounded-2xl">
                         <BookOpen className="w-6 h-6 text-zinc-400 mx-auto mb-1.5" />
-                        <p className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>No public exams found.</p>
+                        <p className="text-zinc-500 font-medium text-xs">No public exams found.</p>
                       </div>
                     )}
                   </div>
@@ -508,21 +506,17 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                       <button
                         onClick={() => setPage(p => Math.max(0, p - 1))}
                         disabled={page === 0}
-                        className="px-2.5 py-1.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
-                        style={{ fontSize: fontSize.xs }}
-                      >
+                        className="px-2.5 py-1.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer text-xs">
                         <ChevronLeft className="w-3.5 h-3.5" />
                         Prev
                       </button>
-                      <span className="text-zinc-500 font-semibold" style={{ fontSize: fontSize.xs }}>
+                      <span className="text-zinc-500 font-semibold text-xs">
                         Page {page + 1} of {totalPages}
                       </span>
                       <button
                         onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                         disabled={page === totalPages - 1}
-                        className="px-2.5 py-1.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer"
-                        style={{ fontSize: fontSize.xs }}
-                      >
+                        className="px-2.5 py-1.5 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-semibold text-zinc-750 dark:text-zinc-300 transition-all flex items-center gap-1 cursor-pointer text-xs">
                         Next
                         <ChevronRight className="w-3.5 h-3.5" />
                       </button>
@@ -539,11 +533,10 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
 
         </div>
       </div>
-
       {showConfirmImportModal && importTargetExam && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[260] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 w-full max-w-[340px] shadow-2xl relative overflow-hidden text-center space-y-4">
-            <h4 className="font-bold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Import Exam</h4>
+            <h4 className="font-bold text-zinc-900 dark:text-white text-base">Import Exam</h4>
             <p className="text-zinc-500 font-medium text-xs leading-relaxed">
               Do you want to import <strong>{importTargetExam.examName}</strong> to your own categories?
             </p>
@@ -577,11 +570,10 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
           </div>
         </div>
       )}
-
       {showCreateOthersCategoryModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[260] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 w-full max-w-[340px] shadow-2xl relative overflow-hidden text-center space-y-4">
-            <h4 className="font-bold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Create Category</h4>
+            <h4 className="font-bold text-zinc-900 dark:text-white text-base">Create Category</h4>
             <p className="text-zinc-500 font-medium text-xs leading-relaxed">
               We need to initialize a default category named <strong>others</strong> on your account to import this exam.
             </p>

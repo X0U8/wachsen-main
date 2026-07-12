@@ -96,14 +96,15 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
     >
       <div className="w-full max-w-md bg-white dark:bg-zinc-955 border border-black/15 dark:border-white/20 rounded-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto shadow-xl transition-colors">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.sm }}>New Exam Type</h2>
+          <h2 className="font-semibold text-zinc-900 dark:text-white text-sm">New Exam Type</h2>
           <button onClick={onClose} className="text-zinc-400 dark:text-gray-550 hover:text-zinc-650 dark:hover:text-white cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div>
-          <label className="font-medium text-zinc-450 dark:text-gray-550 mb-1 block" style={{ fontSize: fontSize.xs }}>
+          <label
+            className="font-medium text-zinc-450 dark:text-gray-550 mb-1 block text-xs">
             Exam Name
             <span className="text-zinc-500 dark:text-gray-650 ml-1">({form.examName.length}/{maxNameLength})</span>
           </label>
@@ -117,13 +118,12 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
             }}
             placeholder="e.g. Board Exams, SAT, or JEE"
             maxLength={maxNameLength}
-            className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-gray-800 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-gray-500"
-            style={{ fontSize: fontSize.xs }}
-          />
+            className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-gray-800 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-gray-500 text-xs" />
         </div>
 
         <div>
-          <label className="font-medium text-zinc-450 dark:text-gray-550 mb-1 block" style={{ fontSize: fontSize.xs }}>
+          <label
+            className="font-medium text-zinc-450 dark:text-gray-550 mb-1 block text-xs">
             Subjects{' '}
             <span className={form.subjects.length >= maxSubjects ? 'text-red-500' : 'text-zinc-500 dark:text-gray-650'}>
               ({form.subjects.length}/{maxSubjects})
@@ -136,9 +136,7 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
               onKeyDown={handleSubjectKeyDown}
               placeholder={form.subjects.length >= maxSubjects ? 'Subject limit reached' : 'Type subject and press Enter'}
               disabled={form.subjects.length >= maxSubjects}
-              className="flex-1 bg-white dark:bg-black border border-zinc-200 dark:border-gray-800 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ fontSize: fontSize.xs }}
-            />
+              className="flex-1 bg-white dark:bg-black border border-zinc-200 dark:border-gray-800 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed text-xs" />
             <button
               onClick={addSubject}
               disabled={form.subjects.length >= maxSubjects}
@@ -148,16 +146,14 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
             </button>
           </div>
           {form.subjectError && (
-            <p className="text-red-500 mt-1" style={{ fontSize: fontSize.xs }}>{form.subjectError}</p>
+            <p className="text-red-500 mt-1 text-xs">{form.subjectError}</p>
           )}
           {form.subjects.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2.5">
               {form.subjects.map((s, i) => (
                 <span
                   key={i}
-                  className="flex items-center gap-1 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 px-2 py-0.5 border border-zinc-200 dark:border-gray-700 rounded-full"
-                  style={{ fontSize: fontSize.xs }}
-                >
+                  className="flex items-center gap-1 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 px-2 py-0.5 border border-zinc-200 dark:border-gray-700 rounded-full text-xs">
                   {s}
                   <button onClick={() => removeSubject(i)} className="text-zinc-450 dark:text-gray-500 hover:text-red-500 ml-0.5 cursor-pointer">
                     <X className="w-2.5 h-2.5" />
@@ -169,7 +165,8 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
         </div>
 
         <div className="relative">
-          <label className="font-medium text-zinc-450 dark:text-gray-550 mb-1 block" style={{ fontSize: fontSize.xs }}>Academic Level</label>
+          <label
+            className="font-medium text-zinc-450 dark:text-gray-550 mb-1 block text-xs">Academic Level</label>
           <input
             value={form.academicLevel}
             onChange={e => {
@@ -179,9 +176,7 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
             onFocus={() => setShowLevelPicker(true)}
             onBlur={() => setTimeout(() => setShowLevelPicker(false), 150)}
             placeholder="Search level..."
-            className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-gray-800 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-gray-500"
-            style={{ fontSize: fontSize.xs }}
-          />
+            className="w-full bg-white dark:bg-black border border-zinc-200 dark:border-gray-800 rounded-lg px-3 py-2 text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500 dark:focus:border-gray-500 text-xs" />
           {showLevelPicker && form.academicLevel.trim().length > 0 && (() => {
             const filtered = ACADEMIC_LEVELS.filter(l =>
               l.toLowerCase().startsWith(form.academicLevel.toLowerCase())
@@ -195,9 +190,7 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
                       setForm(f => ({ ...f, academicLevel: level }));
                       setShowLevelPicker(false);
                     }}
-                    className={`w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-gray-800 transition-colors ${form.academicLevel === level ? 'text-blue-600 dark:text-white font-medium' : 'text-zinc-600 dark:text-gray-400'}`}
-                    style={{ fontSize: fontSize.xs }}
-                  >
+                    className={`w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-gray-800 transition-colors ${form.academicLevel === level ? 'text-blue-600 dark:text-white font-medium' : 'text-zinc-600 dark:text-gray-400'} text-xs`}>
                     {level}
                   </button>
                 ))}
@@ -209,17 +202,13 @@ export default function NewExamForm({ onSave, onClose, maxSubjects, maxNameLengt
         <div className="flex gap-2 pt-2">
           <button
             onClick={onClose}
-            className="flex-1 py-2 rounded-lg bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 border border-zinc-200 dark:border-gray-750 transition-colors cursor-pointer"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="flex-1 py-2 rounded-lg bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 border border-zinc-200 dark:border-gray-750 transition-colors cursor-pointer text-xs">
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving || !form.examName.trim() || form.examName.trim().length > maxNameLength}
-            className="flex-1 py-2 rounded-lg bg-blue-600 dark:bg-white text-white dark:text-black font-medium hover:bg-blue-700 dark:hover:bg-gray-200 transition-colors disabled:opacity-40 cursor-pointer"
-            style={{ fontSize: fontSize.xs }}
-          >
+            className="flex-1 py-2 rounded-lg bg-blue-600 dark:bg-white text-white dark:text-black font-medium hover:bg-blue-700 dark:hover:bg-gray-200 transition-colors disabled:opacity-40 cursor-pointer text-xs">
             {saving ? 'Saving...' : 'Save'}
           </button>
         </div>

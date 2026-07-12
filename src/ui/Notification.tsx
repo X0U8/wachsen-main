@@ -65,7 +65,7 @@ export default function Notification({ type, message, onClose }: NotificationPro
           
           <div className="flex items-start gap-3 p-4 sm:p-4">
             <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${color} flex-shrink-0 mt-0.5`} />
-            <p className="text-gray-900 dark:text-white flex-1" style={{ fontSize: fontSize.xs }}>{message}</p>
+            <p className="text-gray-900 dark:text-white flex-1 text-xs">{message}</p>
             <button
               onClick={onClose}
               className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"

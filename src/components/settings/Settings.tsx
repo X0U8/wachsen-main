@@ -141,8 +141,8 @@ export default function Settings() {
   const Row = ({ label, sub, right }: { label: string; sub?: string; right: React.ReactNode }) => (
     <div className="flex items-center justify-between gap-4">
       <div className="min-w-0">
-        <p className="font-medium text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.sm }}>{label}</p>
-        {sub && <p className="text-zinc-500 dark:text-gray-500" style={{ fontSize: fontSize.xs }}>{sub}</p>}
+        <p className="font-medium text-zinc-800 dark:text-gray-100 text-sm">{label}</p>
+        {sub && <p className="text-zinc-500 dark:text-gray-500 text-xs">{sub}</p>}
       </div>
       {right}
     </div>
@@ -155,7 +155,7 @@ export default function Settings() {
           <button onClick={() => navigate(-1)} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400 transition-colors cursor-pointer">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>Settings</h1>
+          <h1 className="font-semibold text-zinc-800 dark:text-gray-100 text-base">Settings</h1>
         </header>
 
         <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-6 space-y-4">
@@ -165,9 +165,9 @@ export default function Settings() {
               label="Profile"
               sub={userProfile?.name || 'Edit your details'}
               right={
-                <button onClick={() => setShowEditProfile(true)}
-                  className="px-3 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-lg font-medium transition-colors cursor-pointer"
-                  style={{ fontSize: fontSize.xs }}>Edit</button>
+                <button
+                  onClick={() => setShowEditProfile(true)}
+                  className="px-3 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] text-white rounded-lg font-medium transition-colors cursor-pointer text-xs">Edit</button>
               }
             />
           </div>
@@ -189,40 +189,46 @@ export default function Settings() {
           </div>
 
           <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-4">
-            <p className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.sm }}>BYOK</p>
+            <p className="font-semibold text-zinc-800 dark:text-gray-100 text-sm">BYOK</p>
 
             <div className="space-y-2">
-              <label className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Mesh API key</label>
+              <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Mesh API key</label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <input type={showKey ? 'text' : 'password'} value={meshKey} onChange={(e) => setMeshKey(e.target.value)}
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={meshKey}
+                    onChange={(e) => setMeshKey(e.target.value)}
                     placeholder="rsk_..."
-                    className="w-full bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-xl px-3 py-2 pr-10 text-zinc-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-[#007AFF]"
-                    style={{ fontSize: fontSize.xs }} />
+                    className="w-full bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-xl px-3 py-2 pr-10 text-zinc-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-[#007AFF] text-xs" />
                   <button onClick={() => setShowKey(!showKey)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded transition-colors cursor-pointer">
                     {showKey ? <EyeOff className="w-3.5 h-3.5 text-zinc-400" /> : <Eye className="w-3.5 h-3.5 text-zinc-400" />}
                   </button>
                 </div>
-                <button onClick={saveKey} disabled={!meshKey.trim() || meshKey.trim() === savedMeshKey.trim()}
-                  className="px-3 py-2 bg-[#007AFF] hover:bg-[#0062CC] disabled:opacity-40 text-white rounded-xl font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
-                  style={{ fontSize: fontSize.xs }}>
+                <button
+                  onClick={saveKey}
+                  disabled={!meshKey.trim() || meshKey.trim() === savedMeshKey.trim()}
+                  className="px-3 py-2 bg-[#007AFF] hover:bg-[#0062CC] disabled:opacity-40 text-white rounded-xl font-medium transition-colors flex items-center gap-1.5 cursor-pointer text-xs">
                   {meshKey.trim() === savedMeshKey.trim() && savedMeshKey ? <><Check className="w-3.5 h-3.5" />Saved</> : 'Save'}
                 </button>
               </div>
               {savedMeshKey && (
-                <button onClick={() => setShowRemoveConfirm(true)} className="text-red-400 hover:text-red-500 font-medium transition-colors cursor-pointer" style={{ fontSize: fontSize.xs }}>Remove key</button>
+                <button
+                  onClick={() => setShowRemoveConfirm(true)}
+                  className="text-red-400 hover:text-red-500 font-medium transition-colors cursor-pointer text-xs">Remove key</button>
               )}
             </div>
 
             <div className="space-y-2">
-              <label className="text-zinc-500 dark:text-gray-500 font-medium" style={{ fontSize: fontSize.xs }}>Models ({models.length}/10)</label>
+              <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Models ({models.length}/10)</label>
               <div className="space-y-1.5">
                 {models.map(m => (
                   <div key={m} className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all cursor-pointer ${activeModel === m ? 'bg-[#007AFF]/10 border-[#007AFF]/30' : 'bg-zinc-50 dark:bg-gray-950 border-zinc-200 dark:border-gray-800 hover:border-zinc-300 dark:hover:border-gray-700'}`}
                     onClick={() => setAndSaveActiveModel(m)}>
                     <div className="flex items-center gap-2 min-w-0">
                       {activeModel === m && <Check className="w-3.5 h-3.5 text-[#007AFF] shrink-0" />}
-                      <span className={`truncate ${activeModel === m ? 'text-[#007AFF] font-medium' : 'text-zinc-600 dark:text-gray-400'}`} style={{ fontSize: fontSize.xs }}>{m}</span>
+                      <span
+                        className={`truncate ${activeModel === m ? 'text-[#007AFF] font-medium' : 'text-zinc-600 dark:text-gray-400'} text-xs`}>{m}</span>
                     </div>
                     {models.length > 1 && (
                       <button onClick={(e) => { e.stopPropagation(); confirmRemoveModel(m); }} className="p-1 hover:bg-red-500/10 rounded transition-colors cursor-pointer">
@@ -235,17 +241,23 @@ export default function Settings() {
               {models.length < 10 && (
                 showAddModel ? (
                   <div className="flex gap-2">
-                    <input value={newModel} onChange={(e) => setNewModel(e.target.value)}
+                    <input
+                      value={newModel}
+                      onChange={(e) => setNewModel(e.target.value)}
                       placeholder="e.g. anthropic/claude-sonnet-5"
-                      className="flex-1 bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-zinc-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-[#007AFF]"
-                      style={{ fontSize: fontSize.xs }} />
-                    <button onClick={addModel} disabled={!newModel.trim() || models.includes(newModel.trim())}
-                      className="px-3 py-1.5 bg-[#007AFF] text-white rounded-lg font-medium disabled:opacity-40 cursor-pointer" style={{ fontSize: fontSize.xs }}>Add</button>
-                    <button onClick={() => { setShowAddModel(false); setNewModel(''); }}
-                      className="px-3 py-1.5 bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-400 rounded-lg font-medium cursor-pointer" style={{ fontSize: fontSize.xs }}>Cancel</button>
+                      className="flex-1 bg-zinc-100 dark:bg-gray-950 border border-zinc-300 dark:border-gray-700 rounded-lg px-3 py-1.5 text-zinc-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-[#007AFF] text-xs" />
+                    <button
+                      onClick={addModel}
+                      disabled={!newModel.trim() || models.includes(newModel.trim())}
+                      className="px-3 py-1.5 bg-[#007AFF] text-white rounded-lg font-medium disabled:opacity-40 cursor-pointer text-xs">Add</button>
+                    <button
+                      onClick={() => { setShowAddModel(false); setNewModel(''); }}
+                      className="px-3 py-1.5 bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-400 rounded-lg font-medium cursor-pointer text-xs">Cancel</button>
                   </div>
                 ) : (
-                  <button onClick={() => setShowAddModel(true)} className="flex items-center gap-1.5 text-[#007AFF] font-medium hover:underline cursor-pointer" style={{ fontSize: fontSize.xs }}>
+                  <button
+                    onClick={() => setShowAddModel(true)}
+                    className="flex items-center gap-1.5 text-[#007AFF] font-medium hover:underline cursor-pointer text-xs">
                     <Plus className="w-3 h-3" /> Add model
                   </button>
                 )
@@ -270,13 +282,14 @@ export default function Settings() {
           <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-3">
             <div className="flex items-center gap-2">
               <Type className="w-4 h-4 text-zinc-400" />
-              <p className="font-medium text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.sm }}>Font size</p>
+              <p className="font-medium text-zinc-800 dark:text-gray-100 text-sm">Font size</p>
             </div>
             <div className="flex gap-2">
               {FONT_OPTIONS.map(opt => (
-                <button key={opt.value} onClick={() => setFontSizeLevel(opt.value)}
-                  className={`flex-1 py-2 px-2 rounded-xl font-medium transition-all duration-200 cursor-pointer ${fontSizeLevel === opt.value ? 'bg-blue-600 text-white shadow-sm' : 'bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-300 hover:bg-zinc-200 dark:hover:bg-gray-700'}`}
-                  style={{ fontSize: fontSize.sm }}>
+                <button
+                  key={opt.value}
+                  onClick={() => setFontSizeLevel(opt.value)}
+                  className={`flex-1 py-2 px-2 rounded-xl font-medium transition-all duration-200 cursor-pointer ${fontSizeLevel === opt.value ? 'bg-blue-600 text-white shadow-sm' : 'bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-300 hover:bg-zinc-200 dark:hover:bg-gray-700'} text-sm`}>
                   {opt.label}
                 </button>
               ))}
@@ -290,9 +303,9 @@ export default function Settings() {
           </div>
 
           <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5">
-            <button onClick={() => setShowLogoutConfirm(true)}
-              className="flex items-center gap-2.5 text-red-500 hover:text-red-600 font-medium transition-colors cursor-pointer"
-              style={{ fontSize: fontSize.sm }}>
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              className="flex items-center gap-2.5 text-red-500 hover:text-red-600 font-medium transition-colors cursor-pointer text-sm">
               <LogOut className="w-4 h-4" />
               Sign out
             </button>
@@ -300,70 +313,66 @@ export default function Settings() {
 
         </main>
       </div>
-
       {showRemoveConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
           onClick={(e) => { if (e.target === e.currentTarget) setShowRemoveConfirm(false); }}>
           <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
             <div className="text-center space-y-2">
               <AlertTriangle className="w-7 h-7 text-red-500 mx-auto" />
-              <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Remove API key?</h3>
-              <p className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Generation will use server credits instead.</p>
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-base">Remove API key?</h3>
+              <p className="text-zinc-500 dark:text-gray-400 text-xs">Generation will use server credits instead.</p>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowRemoveConfirm(false)}
-                className="flex-1 py-2 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors cursor-pointer"
-                style={{ fontSize: fontSize.sm }}>Cancel</button>
-              <button onClick={confirmRemoveKey}
-                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors cursor-pointer"
-                style={{ fontSize: fontSize.sm }}>Remove</button>
+              <button
+                onClick={() => setShowRemoveConfirm(false)}
+                className="flex-1 py-2 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors cursor-pointer text-sm">Cancel</button>
+              <button
+                onClick={confirmRemoveKey}
+                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm">Remove</button>
             </div>
           </div>
         </div>
       )}
-
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
           onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutConfirm(false); }}>
           <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
             <div className="text-center space-y-2">
               <LogOut className="w-7 h-7 text-zinc-500 mx-auto" />
-              <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Sign out?</h3>
-              <p className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>All local data will be cleared.</p>
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-base">Sign out?</h3>
+              <p className="text-zinc-500 dark:text-gray-400 text-xs">All local data will be cleared.</p>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-2 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors cursor-pointer"
-                style={{ fontSize: fontSize.sm }}>Cancel</button>
-              <button onClick={handleLogout}
-                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors cursor-pointer"
-                style={{ fontSize: fontSize.sm }}>Sign out</button>
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors cursor-pointer text-sm">Cancel</button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm">Sign out</button>
             </div>
           </div>
         </div>
       )}
-
       {modelToDelete && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
           onClick={(e) => { if (e.target === e.currentTarget) setModelToDelete(null); }}>
           <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
             <div className="text-center space-y-2">
               <AlertTriangle className="w-7 h-7 text-red-500 mx-auto" />
-              <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>Remove model?</h3>
-              <p className="text-zinc-500 dark:text-gray-400 truncate" style={{ fontSize: fontSize.xs }}>{modelToDelete}</p>
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-base">Remove model?</h3>
+              <p className="text-zinc-500 dark:text-gray-400 truncate text-xs">{modelToDelete}</p>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setModelToDelete(null)}
-                className="flex-1 py-2 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors cursor-pointer"
-                style={{ fontSize: fontSize.sm }}>Cancel</button>
-              <button onClick={handleRemoveModelConfirm}
-                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors cursor-pointer"
-                style={{ fontSize: fontSize.sm }}>Remove</button>
+              <button
+                onClick={() => setModelToDelete(null)}
+                className="flex-1 py-2 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors cursor-pointer text-sm">Cancel</button>
+              <button
+                onClick={handleRemoveModelConfirm}
+                className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors cursor-pointer text-sm">Remove</button>
             </div>
           </div>
         </div>
       )}
-
       <EditProfileModal show={showEditProfile} onClose={() => setShowEditProfile(false)} />
     </>
   );

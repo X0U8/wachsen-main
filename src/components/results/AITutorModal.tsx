@@ -154,8 +154,8 @@ export default function AITutorModal({
           <div className="flex items-center gap-2">
             <Sparkle className="w-5 h-5 text-blue-500 fill-blue-500 " />
             <div>
-              <div className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.sm }}>AI Tutor</div>
-              <div className="text-zinc-550 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>
+              <div className="font-semibold text-zinc-900 dark:text-white text-sm">AI Tutor</div>
+              <div className="text-zinc-550 dark:text-gray-400 text-xs">
                 {localStorage.getItem('use_own_key') === 'true' ? 'Using own API key' : `Cost: 1 credit per message (You have ${userProfile?.credits || 0} credits)`}
               </div>
             </div>
@@ -171,11 +171,11 @@ export default function AITutorModal({
         <div className="flex-grow p-4 overflow-y-auto space-y-4">
           {chatHistory.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-2xl p-3.5 leading-relaxed select-text whitespace-pre-wrap ${msg.role === 'user'
-                ? 'bg-blue-600 text-white rounded-tr-none'
-                : 'bg-zinc-100 dark:bg-gray-800/80 text-zinc-900 dark:text-gray-200 rounded-tl-none border border-zinc-200/20 dark:border-gray-700/30'
-                }`}
-                style={{ fontSize: fontSize.xs }}>
+              <div
+                className={`max-w-[85%] rounded-2xl p-3.5 leading-relaxed select-text whitespace-pre-wrap ${msg.role === 'user'
+                  ? 'bg-blue-600 text-white rounded-tr-none'
+                  : 'bg-zinc-100 dark:bg-gray-800/80 text-zinc-900 dark:text-gray-200 rounded-tl-none border border-zinc-200/20 dark:border-gray-700/30'
+                  } text-xs`}>
                 <MathText text={msg.content} />
               </div>
             </div>
@@ -207,7 +207,7 @@ export default function AITutorModal({
             <div className="flex justify-start">
               <div className="bg-zinc-100 dark:bg-gray-800/80 border border-zinc-200/20 dark:border-gray-700/30 rounded-2xl rounded-tl-none p-3.5 flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
-                <span className="text-zinc-500 dark:text-gray-450 font-medium" style={{ fontSize: fontSize.xs }}>Tutor is thinking...</span>
+                <span className="text-zinc-500 dark:text-gray-450 font-medium text-xs">Tutor is thinking...</span>
               </div>
             </div>
           )}
@@ -227,11 +227,9 @@ export default function AITutorModal({
                 onChange={(e) => setChatInput(e.target.value)}
                 disabled={isSendingChat}
                 maxLength={250}
-                className="flex-grow bg-transparent border-none py-2.5 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-gray-500 focus:outline-none disabled:opacity-50"
-                style={{ fontSize: fontSize.xs }}
-              />
+                className="flex-grow bg-transparent border-none py-2.5 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-gray-500 focus:outline-none disabled:opacity-50 text-xs" />
               {chatInput.length > 200 && (
-                <span className="text-zinc-400 dark:text-gray-500 select-none" style={{ fontSize: fontSize.xs }}>
+                <span className="text-zinc-400 dark:text-gray-500 select-none text-xs">
                   {250 - chatInput.length}
                 </span>
               )}

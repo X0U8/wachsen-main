@@ -336,7 +336,8 @@ export default function Exam() {
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100 font-sans antialiased select-none pb-24">
       <header className="sticky top-0 z-40 w-full px-4 sm:px-6 py-3 sm:py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-900/80 flex items-center justify-between transition-colors duration-300">
         <div>
-          <h1 className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-semibold tracking-tight text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>
+          <h1
+            className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-semibold tracking-tight text-zinc-800 dark:text-gray-100 text-base">
             <span className="sm:hidden">
               <TextType text={greeting} typingSpeed={200} pauseDuration={2000} showCursor={false} loop={false} />
             </span>
@@ -347,10 +348,11 @@ export default function Exam() {
               )}
             </span>
           </h1>
-          <p className="text-zinc-450 dark:text-gray-550 mt-1" style={{ fontSize: fontSize.sm }}>{today}</p>
+          <p className="text-zinc-450 dark:text-gray-550 mt-1 text-sm">{today}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-zinc-150/50 dark:bg-gray-900/50 border border-zinc-250 dark:border-gray-800 rounded-xl px-2.5 sm:px-3 py-1.5 text-zinc-600 dark:text-gray-400" style={{ fontSize: fontSize.sm }}>
+          <div
+            className="flex items-center gap-1.5 sm:gap-2 bg-zinc-150/50 dark:bg-gray-900/50 border border-zinc-250 dark:border-gray-800 rounded-xl px-2.5 sm:px-3 py-1.5 text-zinc-600 dark:text-gray-400 text-sm">
             <strong className="text-zinc-850 dark:text-gray-100 font-semibold">{userProfile?.credits || 0}</strong>
             <span className="hidden sm:inline">credits</span>
             <button onClick={() => setShowClaim(true)} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Daily credits">+</button>
@@ -363,14 +365,13 @@ export default function Exam() {
           </button>
         </div>
       </header>
-
       {localStorage.getItem('use_own_key') === 'true' && (() => {
         const prov = localStorage.getItem('provider') || 'mesh';
         const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key');
         if (!key) return null;
         return (
-          <div className="w-full px-3 py-1 bg-[#007AFF]/8 border-b border-[#007AFF]/20 text-[#007AFF] text-center font-medium" style={{ fontSize: fontSize.xs }}>
-            Using your own key with {prov === 'mistral' ? 'Mistral' : 'Mesh API'}
+          <div
+            className="w-full px-3 py-1 bg-[#007AFF]/8 border-b border-[#007AFF]/20 text-[#007AFF] text-center font-medium text-xs">Using your own key with {prov === 'mistral' ? 'Mistral' : 'Mesh API'}
           </div>
         );
       })()}
@@ -383,9 +384,7 @@ export default function Exam() {
               className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold  tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${tab === t
                 ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
                 : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
-                }`}
-              style={{ fontSize: fontSize.xs }}
-            >
+                } text-xs`}>
               {t === 'exams' ? 'Exams' : t === 'plan' ? 'Plan' : 'Upcoming'}
             </button>
           ))}
@@ -396,7 +395,7 @@ export default function Exam() {
           <>
             {examTypes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
-                <h3 className="font-semibold text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>
+                <h3 className="font-semibold text-zinc-800 dark:text-gray-100 text-base">
                   Create your first exam type
                 </h3>
                 <button
@@ -409,10 +408,11 @@ export default function Exam() {
             ) : (
               <>
                 <div className="flex justify-between items-center mb-4 px-1">
-                  <p className="font-medium text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>{slotsLeft} slot{slotsLeft !== 1 ? 's' : ''} remaining</p>
-                  <button onClick={handleDoubleClick} disabled={slotsLeft <= 0}
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-all ${slotsLeft <= 0 ? 'bg-zinc-200 dark:bg-gray-800 text-zinc-400 dark:text-gray-600 cursor-not-allowed' : 'bg-[#007AFF] hover:bg-[#0062CC] text-white cursor-pointer'}`}
-                    style={{ fontSize: fontSize.xs }}>
+                  <p className="font-medium text-gray-500 dark:text-gray-400 text-xs">{slotsLeft} slot{slotsLeft !== 1 ? 's' : ''} remaining</p>
+                  <button
+                    onClick={handleDoubleClick}
+                    disabled={slotsLeft <= 0}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-all ${slotsLeft <= 0 ? 'bg-zinc-200 dark:bg-gray-800 text-zinc-400 dark:text-gray-600 cursor-not-allowed' : 'bg-[#007AFF] hover:bg-[#0062CC] text-white cursor-pointer'} text-xs`}>
                     <Plus className="w-3.5 h-3.5" /> New
                   </button>
                 </div>
@@ -431,21 +431,24 @@ export default function Exam() {
                       >
                         <div className="p-3 sm:p-4">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-zinc-800 dark:text-gray-100 font-medium truncate" style={{ fontSize: fontSize.sm }}>{exam.name}</p>
+                            <p className="text-zinc-800 dark:text-gray-100 font-medium truncate text-sm">{exam.name}</p>
                             {isDisabled && <Lock className="w-3.5 h-3.5 text-zinc-400 dark:text-gray-600 shrink-0 mt-0.5" />}
                           </div>
                           {exam.academicLevel && (
-                            <p className="text-zinc-500 dark:text-gray-400 mt-1 font-medium" style={{ fontSize: fontSize.xs }}>{exam.academicLevel}</p>
+                            <p className="text-zinc-500 dark:text-gray-400 mt-1 font-medium text-xs">{exam.academicLevel}</p>
                           )}
                           {exam.subjects.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-3">
                               {exam.subjects.slice(0, 3).map((s, si) => (
-                                <span key={si} className="bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-400 px-2 py-0.5 border border-zinc-200 dark:border-gray-700/60 rounded-full" style={{ fontSize: fontSize.xs }}>
+                                <span
+                                  key={si}
+                                  className="bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-400 px-2 py-0.5 border border-zinc-200 dark:border-gray-700/60 rounded-full text-xs">
                                   {s}
                                 </span>
                               ))}
                               {exam.subjects.length > 3 && (
-                                <span className="text-gray-600 dark:text-gray-550 font-medium self-center pl-0.5" style={{ fontSize: fontSize.xs }}>+{exam.subjects.length - 3}</span>
+                                <span
+                                  className="text-gray-600 dark:text-gray-550 font-medium self-center pl-0.5 text-xs">+{exam.subjects.length - 3}</span>
                               )}
                             </div>
                           )}
@@ -481,7 +484,6 @@ export default function Exam() {
       {showUpgradeModal && (
         <SubscriptionModal name={disabledItemName} onClose={() => setShowUpgradeModal(false)} />
       )}
-
       {notification && (
         <InfoComponent
           message={notification.message}
@@ -489,18 +491,15 @@ export default function Exam() {
           onClose={() => setNotification(null)}
         />
       )}
-
       <ClaimCreditsModal
         show={showClaim}
         onClose={() => setShowClaim(false)}
         userProfile={userProfile}
         refreshCredits={refreshCredits}
       />
-
       {showAnalytics && (
         <AnalyticsModal onClose={() => setShowAnalytics(false)} />
       )}
-
       <Footer />
     </div>
   );

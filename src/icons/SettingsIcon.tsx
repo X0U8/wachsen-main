@@ -65,7 +65,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
           stroke="currentColor"
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth="2.5"
+          strokeWidth="1.75"
           transition={{ type: "spring", stiffness: 50, damping: 10 }}
           variants={{
             normal: {

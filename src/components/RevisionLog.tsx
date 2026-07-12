@@ -274,6 +274,9 @@ export default function RevisionLog() {
 3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).
 4. "explanation": A concise explanation of the correct answers.
 
+For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
+VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes so it is valid JSON and parses correctly.
+
 Return ONLY a valid JSON array matching this format:
 [{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2], "explanation": "..."}]`,
           correctAnswer: '',
@@ -294,6 +297,7 @@ Return ONLY a valid JSON array matching this format:
 
       let replyText = data.reply || '[]';
       replyText = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
+      console.log('AI generated content:', replyText);
       const cards = safeParseJSON(replyText);
 
       setConceptCards(cards);
@@ -676,11 +680,9 @@ Return ONLY a valid JSON array matching this format:
 
           <button
             onClick={() => {
-              console.log('Concept Cards clicked. examPlan:', examPlan);
               if (examPlan) {
                 setShowSegmentSelector(true);
               } else {
-                console.log('No exam plan found. Falling back to direct generation from subtopics:', subtopics);
                 if (subtopics.length > 0) {
                   generateConceptCards(subtopics.join(', '));
                 } else {

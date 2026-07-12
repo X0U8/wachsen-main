@@ -69,7 +69,7 @@ export default function ExamDetails() {
   };
   const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
 
-  // State for exams - initialized as empty
+
   const [exams, setExams] = useState<Exam[]>([]);
   const [selectedExamForInfo, setSelectedExamForInfo] = useState<Exam | null>(null);
   const [loadingExams, setLoadingExams] = useState(false);
@@ -91,7 +91,7 @@ export default function ExamDetails() {
 
   const queryClient = useQueryClient();
 
-  // Load exam type details with React Query
+
   const { data: fetchedExamType } = useQuery({
     queryKey: ['examType', id],
     queryFn: async () => {
@@ -123,7 +123,7 @@ export default function ExamDetails() {
     }
   }, [fetchedExamType]);
 
-  // Fetch initial exams with React Query
+
   const { data: initialExams = [], isLoading: loadingExamsInitial } = useQuery({
     queryKey: ['examInstances', id, userProfile?.id, statusFilter, sortOrder, activeSearchQuery],
     queryFn: async () => {
@@ -168,7 +168,7 @@ export default function ExamDetails() {
 
   const hasMoreExams = exams.length >= EXAMS_PER_PAGE && exams.length % EXAMS_PER_PAGE === 0;
 
-  // Fetch more exams (pagination)
+
   const fetchExams = async (reset: boolean = false) => {
     if (!id || !userProfile) return;
 
@@ -280,7 +280,7 @@ export default function ExamDetails() {
         .eq('id', id);
       if (error) throw error;
 
-      // Update local state
+
       setExamType(prev => ({
         ...prev,
         name,
@@ -288,7 +288,7 @@ export default function ExamDetails() {
         academicLevel: editCategoryForm.academicLevel,
       }));
 
-      // Update cache with modified exam type
+
       const cachedExamTypes = localStorageCache.get<any[]>(localStorageCache.keys.EXAM_CATEGORIES) || [];
       const updatedCache = cachedExamTypes.map(exam =>
         exam.id === id ? { ...exam, name, subjects: editCategoryForm.subjects, academicLevel: editCategoryForm.academicLevel } : exam
@@ -395,7 +395,7 @@ export default function ExamDetails() {
           ) : exams.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left" style={{ fontSize: fontSize.sm }}>
-                <thead className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 uppercase font-semibold tracking-wider" style={{ fontSize: fontSize.xs }}>
+                <thead className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 font-semibold tracking-wider" style={{ fontSize: fontSize.sm }}>
                   <tr>
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Start</th>

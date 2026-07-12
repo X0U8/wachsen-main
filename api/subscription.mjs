@@ -32,11 +32,11 @@ export default async function handler(req, res) {
       global: { headers: { Authorization: `Bearer ${authToken}` } }
     });
 
-    // ─────────────────────────────────────────────
-    // ACTION: create-order
-    // Creates a Razorpay order on the server and returns the order_id
-    // The frontend must use this order_id to open the Razorpay checkout
-    // ─────────────────────────────────────────────
+
+
+
+
+
     if (action === 'create-order') {
       if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
         return res.status(500).json({ error: 'Razorpay credentials not configured.' });
@@ -68,9 +68,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, order_id: orderData.id });
     }
 
-    // ─────────────────────────────────────────────
-    // ACTION: process (verify Razorpay payment signature & activate subscription)
-    // ─────────────────────────────────────────────
+
+
+
     if (action === 'process') {
       if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
         return res.status(400).json({ error: 'Missing payment verification data.' });
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Razorpay secret not configured.' });
       }
 
-      // Verify HMAC-SHA256 signature
+
       const expectedSignature = crypto
         .createHmac('sha256', RAZORPAY_KEY_SECRET)
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -91,13 +91,13 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Payment verification failed. Invalid signature.' });
       }
 
-      // Signature verified — activate the subscription
-    return activateSubscription(res, authed, { userId, plan, creditsPerDay, period, amount, currency, razorpay_payment_id, razorpay_order_id, razorpay_signature });
+
+      return activateSubscription(res, authed, { userId, plan, creditsPerDay, period, amount, currency, razorpay_payment_id, razorpay_order_id, razorpay_signature });
     }
 
-    // ─────────────────────────────────────────────
-    // ACTION: update (Free plan — no payment needed)
-    // ─────────────────────────────────────────────
+
+
+
     if (action === 'update') {
       return activateSubscription(res, authed, { userId, plan, creditsPerDay, period: period || 'month', amount: 0, currency: 'USD', razorpay_payment_id: null, razorpay_order_id: null, razorpay_signature: null });
     }
@@ -110,9 +110,9 @@ export default async function handler(req, res) {
   }
 }
 
-// ─────────────────────────────────────────────
-// Shared helper: logs transaction & updates profile
-// ─────────────────────────────────────────────
+
+
+
 async function activateSubscription(res, authed, { userId, plan, creditsPerDay, period, amount, currency, razorpay_payment_id, razorpay_order_id, razorpay_signature }) {
   const isFree = plan.toLowerCase() === 'free';
   const isPremium = !isFree;
@@ -127,7 +127,7 @@ async function activateSubscription(res, authed, { userId, plan, creditsPerDay, 
     }
   }
 
-  // Log transaction
+
   const { error: txError } = await authed
     .from('transactions')
     .insert({
@@ -147,7 +147,7 @@ async function activateSubscription(res, authed, { userId, plan, creditsPerDay, 
     return res.status(500).json({ error: 'Failed to log transaction.', details: txError.message });
   }
 
-  // Update profile
+
   const { error: profileError } = await authed
     .from('profiles')
     .update({

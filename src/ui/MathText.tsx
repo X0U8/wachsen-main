@@ -10,7 +10,7 @@ const MathText = ({ text }: { text: any }) => {
 
     const textStr = String(text ?? '');
 
-    // HTML-escape so < > & don't get interpreted as tags before MathJax runs
+
     const escaped = textStr
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -19,13 +19,13 @@ const MathText = ({ text }: { text: any }) => {
 
     if (!ready || !textStr.includes('$')) return;
 
-    // Clear MathJax's internal cache for this element so it re-processes
+
     if (window.MathJax?.typesetClear) {
       window.MathJax.typesetClear([containerRef.current]);
     }
 
     const timer = setTimeout(() => {
-      window.MathJax?.typesetPromise?.([containerRef.current]).catch(() => {});
+      window.MathJax?.typesetPromise?.([containerRef.current]).catch(() => { });
     }, 50);
 
     return () => clearTimeout(timer);

@@ -52,12 +52,12 @@ export default function RevisionQuestionsList({ questions }: RevisionQuestionsLi
                 </div>
 
                 {question.concept && (
-                  <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800/50">
-                    <div className="text-zinc-500 mb-1 flex items-center gap-1.5 uppercase tracking-wider font-semibold" style={{ fontSize: fontSize.xs }}>
-                      <Square className="w-2.5 h-2.5 text-zinc-500 bg-zinc-500 dark:text-zinc-655" />
+                  <div className="p-3 bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/10 dark:border-blue-500/20 rounded-xl space-y-1 mt-1">
+                    <div className="text-blue-500 dark:text-blue-400 flex items-center gap-1.5 uppercase tracking-wider font-semibold" style={{ fontSize: fontSize.xs }}>
+                      <Square className="w-2.5 h-2.5 fill-current text-blue-500 dark:text-blue-400" />
                       Subtopic
                     </div>
-                    <div className="text-zinc-600 dark:text-zinc-400 leading-relaxed" style={{ fontSize: fontSize.sm }}>
+                    <div className="text-zinc-750 dark:text-zinc-300 leading-relaxed" style={{ fontSize: fontSize.sm }}>
                       <MathText text={question.concept} />
                     </div>
                   </div>

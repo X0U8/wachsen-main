@@ -32,7 +32,7 @@ export default function PrintQuestion({
     setIsLoading(true);
     setProgress(0);
 
-    // 1. Progress timer up to 90%
+
     let currentProgress = 0;
     const interval = setInterval(() => {
       setProgress(prev => {
@@ -41,9 +41,9 @@ export default function PrintQuestion({
       });
     }, 45);
 
-    // 2. Wait for React render + MathJax typesetting
+
     const triggerTypeset = async () => {
-      // Let React render components
+
       await new Promise(resolve => setTimeout(resolve, 400));
 
       if (window.MathJax?.typesetPromise && previewContainerRef.current) {
@@ -54,7 +54,7 @@ export default function PrintQuestion({
         }
       }
 
-      // Finish loading
+
       setProgress(100);
       clearInterval(interval);
       setTimeout(() => {
@@ -76,7 +76,6 @@ export default function PrintQuestion({
   const modalContent = (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:hidden no-print-overlay">
       <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl w-full max-w-4xl h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        {/* Modal Header */}
         <div className="p-4 border-b border-zinc-200/50 dark:border-gray-800 flex items-center justify-between bg-zinc-50/50 dark:bg-gray-900/50 backdrop-blur-md">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">Print Preview</h3>
@@ -100,7 +99,6 @@ export default function PrintQuestion({
           </div>
         </div>
 
-        {/* Scrollable Preview Screen Container */}
         <div className="relative flex-grow p-6 overflow-y-auto bg-zinc-50 dark:bg-gray-950 flex justify-center items-start">
           {isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-50/90 dark:bg-gray-950/90 backdrop-blur-xs z-10 gap-2 pointer-events-none animate-in fade-in duration-200">
@@ -122,14 +120,11 @@ export default function PrintQuestion({
               }`}
           >
 
-            {/* Question Sheet Section */}
             <div>
-              {/* Center Exam Name */}
               <div className="text-center pb-2 mb-4">
                 <h1 className="text-xl font-bold uppercase tracking-wide">{examName || 'EXAMINATION'}</h1>
               </div>
 
-              {/* Meta details header (No top divider) */}
               <div className="flex justify-between items-start text-xs pb-3 mb-4 text-zinc-550 dark:text-gray-400">
                 <div>
                   <div><span className="font-bold">Total Marks:</span> {examMeta.totalMarks}</div>
@@ -140,7 +135,6 @@ export default function PrintQuestion({
                 </div>
               </div>
 
-              {/* Student name blank space (Now with a single bottom divider line separating header from questions) */}
               <div className="flex justify-between items-center text-xs border-b border-zinc-200 dark:border-gray-800 pb-4 mb-6">
                 <div className="flex-grow flex items-center gap-2">
                   <span className="font-semibold text-zinc-700 dark:text-gray-300">Student Name:</span>
@@ -152,7 +146,6 @@ export default function PrintQuestion({
                 </div>
               </div>
 
-              {/* Questions List */}
               <div className="space-y-8">
                 {questions.map((q, idx) => (
                   <div key={q.id || idx} className="text-sm leading-relaxed avoid-break">
@@ -163,7 +156,6 @@ export default function PrintQuestion({
                       </div>
                     </div>
 
-                    {/* Options (Rendered vertically to avoid layout overlays) */}
                     {q.options && Array.isArray(q.options) && q.options.length > 0 && (
                       <div className="flex flex-col gap-3 mt-3 ml-7">
                         {q.options.map((opt: string, oIdx: number) => (
@@ -177,7 +169,6 @@ export default function PrintQuestion({
                       </div>
                     )}
 
-                    {/* Integer/Free writing space */}
                     {(!q.options || q.options.length === 0) && (
                       <div className="mt-4 ml-7 border-b border-dashed border-zinc-300 w-48 h-6 text-zinc-400 text-[10px] italic">
                         Write answer here:
@@ -188,7 +179,6 @@ export default function PrintQuestion({
               </div>
             </div>
 
-            {/* Answer Key Section */}
             <div className="pt-12 border-t border-zinc-200 dark:border-gray-800 mt-12">
               <div className="text-center pb-4 mb-6">
                 <p className="text-xs text-zinc-550 dark:text-gray-450 uppercase font-semibold">Answer Key</p>
@@ -214,7 +204,6 @@ export default function PrintQuestion({
                   </div>
                 ))}
               </div>
-              {/* Printable footer */}
               <div className="mt-12 pt-4 border-t border-zinc-200 dark:border-gray-850 text-center text-[9px] text-zinc-450 italic">
                 This Question & answers are generated in wachsen AI. AI can make mistakes.
               </div>
@@ -230,14 +219,11 @@ export default function PrintQuestion({
       id="print-wrapper-root"
       className="hidden print:block bg-white text-zinc-900 p-[20mm] font-sans"
     >
-      {/* EXAM QUESTIONS PAGE */}
       <div>
-        {/* Center Exam Name */}
         <div className="text-center pb-2 mb-4">
           <h1 className="text-2xl font-bold uppercase tracking-wide">{examName || 'EXAMINATION'}</h1>
         </div>
 
-        {/* Print Meta Info Header */}
         <div className="flex justify-between items-start text-xs pb-3 mb-4 text-zinc-550">
           <div>
             <div><span className="font-bold">Total Marks:</span> {examMeta.totalMarks}</div>
@@ -248,7 +234,6 @@ export default function PrintQuestion({
           </div>
         </div>
 
-        {/* Student name blank space */}
         <div className="flex justify-between items-center text-xs border-b border-zinc-200 pb-4 mb-6">
           <div className="flex-grow flex items-center gap-2">
             <span className="font-bold text-zinc-800">Student Name:</span>
@@ -293,7 +278,6 @@ export default function PrintQuestion({
         </div>
       </div>
 
-      {/* EXAM ANSWER KEY (FORCED TO NEW PAGE) */}
       <div className="page-break pt-12">
         <div className="text-center border-b-2 border-zinc-850 pb-4 mb-6">
           <p className="text-xs text-zinc-550 uppercase font-semibold">Answer Key</p>
@@ -320,7 +304,6 @@ export default function PrintQuestion({
           ))}
         </div>
 
-        {/* Printable footer */}
         <div className="mt-12 pt-4 border-t border-zinc-200 text-center text-[9px] text-zinc-400 italic">
           This Question & answers are generated in wachsen AI. AI can make mistakes.
         </div>

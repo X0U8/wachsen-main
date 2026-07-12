@@ -23,7 +23,7 @@ export default function SegmentSelectorModal({
 }: SegmentSelectorModalProps) {
   if (!isOpen || !examPlan) return null;
 
-  // Extract segments grouped by subject
+
   const planSubjects = Array.isArray(examPlan) ? examPlan : (examPlan.subjects || []);
   const segmentsBySubject: Record<string, Segment[]> = {};
 
@@ -53,7 +53,6 @@ export default function SegmentSelectorModal({
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg h-[500px] flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white">
-        {/* Header */}
         <div className="flex items-center justify-between flex-shrink-0">
           <div>
             <h3 className="font-semibold text-zinc-800 dark:text-white tracking-wider" style={{ fontSize: fontSize.base }}>Select Subtopic</h3>
@@ -67,7 +66,6 @@ export default function SegmentSelectorModal({
           </button>
         </div>
 
-        {/* Scrollable Segment List */}
         <div className="flex-grow overflow-y-auto pr-1 my-4 space-y-5">
           {Object.keys(segmentsBySubject).length === 0 ? (
             <div className="text-center py-12 text-zinc-500 dark:text-zinc-400" style={{ fontSize: fontSize.xs }}>
@@ -107,7 +105,6 @@ export default function SegmentSelectorModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex-shrink-0 border-t border-zinc-150 dark:border-zinc-900 pt-3">
           <button
             onClick={onClose}

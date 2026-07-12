@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../services/supabase';
 import { useUserProfile } from '../../../lib/UserContext.tsx';
 import PlanWizard, { SubjectInput } from './PlanWizard';
@@ -10,51 +11,50 @@ import { fontSize } from '../../../lib/utils';
 export default function PlanContainer() {
   const { userProfile, refreshCredits } = useUserProfile();
   const [userId, setUserId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // States
-  const [activePlan, setActivePlan] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { data: activePlan = null, isLoading: loadingPlan } = useQuery({
+    queryKey: ['activeStudyPlan', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from('study_plans')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      return data || null;
+    },
+    enabled: !!userId,
+  });
+
   const [viewRoadmap, setViewRoadmap] = useState<boolean>(false);
   const [showWizard, setShowWizard] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<boolean>(false);
 
-  // Wizard form inputs (managed at container level to pass down/reset cleanly)
+
   const [examName, setExamName] = useState<string>('');
   const [subjects, setSubjects] = useState<SubjectInput[]>([]);
   const [days, setDays] = useState<number>(90);
   const [generating, setGenerating] = useState<boolean>(false);
-  
-  // Notification states
+
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Fetch active study plan on load
+
   useEffect(() => {
-    const checkActivePlan = async () => {
-      setLoading(true);
+    const getSessionUser = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
       if (user) {
         setUserId(user.id);
-        try {
-          const { data, error } = await supabase
-            .from('study_plans')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (error && error.code !== 'PGRST116') {
-            console.error('Error fetching active study plan:', error);
-          } else {
-            setActivePlan(data || null);
-          }
-        } catch (e) {
-          console.error(e);
-        }
       }
-      setLoading(false);
     };
-    checkActivePlan();
+    getSessionUser();
   }, []);
 
   const handleGenerate = async () => {
@@ -80,7 +80,7 @@ export default function PlanContainer() {
     }
 
     try {
-      // 1. Build payload
+
       const payloadSubjects = subjects.map(s => ({
         name: s.name,
         chapters: s.chapters
@@ -90,7 +90,7 @@ export default function PlanContainer() {
       const session = await supabase.auth.getSession();
       const authToken = session.data?.session?.access_token || '';
 
-      // 2. Call AI
+
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,7 +108,7 @@ export default function PlanContainer() {
         throw new Error(data.error || 'Failed to generate study plan.');
       }
 
-      // 3. Save to db
+
       const { data: savedRecord, error: saveError } = await supabase
         .from('study_plans')
         .insert({
@@ -124,11 +124,11 @@ export default function PlanContainer() {
       if (saveError) throw saveError;
 
       refreshCredits();
-      setActivePlan(savedRecord);
+      queryClient.setQueryData(['activeStudyPlan', userId], savedRecord);
       setShowWizard(false);
-      setViewRoadmap(true); // Open the roadmap directly
+      setViewRoadmap(true);
 
-      // Clear wizard inputs
+
       setExamName('');
       setSubjects([]);
       setDays(90);
@@ -154,7 +154,7 @@ export default function PlanContainer() {
 
       if (error) throw error;
 
-      setActivePlan(null);
+      queryClient.setQueryData(['activeStudyPlan', userId], null);
       setViewRoadmap(false);
       setShowWizard(false);
       setSuccessMsg('Study plan reset successfully.');
@@ -167,7 +167,9 @@ export default function PlanContainer() {
     }
   };
 
-  if (loading) {
+  const isPlanLoading = !userId || loadingPlan;
+
+  if (isPlanLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -178,7 +180,6 @@ export default function PlanContainer() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Toast notifications */}
       {errorMsg && (
         <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center gap-3 animate-fadeIn">
           <AlertCircle className="w-5 h-5 shrink-0" />
@@ -198,7 +199,6 @@ export default function PlanContainer() {
         </div>
       )}
 
-      {/* ROADMAP TREE VIEW */}
       {activePlan && viewRoadmap && (
         <PlanView
           planId={activePlan.id}
@@ -210,7 +210,6 @@ export default function PlanContainer() {
         />
       )}
 
-      {/* ACTIVE PLAN DASHBOARD SUMMARY */}
       {activePlan && !viewRoadmap && (
         <PlanDashboard
           plan={activePlan}
@@ -220,7 +219,6 @@ export default function PlanContainer() {
         />
       )}
 
-      {/* NO ACTIVE PLAN: INITIAL EMPTY DASHBOARD STATE */}
       {!activePlan && !showWizard && (
         <div className="border border-dashed border-black/15 dark:border-white/20 rounded-3xl p-8 text-center flex flex-col items-center gap-4 bg-white dark:bg-zinc-900/40">
           <h3 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
@@ -236,7 +234,6 @@ export default function PlanContainer() {
         </div>
       )}
 
-      {/* WIZARD FORM ENTRY */}
       {!activePlan && showWizard && (
         <PlanWizard
           examName={examName}
@@ -256,7 +253,7 @@ export default function PlanContainer() {
   );
 }
 
-// Simple AlertCircle icon wrapper
+
 function AlertCircle({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
@@ -279,7 +276,7 @@ function AlertCircle({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-// Simple Loader2 icon wrapper
+
 function Loader2({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg

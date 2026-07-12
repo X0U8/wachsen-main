@@ -188,7 +188,6 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-gray-800 rounded-3xl p-5 sm:p-6 w-full max-w-md space-y-4 shadow-2xl">
 
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-gray-800 pb-3">
           <div className="flex items-center gap-3">
 
@@ -199,7 +198,6 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
           </button>
         </div>
 
-        {/* Error */}
         {error && (
           <div className="p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-500 dark:text-red-400 flex gap-2 items-start" style={{ fontSize: fontSize.xs }}>
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -207,10 +205,8 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
           </div>
         )}
 
-        {/* Scrollable Fields */}
         <div className="space-y-3.5 max-h-[60vh] overflow-y-auto pr-1">
 
-          {/* Avatar Upload */}
           <div className="flex items-center gap-4 bg-zinc-50 dark:bg-gray-950 p-3 rounded-2xl border border-zinc-200/80 dark:border-gray-800">
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold overflow-hidden shadow-sm shrink-0" style={{ fontSize: fontSize.lg }}>
               {editPicUrl.trim() ? (
@@ -235,7 +231,6 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
             </div>
           </div>
 
-          {/* Full Name */}
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Name</label>
@@ -245,7 +240,6 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
               placeholder="Enter your name" className={inputCls} style={{ fontSize: fontSize.xs }} />
           </div>
 
-          {/* Gender */}
           <div className="space-y-1">
             <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Gender</label>
             <select value={editGender} onChange={(e) => setEditGender(e.target.value)} className={selectCls} style={{ fontSize: fontSize.xs }}>
@@ -257,7 +251,6 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
             </select>
           </div>
 
-          {/* Country */}
           <div className="space-y-1">
             <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Country</label>
             <select value={editCountry} onChange={(e) => setEditCountry(e.target.value)} className={selectCls} style={{ fontSize: fontSize.xs }}>
@@ -266,7 +259,6 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
             </select>
           </div>
 
-          {/* Date of Birth */}
           <div className="space-y-1">
             <label className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: fontSize.xs }}>Date of birth</label>
             <div className="flex gap-2">
@@ -288,7 +280,6 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3 pt-1">
           <button onClick={onClose}
             className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium transition-colors hover:bg-zinc-200 dark:hover:bg-gray-700 cursor-pointer"

@@ -1,5 +1,6 @@
+// Genereted Using AI
 export const NON_INT_SUBJECTS = new Set([
-  // Languages & Literature
+
   'english', 'english language', 'english literature',
   'english grammar', 'english composition', 'creative writing',
   'technical writing', 'business english', 'academic writing',
@@ -20,7 +21,7 @@ export const NON_INT_SUBJECTS = new Set([
   'indonesian', 'malay', 'swahili', 'thai', 'vietnamese',
   'pali', 'prakrit',
 
-  // Humanities / Social Sciences (descriptive)
+
   'history', 'ancient history', 'medieval history', 'modern history',
   'contemporary history', 'world history', 'indian history',
   'european history', 'american history', 'art history',
@@ -46,7 +47,7 @@ export const NON_INT_SUBJECTS = new Set([
   'psychology', 'clinical psychology', 'abnormal psychology',
   'counselling',
 
-  // Arts & Performance
+
   'fine arts', 'art', 'drawing', 'painting', 'sculpture',
   'printmaking', 'photography', 'graphic design', 'visual arts',
   'digital art', 'illustration', 'fashion design', 'textile design',
@@ -59,12 +60,12 @@ export const NON_INT_SUBJECTS = new Set([
   'performing arts', 'theatre', 'drama', 'acting',
   'film making', 'cinematography', 'screenwriting',
 
-  // Linguistics-adjacent (theory, not counting)
+
   'rhetoric', 'communication studies', 'speech', 'public speaking',
   'debate', 'journalism', 'media studies', 'mass communication',
   'business communication',
 
-  // Values / Skills
+
   'life skills', 'value education', 'moral science',
   'work education', 'socially useful productive work', 'supw',
   'ncc', 'national cadet corps',

@@ -7,7 +7,7 @@ export default function Subscription() {
   const { userProfile, refreshCredits, refreshProfile } = useUserProfile();
 
   const handleClose = () => {
-    // Navigate back if possible, otherwise go to exam page
+
     if (window.history.length > 1) {
       navigate(-1);
     } else {

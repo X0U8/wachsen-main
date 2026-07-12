@@ -37,7 +37,7 @@ export default function PlanViewDaily({
   const [loadingDetails, setLoadingDetails] = useState<Record<number, boolean>>({});
   const [generatingDetails, setGeneratingDetails] = useState<boolean>(false);
 
-  // Compute active month based on dates
+
   const createdDate = new Date(createdAt);
   const currentDate = new Date();
 
@@ -47,7 +47,7 @@ export default function PlanViewDaily({
   const diffDays = Math.max(0, Math.floor((currentMidnight - createdMidnight) / (1000 * 60 * 60 * 24)));
   const currentActiveMonth = Math.floor(diffDays / 30) + 1;
 
-  // Format month dates range
+
   const getMonthDateRange = (createdDateStr: string, monthNum: number) => {
     const start = new Date(createdDateStr);
     start.setDate(start.getDate() + (monthNum - 1) * 30);
@@ -69,9 +69,9 @@ export default function PlanViewDaily({
     return unlockDate.toLocaleDateString(undefined, { dateStyle: 'medium' });
   };
 
-  // Load detailed tasks on mount/change
+
   useEffect(() => {
-    // Lock future months
+
     if (selectedMonthNum > currentActiveMonth) return;
     if (loadedDetails[selectedMonthNum]) return;
 
@@ -109,14 +109,14 @@ export default function PlanViewDaily({
 
     const useOwnKey = localStorage.getItem('use_own_key') === 'true';
 
-    // Must use default credit system
+
     if (useOwnKey) {
       setErrorMsg("Detailed monthly tasks can only be generated using our default credit system. Please disable 'Use Own Key' in Settings.");
       setGeneratingDetails(false);
       return;
     }
 
-    // Must be current active month
+
     if (selectedMonthNum !== currentActiveMonth) {
       setErrorMsg(`Detailed tasks can only be generated during the active month (Month ${currentActiveMonth}).`);
       setGeneratingDetails(false);
@@ -191,7 +191,6 @@ export default function PlanViewDaily({
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Month selector list */}
       <div className="flex flex-wrap gap-2 border-b border-zinc-200 dark:border-gray-800 pb-3">
         {planJson.months.map(m => {
           const isLocked = currentActiveMonth < m.month;
@@ -200,10 +199,10 @@ export default function PlanViewDaily({
               key={m.month}
               onClick={() => setSelectedMonthNum(m.month)}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${selectedMonthNum === m.month
-                  ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                  : isLocked
-                    ? 'bg-zinc-100/50 dark:bg-zinc-950/20 border-zinc-200 dark:border-gray-850 text-zinc-400 dark:text-gray-650'
-                    : 'bg-white dark:bg-zinc-900 border-zinc-250 dark:border-gray-800 text-zinc-650 dark:text-gray-350 hover:bg-zinc-50 dark:hover:bg-white/5'
+                ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                : isLocked
+                  ? 'bg-zinc-100/50 dark:bg-zinc-950/20 border-zinc-200 dark:border-gray-850 text-zinc-400 dark:text-gray-650'
+                  : 'bg-white dark:bg-zinc-900 border-zinc-250 dark:border-gray-800 text-zinc-650 dark:text-gray-350 hover:bg-zinc-50 dark:hover:bg-white/5'
                 }`}
             >
               Month {m.month}
@@ -213,7 +212,6 @@ export default function PlanViewDaily({
         })}
       </div>
 
-      {/* Locked State notice */}
       {isMonthLocked ? (
         <div className="border border-zinc-300 dark:border-gray-850 rounded-3xl p-12 text-center flex flex-col items-center gap-3 bg-white/20 dark:bg-gray-900/20">
           <div className="p-4 bg-zinc-100 dark:bg-zinc-900 text-zinc-400 dark:text-gray-650 rounded-full border border-zinc-200 dark:border-gray-800">
@@ -265,7 +263,7 @@ export default function PlanViewDaily({
           ))}
         </div>
       ) : (
-        // Empty State: Generate detailed tasks for this month
+
         <div className="border border-dashed border-black/15 dark:border-white/20 rounded-3xl p-8 text-center flex flex-col items-center gap-4 bg-white dark:bg-zinc-900/40">
           {generatingDetails ? (
             <div className="space-y-4 py-4 flex flex-col items-center">

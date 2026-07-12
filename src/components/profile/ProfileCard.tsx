@@ -19,12 +19,18 @@ const getDailyImportLimit = (plan: string) => {
   if (p.includes('lite')) return 5;
   if (p.includes('rise')) return 10;
   if (p.includes('peak')) return 15;
-  return 3; // free or other
+  return 3;
 };
 
 export default function ProfileCard({ onClose, userId }: { onClose: () => void; userId?: string }) {
   const { userProfile: loggedInProfile } = useUserProfile();
-  const { theme } = useTheme();
+  const { theme, fontSizeLevel } = useTheme();
+  const scale = {
+    small: 0.85,
+    medium: 1.0,
+    large: 1.35,
+    larger: 1.6
+  }[fontSizeLevel] || 1.0;
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
@@ -39,11 +45,11 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
   const dragging = useRef(false);
   const rafId = useRef(0);
 
-  // Viewed profile details state (if userId is provided)
+
   const [viewProfile, setViewProfile] = useState<any | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-  // Public exams state
+
   const [exams, setExams] = useState<any[]>([]);
   const [examsLoading, setExamsLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -91,7 +97,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
     }
   };
 
-  // Import flow state
+
   const [importTargetExam, setImportTargetExam] = useState<any | null>(null);
   const [showCreateOthersCategoryModal, setShowCreateOthersCategoryModal] = useState(false);
   const [showConfirmImportModal, setShowConfirmImportModal] = useState(false);
@@ -99,7 +105,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
   const [importError, setImportError] = useState('');
   const [importSuccess, setImportSuccess] = useState('');
 
-  // Fetch target user's full profile if userId is provided
+
   useEffect(() => {
     if (!userId) {
       setViewProfile(null);
@@ -135,7 +141,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
     fetchProfile();
   }, [userId]);
 
-  // Fetch public exams of viewed user
+
   const fetchUserExams = useCallback(async () => {
     const targetUserId = userId || loggedInProfile?.id;
     if (!targetUserId) return;
@@ -166,10 +172,10 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
     fetchUserExams();
   }, [fetchUserExams]);
 
-  // Determine active profile card data
+
   const userProfile = userId ? viewProfile : loggedInProfile;
 
-  // 3D Tilting Animation
+
   const applyTransform = (rx: number, ry: number) => {
     const card = cardRef.current;
     const face = faceRef.current;
@@ -328,7 +334,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
 
   const totalPages = Math.ceil(totalCount / EXAMS_PER_PAGE);
 
-  // Import flow logic
+
   const checkOthersCategory = async (): Promise<string | null> => {
     if (!loggedInProfile?.id) return null;
     const { data } = await supabase
@@ -368,7 +374,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
     setImporting(true);
     setImportError('');
     try {
-      // 1. Create Others Category in examtypes
+
       const { data: catData, error: catError } = await supabase
         .from('examtypes')
         .insert({
@@ -384,7 +390,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
 
       localStorage.removeItem('wachsen_exam_categories');
 
-      // 2. Upsert/Insert exam_imports row with default count 0
+
       const { data: existingImport } = await supabase
         .from('exam_imports')
         .select('user_id')
@@ -424,7 +430,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
       const plan = loggedInProfile.PremiumType || 'free';
       const limit = getDailyImportLimit(plan);
 
-      // Check daily imports limit
+
       let { data: importData, error: importError } = await supabase
         .from('exam_imports')
         .select('*')
@@ -455,7 +461,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
         throw new Error(`Already imported ${limit} exams today. Try tomorrow.`);
       }
 
-      // Fetch the full exam document to copy it
+
       const { data: examData, error: examErr } = await supabase
         .from('exams')
         .select('examName, totalQuestions, difficulty, totalTime, subjects, generatedExam, correct_marks, negative_marks, ExamPlan')
@@ -464,7 +470,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
 
       if (examErr || !examData) throw examErr || new Error('Exam details not found');
 
-      // Save new exam copy with anytime scheduling
+
       const { error: insExamErr } = await supabase
         .from('exams')
         .insert({
@@ -490,7 +496,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
 
       if (insExamErr) throw insExamErr;
 
-      // Update daily import count
+
       const newCount = isSameDay ? (importData.exam_imported + 1) : 1;
       const { error: updErr } = await supabase
         .from('exam_imports')
@@ -516,7 +522,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
     }
   };
 
-  // Branch 1: Self profile card (Renders the original design overlay layout)
+
   if (!userId) {
     return (
       <div
@@ -537,13 +543,13 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6">
-          <div style={{ perspective: '700px', perspectiveOrigin: '50% 50%' }}>
+          <div style={{ perspective: `${700 * scale}px`, perspectiveOrigin: '50% 50%' }}>
             <div
               ref={cardRef}
               style={{
-                width: '380px',
-                height: '240px',
-                borderRadius: '16px',
+                width: `${380 * scale}px`,
+                height: `${240 * scale}px`,
+                borderRadius: `${16 * scale}px`,
                 position: 'relative',
                 transformStyle: 'preserve-3d',
                 willChange: 'transform',
@@ -555,21 +561,21 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                 ref={faceRef}
                 style={{
                   position: 'absolute', inset: 0,
-                  borderRadius: '16px',
+                  borderRadius: `${16 * scale}px`,
                   background: theme === 'dark' ? '#1a1a2e' : '#ffffff',
                   border: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)',
                   overflow: 'hidden',
-                  padding: '20px 20px 16px',
-                  display: 'flex', flexDirection: 'row', gap: '16px',
+                  padding: `${20 * scale}px ${20 * scale}px ${16 * scale}px`,
+                  display: 'flex', flexDirection: 'row', gap: `${16 * scale}px`,
                   fontFamily: "'DM Sans', system-ui, sans-serif",
                 } as React.CSSProperties}
               >
                 <div
                   style={{
                     position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    fontSize: '10px',
+                    top: `${12 * scale}px`,
+                    left: `${12 * scale}px`,
+                    fontSize: `${10 * scale}px`,
                     fontWeight: 700,
                     letterSpacing: '0.15em',
                     color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
@@ -582,34 +588,34 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
 
                 <div
                   style={{
-                    position: 'absolute', inset: 0, borderRadius: '16px',
+                    position: 'absolute', inset: 0, borderRadius: `${16 * scale}px`,
                     background: 'radial-gradient(ellipse at var(--gx,50%) var(--gy,30%), rgba(0,0,0,0.06) 0%, transparent 75%)',
                     pointerEvents: 'none', zIndex: 20,
                   } as React.CSSProperties}
                 />
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flexShrink: 0, justifyContent: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: `${8 * scale}px`, flexShrink: 0, justifyContent: 'center' }}>
                   <div style={{
-                    width: '72px', height: '72px', borderRadius: '50%',
+                    width: `${72 * scale}px`, height: `${72 * scale}px`, borderRadius: '50%',
                     background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '26px', fontWeight: 500, color: '#fff', overflow: 'hidden',
+                    display: 'flex', alignItems: 'center', justify500: 'center',
+                    fontSize: `${26 * scale}px`, fontWeight: 500, color: '#fff', overflow: 'hidden',
                     boxShadow: '0 2px 10px rgba(0,0,0,0.1)', flexShrink: 0,
-                  }}>
+                  } as any}>
                     {userProfile.profile_picture?.trim()
                       ? <img src={userProfile.profile_picture} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       : firstLetter}
                   </div>
                   {userProfile.PremiumType && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: `${4 * scale}px` }}>
                       <div style={{
-                        width: '60px', height: '24px', borderRadius: '6px',
+                        width: `${60 * scale}px`, height: `${24 * scale}px`, borderRadius: `${6 * scale}px`,
                         background: theme === 'dark' ? '#0f0f23' : '#1e293b',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${4 * scale}px`,
                       }}>
                         <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
                         <span style={{
-                          fontSize: '9px', fontWeight: 600, letterSpacing: '0.05em',
+                          fontSize: `${9 * scale}px`, fontWeight: 600, letterSpacing: '0.05em',
                           color: '#ffffff', textTransform: 'uppercase',
                         }}>
                           {getShortPlanName(userProfile.PremiumType)}
@@ -622,7 +628,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                 <div style={{ width: '0.5px', background: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', alignSelf: 'stretch', flexShrink: 0 }} />
 
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '30px', flex: 1 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: `${5 * scale}px`, marginTop: `${30 * scale}px`, flex: 1 }}>
                     {([
                       { l: 'Name', v: userProfile.name?.toUpperCase() },
                       { l: 'USER ID', v: `@${userProfile.username || ''}` },
@@ -631,10 +637,10 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                       userProfile.gender && { l: 'Gender', v: userProfile.gender },
                       userProfile.country && { l: 'Nation', v: userProfile.country },
                     ] as any[]).filter(Boolean).map((f: any) => (
-                      <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                        <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: '65px', fontWeight: 500 }}>{f.l}</span>
+                      <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: `${10 * scale}px` }}>
+                        <span style={{ fontSize: `${10 * scale}px`, textTransform: 'uppercase', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${65 * scale}px`, fontWeight: 500 }}>{f.l}</span>
                         <span style={{
-                          fontSize: f.l === 'Name' ? '12px' : '11px',
+                          fontSize: f.l === 'Name' ? `${12 * scale}px` : `${11 * scale}px`,
                           fontWeight: f.l === 'Name' ? 700 : 400,
                           color: theme === 'dark' ? '#ffffff' : '#000000',
                           fontFamily: f.l === 'Name' ? "'DM Sans', system-ui, sans-serif" : "'DM Mono',monospace",
@@ -644,12 +650,12 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                     ))}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)' }}>
-                    <span style={{ fontSize: '9px', fontWeight: 500, color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', letterSpacing: '0.05em' }}>
-                      Member since — {new Date(userProfile.created_at || userProfile.id).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: `${8 * scale}px`, borderTop: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)' }}>
+                    <span style={{ fontSize: `${9 * scale}px`, fontWeight: 500, color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', letterSpacing: '0.05em' }}>
+                      Member since {new Date(userProfile.created_at || userProfile.id).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>
-                    <div style={{ display: 'flex', gap: '3px' }}>
-                      {[0.32, 0.18, 0.09].map((o, i) => <div key={i} style={{ width: '5px', height: '5px', borderRadius: '50%', background: theme === 'dark' ? `rgba(255,255,255,${o})` : `rgba(0,0,0,${o})` }} />)}
+                    <div style={{ display: 'flex', gap: `${3 * scale}px` }}>
+                      {[0.32, 0.18, 0.09].map((o, i) => <div key={i} style={{ width: `${5 * scale}px`, height: `${5 * scale}px`, borderRadius: '50%', background: theme === 'dark' ? `rgba(255,255,255,${o})` : `rgba(0,0,0,${o})` }} />)}
                     </div>
                   </div>
                 </div>
@@ -669,7 +675,7 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
     );
   }
 
-  // Branch 2: Viewing friend's public profile details (Renders a fixed-height card modal with scrollable public exams)
+
   return (
     <>
       <div
@@ -678,10 +684,10 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
       >
         <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl w-full max-w-[420px] sm:max-w-[620px] md:max-w-[720px] lg:max-w-[800px] h-[640px] max-h-[90vh] flex flex-col shadow-2xl relative overflow-hidden animate-fade-in">
 
-            <div className="flex justify-between items-center px-5 py-4 border-b border-black/10 dark:border-white/10 flex-shrink-0">
-              <h1 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
-                Public profile
-              </h1>
+          <div className="flex justify-between items-center px-5 py-4 border-b border-black/10 dark:border-white/10 flex-shrink-0">
+            <h1 className="font-semibold text-zinc-900 dark:text-white" style={{ fontSize: fontSize.base }}>
+              Public profile
+            </h1>
             <div className="flex items-center gap-2">
               <button
                 onClick={copyId}
@@ -699,133 +705,130 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
             </div>
           </div>
 
-          {/* Content Container (Scrollable internally but holds structure) */}
           <div className="flex-1 flex flex-col items-center p-5 overflow-hidden min-h-0 space-y-4">
 
-            {/* 3D Profile Card (Fixed Height) */}
             {showProfileCard && (
-              <div style={{ perspective: '700px', perspectiveOrigin: '50% 50%' }} className="flex-shrink-0">
-              <div
-                ref={cardRef}
-                style={{
-                  width: '350px',
-                  height: '220px',
-                  borderRadius: '16px',
-                  position: 'relative',
-                  transformStyle: 'preserve-3d',
-                  willChange: 'transform',
-                  cursor: 'grab',
-                  boxShadow: '0 12px 36px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.2)',
-                }}
-              >
+              <div style={{ perspective: `${700 * scale}px`, perspectiveOrigin: '50% 50%' }} className="flex-shrink-0">
                 <div
-                  ref={faceRef}
+                  ref={cardRef}
                   style={{
-                    position: 'absolute', inset: 0,
-                    borderRadius: '16px',
-                    background: theme === 'dark' ? '#1a1a2e' : '#ffffff',
-                    border: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)',
-                    overflow: 'hidden',
-                    padding: '16px 16px 12px',
-                    display: 'flex', flexDirection: 'row', gap: '14px',
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                  } as React.CSSProperties}
+                    width: `${350 * scale}px`,
+                    height: `${220 * scale}px`,
+                    borderRadius: `${16 * scale}px`,
+                    position: 'relative',
+                    transformStyle: 'preserve-3d',
+                    willChange: 'transform',
+                    cursor: 'grab',
+                    boxShadow: '0 12px 36px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.2)',
+                  }}
                 >
                   <div
+                    ref={faceRef}
                     style={{
-                      position: 'absolute',
-                      top: '10px',
-                      left: '10px',
-                      fontSize: '9px',
-                      fontWeight: 750,
-                      letterSpacing: '0.15em',
-                      color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-                      textTransform: 'uppercase',
-                      zIndex: 10,
-                    }}
-                  >
-                    Wachsen
-                  </div>
-
-                  <div
-                    style={{
-                      position: 'absolute', inset: 0, borderRadius: '16px',
-                      background: 'radial-gradient(ellipse at var(--gx,50%) var(--gy,30%), rgba(0,0,0,0.06) 0%, transparent 75%)',
-                      pointerEvents: 'none', zIndex: 20,
+                      position: 'absolute', inset: 0,
+                      borderRadius: `${16 * scale}px`,
+                      background: theme === 'dark' ? '#1a1a2e' : '#ffffff',
+                      border: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)',
+                      overflow: 'hidden',
+                      padding: `${16 * scale}px ${16 * scale}px ${12 * scale}px`,
+                      display: 'flex', flexDirection: 'row', gap: `${14 * scale}px`,
+                      fontFamily: "'DM Sans', system-ui, sans-serif",
                     } as React.CSSProperties}
-                  />
-
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flexShrink: 0, justifyContent: 'center' }}>
-                    <div style={{
-                      width: '64px', height: '64px', borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '24px', fontWeight: 500, color: '#fff', overflow: 'hidden',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0,
-                    }}>
-                      {userProfile.profile_picture?.trim()
-                        ? <img src={userProfile.profile_picture} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                        : firstLetter}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: `${10 * scale}px`,
+                        left: `${10 * scale}px`,
+                        fontSize: `${9 * scale}px`,
+                        fontWeight: 750,
+                        letterSpacing: '0.15em',
+                        color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+                        textTransform: 'uppercase',
+                        zIndex: 10,
+                      }}
+                    >
+                      Wachsen
                     </div>
-                    {userProfile.PremiumType && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <div style={{
-                          width: '54px', height: '22px', borderRadius: '5px',
-                          background: theme === 'dark' ? '#0f0f23' : '#1e293b',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
-                        }}>
-                          <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
-                          <span style={{
-                            fontSize: '8px', fontWeight: 600, letterSpacing: '0.05em',
-                            color: '#ffffff', textTransform: 'uppercase',
-                          }}>
-                            {getShortPlanName(userProfile.PremiumType)}
-                          </span>
-                        </div>
+
+                    <div
+                      style={{
+                        position: 'absolute', inset: 0, borderRadius: `${16 * scale}px`,
+                        background: 'radial-gradient(ellipse at var(--gx,50%) var(--gy,30%), rgba(0,0,0,0.06) 0%, transparent 75%)',
+                        pointerEvents: 'none', zIndex: 20,
+                      } as React.CSSProperties}
+                    />
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: `${6 * scale}px`, flexShrink: 0, justify500: 'center' } as any}>
+                      <div style={{
+                        width: `${64 * scale}px`, height: `${64 * scale}px`, borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: `${24 * scale}px`, fontWeight: 500, color: '#fff', overflow: 'hidden',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0,
+                      }}>
+                        {userProfile.profile_picture?.trim()
+                          ? <img src={userProfile.profile_picture} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                          : firstLetter}
                       </div>
-                    )}
-                  </div>
-
-                  <div style={{ width: '0.5px', background: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', alignSelf: 'stretch', flexShrink: 0 }} />
-
-                  <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '24px', flex: 1 }}>
-                      {([
-                        { l: 'Name', v: userProfile.name?.toUpperCase() },
-                        { l: 'USER ID', v: `@${userProfile.username || ''}` },
-                        { l: 'Email', v: maskEmail(userProfile.email || '') },
-                        userProfile.DOB && { l: 'DOB', v: userProfile.DOB },
-                        userProfile.gender && { l: 'Gender', v: userProfile.gender },
-                        userProfile.country && { l: 'Nation', v: userProfile.country },
-                      ] as any[]).filter(Boolean).map((f: any) => (
-                        <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                          <span style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: '55px', fontWeight: 500 }}>{f.l}</span>
-                          <span style={{
-                            fontSize: f.l === 'Name' ? '11px' : '10px',
-                            fontWeight: f.l === 'Name' ? 700 : 400,
-                            color: theme === 'dark' ? '#ffffff' : '#000000',
-                            fontFamily: f.l === 'Name' ? "'DM Sans', system-ui, sans-serif" : "'DM Mono',monospace",
-                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1
-                          }}>{f.v}</span>
+                      {userProfile.PremiumType && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: `${4 * scale}px` }}>
+                          <div style={{
+                            width: `${54 * scale}px`, height: `${22 * scale}px`, borderRadius: `${5 * scale}px`,
+                            background: theme === 'dark' ? '#0f0f23' : '#1e293b',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${3 * scale}px`,
+                          }}>
+                            <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
+                            <span style={{
+                              fontSize: `${8 * scale}px`, fontWeight: 600, letterSpacing: '0.05em',
+                              color: '#ffffff', textTransform: 'uppercase',
+                            }}>
+                              {getShortPlanName(userProfile.PremiumType)}
+                            </span>
+                          </div>
                         </div>
-                      ))}
+                      )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)' }}>
-                      <span style={{ fontSize: '8px', fontWeight: 500, color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', letterSpacing: '0.05em' }}>
-                        Member since — {new Date(userProfile.created_at || userProfile.id).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </span>
-                      <div style={{ display: 'flex', gap: '3px' }}>
-                        {[0.32, 0.18, 0.09].map((o, i) => <div key={i} style={{ width: '4px', height: '4px', borderRadius: '50%', background: theme === 'dark' ? `rgba(255,255,255,${o})` : `rgba(0,0,0,${o})` }} />)}
+                    <div style={{ width: '0.5px', background: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', alignSelf: 'stretch', flexShrink: 0 }} />
+
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: `${4 * scale}px`, marginTop: `${24 * scale}px`, flex: 1 }}>
+                        {([
+                          { l: 'Name', v: userProfile.name?.toUpperCase() },
+                          { l: 'USER ID', v: `@${userProfile.username || ''}` },
+                          { l: 'Email', v: maskEmail(userProfile.email || '') },
+                          userProfile.DOB && { l: 'DOB', v: userProfile.DOB },
+                          userProfile.gender && { l: 'Gender', v: userProfile.gender },
+                          userProfile.country && { l: 'Nation', v: userProfile.country },
+                        ] as any[]).filter(Boolean).map((f: any) => (
+                          <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: `${8 * scale}px` }}>
+                            <span style={{ fontSize: `${9 * scale}px`, textTransform: 'uppercase', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${55 * scale}px`, fontWeight: 500 }}>{f.l}</span>
+                            <span style={{
+                              fontSize: f.l === 'Name' ? `${11 * scale}px` : `${10 * scale}px`,
+                              fontWeight: f.l === 'Name' ? 700 : 400,
+                              color: theme === 'dark' ? '#ffffff' : '#000000',
+                              fontFamily: f.l === 'Name' ? "'DM Sans', system-ui, sans-serif" : "'DM Mono',monospace",
+                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1
+                            }}>{f.v}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: `${6 * scale}px`, borderTop: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)' }}>
+                        <span style={{ fontSize: `${8 * scale}px`, fontWeight: 500, color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', letterSpacing: '0.05em' }}>
+                          Member since {new Date(userProfile.created_at || userProfile.id).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                        <div style={{ display: 'flex', gap: `${3 * scale}px` }}>
+                          {[0.32, 0.18, 0.09].map((o, i) => <div key={i} style={{ width: `${4 * scale}px`, height: `${4 * scale}px`, borderRadius: '50%', background: theme === 'dark' ? `rgba(255,255,255,${o})` : `rgba(0,0,0,${o})` }} />)}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
             )}
 
-            {/* Public Exams List (Scrollable Internally) */}
             <div className="flex-1 w-full max-w-[360px] sm:max-w-[560px] md:max-w-[660px] lg:max-w-[740px] bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-4 flex flex-col min-h-0 overflow-hidden">
               <div className="flex items-center justify-between px-1 mb-2.5 flex-shrink-0">
                 <div className="flex items-center gap-1.5">
@@ -841,7 +844,6 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                 <span className="text-zinc-500 font-medium" style={{ fontSize: fontSize.xs }}>Total: {totalCount}</span>
               </div>
 
-              {/* Scrollable list wrapper */}
               <div className="flex-grow overflow-y-auto space-y-2 pr-1 min-h-0">
                 {examsLoading ? (
                   <div className="flex flex-col items-center justify-center py-8">
@@ -863,8 +865,8 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                                 {exam.examName || 'Untitled Exam'}
                               </h5>
                               <span className={`px-1.5 py-0.5 rounded font-bold uppercase ${exam.difficulty?.toLowerCase() === 'easy' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
-                                  exam.difficulty?.toLowerCase() === 'hard' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
-                                    'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                exam.difficulty?.toLowerCase() === 'hard' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
+                                  'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                                 }`} style={{ fontSize: fontSize.xs }}>
                                 {exam.difficulty || 'Medium'}
                               </span>
@@ -881,7 +883,6 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
                             </div>
                           </div>
 
-                          {/* Right Top Corner: Import Button */}
                           {loggedInProfile?.id !== userId && (
                             <button
                               onClick={() => handleImportExamClick(exam)}
@@ -944,7 +945,6 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
         </div>
       </div>
 
-      {/* CREATE OTHERS CATEGORY CONFIRMATION MODAL */}
       {showCreateOthersCategoryModal && (
         <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 max-w-xs w-full shadow-2xl flex flex-col items-center text-center">
@@ -984,7 +984,6 @@ export default function ProfileCard({ onClose, userId }: { onClose: () => void; 
         </div>
       )}
 
-      {/* CONFIRM IMPORT MODAL */}
       {showConfirmImportModal && (
         <div className="fixed inset-0 z-[260] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 max-w-xs w-full shadow-2xl flex flex-col items-center text-center">

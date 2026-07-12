@@ -19,11 +19,11 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(15);
 
-  // Compute progress day "x" where x is (current date - created date) capped at total plan days
+
   const createdDate = new Date(plan.created_at);
   const currentDate = new Date();
 
-  // Set times to midnight to calculate exact difference in calendar days
+
   const createdMidnight = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate()).getTime();
   const currentMidnight = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).getTime();
 
@@ -32,10 +32,10 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
 
   const parsedSubjects = Array.isArray(plan.subjects) ? plan.subjects : [];
 
-  // Progress percentage (elapsed time)
+
   const progressPercent = Math.min(100, Math.max(0, (x / plan.days) * 100));
 
-  // Timer countdown hook for confirmation modal
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (showConfirmModal && secondsRemaining > 0) {
@@ -93,6 +93,16 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
             style={{ width: `${progressPercent}%` }}
           />
         </div>
+
+        {parsedSubjects.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 justify-center pt-2">
+            {parsedSubjects.map((sub: any, idx: number) => (
+              <span key={idx} className="bg-zinc-150/50 dark:bg-zinc-800/40 border border-zinc-250 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400 px-2.5 py-1 rounded-xl font-medium tracking-wide animate-fade-in" style={{ fontSize: fontSize.xs }}>
+                {sub.name}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <button
@@ -103,7 +113,6 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
         Continue
       </button>
 
-      {/* 15-SEC WAIT DELETE CONFIRMATION MODAL OVERLAY */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-sm p-6 bg-white dark:bg-zinc-900 border border-zinc-250 dark:border-gray-800 rounded-3xl shadow-xl space-y-6">
@@ -155,7 +164,7 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
   );
 }
 
-// Internal Loader helper
+
 function Loader2({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg

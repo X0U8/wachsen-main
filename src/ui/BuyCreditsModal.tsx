@@ -305,7 +305,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
           setActivePeriod(data.period || 'month');
         }
       } catch (err) {
-        // Silent catch in production
+
       }
     }
     fetchLatestTransaction();
@@ -333,7 +333,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
     const planFromStorage = userProfile?.PremiumType;
     const planToCheck = planFromProps || planFromStorage;
 
-    // Determine normalized current plan name using keyword matching
+
     let userPlan = 'Free';
     if (planToCheck) {
       const p = planToCheck.toLowerCase();
@@ -342,13 +342,13 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
       else if (p.includes('peak')) userPlan = 'Glix Peak';
     }
 
-    // Check if the plan name matches the tier name
+
     if (userPlan !== tierName) return false;
 
-    // For free plan, it's always in use
+
     if (tierName === 'Free') return true;
 
-    // For paid tiers, check if it matches the tab period
+
     const isYearlyPlan = activePeriod.toLowerCase().includes('year') || activePeriod.toLowerCase() === 'yearly';
     const expectedIsYearly = isYearly;
 
@@ -423,7 +423,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
     setLoading(true);
 
     try {
-      // Step 1: Create Razorpay order on the server first (required for signature verification)
+
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token || '';
 
@@ -449,7 +449,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
         return;
       }
 
-      // Step 2: Load Razorpay checkout script and open with server-created order_id
+
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
@@ -465,7 +465,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
           order_id: orderData.order_id,
           handler: async function (response: any) {
             try {
-              // Step 3: Verify signature on the server (HMAC-SHA256 check using secret key)
+
               const { data: sessionData2 } = await supabase.auth.getSession();
               const token2 = sessionData2.session?.access_token || '';
               const processResponse = await fetch('/api/subscription', {
@@ -564,7 +564,7 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
 
           <div className="px-6 sm:px-10 pt-6 pb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-gray-900 dark:text-white tracking-tight font-bold" style={{ fontSize: fontSize.xl }}>
+              <h2 className="text-gray-900 dark:text-white tracking-tight font-semibold" style={{ fontSize: fontSize.xl }}>
                 Ready to <span className="text-blue-600 dark:text-blue-500">Level Up?</span>
               </h2>
             </div>
@@ -576,17 +576,16 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
             </button>
           </div>
 
-          {/* Current Plan Status Bar */}
           <div className="px-6 sm:px-10 pb-3">
             <div className="flex items-center justify-between gap-3 bg-gray-200/60 dark:bg-black/40 border border-black/5 dark:border-white/5 rounded-2xl px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className={`w-2 h-2 rounded-full ${currentPlan && currentPlan !== 'Free' && isPremiumActive() ? 'bg-green-500' : 'bg-gray-400'}`} />
+                <div className={`w-3 h-3 rounded-full ${currentPlan && currentPlan !== 'Free' && isPremiumActive() ? 'bg-green-500' : 'bg-gray-400'}`} />
                 <div>
                   <span className="text-gray-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Current plan</span>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-gray-900 dark:text-white" style={{ fontSize: fontSize.sm }}>{currentPlan || 'Free'}</span>
                     {currentPlan && currentPlan !== 'Free' && isPremiumActive() ? (
-                      <span className="text-green-600 dark:text-green-400" style={{ fontSize: fontSize.xs }}>
+                      <span className="text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.xs }}>
                         Expires {new Date(premiumEnds || '').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                     ) : (
@@ -596,26 +595,22 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                 </div>
               </div>
 
-              {/* Days left indicator */}
               {currentPlan && currentPlan !== 'Free' && isPremiumActive() && premiumEnds ? (
                 <div className="flex flex-col items-end">
-                  <span className="font-bold text-green-600 dark:text-green-400" style={{ fontSize: fontSize.sm }}>
+                  <span className="font-semibold text-blue-600 dark:text-blue-400" style={{ fontSize: fontSize.sm }}>
                     {Math.max(0, Math.ceil((new Date(premiumEnds).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days
                   </span>
                   <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: '0.625rem' }}>remaining</span>
                 </div>
               ) : (
                 <div className="flex flex-col items-end">
-                  <span className="font-bold text-gray-400 dark:text-gray-500" style={{ fontSize: fontSize.sm }}>∞</span>
-                  <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: '0.625rem' }}>no expiry</span>
+                  <span className="font-bold text-gray-400 dark:text-gray-500" style={{ fontSize: fontSize.base }}>∞</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Currency selector + Monthly/Yearly toggle row */}
           <div className="px-6 sm:px-10 pb-5 flex items-center justify-between gap-3">
-            {/* Currency selector */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowCountryDropdown(!showCountryDropdown)}
@@ -641,7 +636,6 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
               )}
             </div>
 
-            {/* Monthly / Yearly toggle */}
             <div className="flex items-center bg-gray-200/40 dark:bg-black/40 rounded-xl p-1 border border-black/5 dark:border-white/5">
               <button
                 onClick={() => setIsYearly(false)}
@@ -659,7 +653,6 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
               </button>
             </div>
 
-            {/* Spacer to balance the layout */}
             <div style={{ width: '3rem' }} />
           </div>
 

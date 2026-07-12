@@ -305,7 +305,7 @@ export default function TakeExam() {
     };
   }, [currentQuestionIdx, isExamStarted, isSubmitting, questions, instanceId]);
 
-  // Countdown timer — when countdown hits 0, show "Start!" briefly, then begin
+
   useEffect(() => {
     if (countdown === null) return;
     if (countdown === 0) {
@@ -321,12 +321,12 @@ export default function TakeExam() {
     return () => clearTimeout(t);
   }, [countdown]);
 
-  // Start exam flow — begin countdown
+
   const startExamFlow = () => {
     setCountdown(3);
   };
 
-  // Actual exam start — called when countdown reaches 0
+
   const doStartExam = async () => {
     if (!userProfile?.id) {
       showNotification('error', 'Please log in to start the exam.');
@@ -609,7 +609,6 @@ export default function TakeExam() {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      {/* Start Modal */}
       <AnimatePresence>
         {showStartModal && (
           <motion.div
@@ -663,7 +662,6 @@ export default function TakeExam() {
 
       {isExamStarted && (
         <>
-          {/* Header */}
           <header className="px-4 py-3 bg-zinc-100/50 dark:bg-gray-900/50 backdrop-blur-md border-b border-zinc-200 dark:border-gray-800 sticky top-0 z-10 flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
               <div>
@@ -721,10 +719,8 @@ export default function TakeExam() {
             </div>
           </header>
 
-          {/* Main Content */}
           <main className="flex-1 overflow-y-auto p-4 md:p-8">
             <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 w-full">
-              {/* Question Content */}
               <div className="flex-1">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -835,7 +831,6 @@ export default function TakeExam() {
                 </AnimatePresence>
               </div>
 
-              {/* Right Sidebar - Question Number Boxes (Desktop Only) */}
               <aside className="hidden md:block w-64 shrink-0">
                 <div className="bg-zinc-100/50 dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 max-h-[calc(100vh-8rem)] flex flex-col">
                   <h3 className="font-medium uppercase text-zinc-400 dark:text-gray-500 mb-4 shrink-0" style={{ fontSize: fontSize.xs }}>Questions</h3>
@@ -919,7 +914,6 @@ export default function TakeExam() {
             </div>
           </main>
 
-          {/* Navigation Footer */}
           <footer className="p-4 bg-zinc-100/50 dark:bg-gray-900/50 backdrop-blur-md border-t border-zinc-200 dark:border-gray-800 sticky bottom-0">
             <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
               <button
@@ -961,7 +955,6 @@ export default function TakeExam() {
             </div>
           </footer>
 
-          {/* Exit/Submit Confirmation Modal */}
           <AnimatePresence>
             {showExitConfirm && (
               <motion.div
@@ -1004,7 +997,6 @@ export default function TakeExam() {
             )}
           </AnimatePresence>
 
-          {/* Auto-Submit Modal */}
           <AnimatePresence>
             {showAutoSubmitModal && (
               <motion.div
@@ -1041,7 +1033,6 @@ export default function TakeExam() {
             )}
           </AnimatePresence>
 
-          {/* Mobile Question Modal */}
           <AnimatePresence>
             {showQuestionModal && (
               <motion.div

@@ -58,11 +58,11 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
   const hasStartedQuestionsRef = useRef(false);
   const hasSavedRef = useRef(false);
 
-  // Reset state when modal closes
+
   useEffect(() => {
     if (!show) {
       abortRef.current = true;
-      generationIdRef.current++; // Invalidate any in-flight async operations
+      generationIdRef.current++;
       hasStartedBlueprintRef.current = false;
       hasStartedQuestionsRef.current = false;
       hasSavedRef.current = false;
@@ -81,14 +81,14 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       setSegmentCountdown(null);
       setNotification(null);
     }
-    // NOTE: Do NOT reset abortRef here when show becomes true.
-    // generateBlueprint() handles that itself after capturing a fresh generation ID.
+
+
   }, [show]);
 
   const uploadedFilePathsRef = useRef<string[]>([]);
   const uploadedFilesRef = useRef<any[]>([]);
 
-  // Cleanup on unmount
+
   useEffect(() => {
     return () => {
       cleanupUploadedFiles();
@@ -97,7 +97,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
 
   const uploadScannedFiles = async (): Promise<any[]> => {
     if (!examData.scannedFiles || examData.scannedFiles.length === 0) return [];
-    
+
     const uploadedFiles: any[] = [];
     const localPaths: string[] = [];
 
@@ -105,14 +105,14 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       const fileExt = f.file.name.split('.').pop() || 'jpg';
       const uniqueId = Math.random().toString(36).substr(2, 9);
       const filePath = `temp/${userId}/${uniqueId}_${Date.now()}.${fileExt}`;
-      
+
       const { error } = await supabase.storage
         .from('scan-refs')
         .upload(filePath, f.file, {
           cacheControl: '3600',
           upsert: false
         });
-        
+
       if (error) {
         console.error('Error uploading file to storage:', error, f.name);
         throw new Error(`Failed to upload ${f.name} to storage.`);
@@ -122,7 +122,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       uploadedFilePathsRef.current.push(filePath);
 
       const { data } = supabase.storage.from('scan-refs').getPublicUrl(filePath);
-      
+
       uploadedFiles.push({
         name: f.name,
         type: f.type,
@@ -131,14 +131,14 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         subjectName: f.subjectName
       });
     }
-    
+
     return uploadedFiles;
   };
 
   const cleanupUploadedFiles = async () => {
     const paths = uploadedFilePathsRef.current;
     if (paths.length === 0) return;
-    
+
     try {
       const { error } = await supabase.storage.from('scan-refs').remove(paths);
       if (error) {
@@ -165,16 +165,16 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
   const getActiveModel = () => localStorage.getItem('mesh_active_model') || '';
   const getUseOwnKey = () => localStorage.getItem('use_own_key') === 'true';
 
-  // Calculate total question credits needed across all subjects
+
   const getTotalQuestionCredits = () => {
     return examData.subjects.reduce((total: number, sub: any) => {
       return total + sub.questionTypes.reduce((qTotal: number, q: any) => qTotal + q.count, 0);
     }, 0);
   };
 
-  // Reserve ALL credits upfront before any generation starts
+
   const reserveAllCredits = async (totalCredits: number): Promise<boolean> => {
-    if (getUseOwnKey()) return true; // Own key users don't use credits
+    if (getUseOwnKey()) return true;
 
     const authToken = await getAuthToken();
     const authed = supabase;
@@ -201,7 +201,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     return true;
   };
 
-  // Refund ALL reserved credits (called on permanent failure or modal close/abort)
+
   const refundAllCredits = async (creditsToRefund = reservedCredits) => {
     if (getUseOwnKey() || creditsToRefund === 0) return;
 
@@ -217,12 +217,12 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     }
   };
 
-  // Helper: check if a generation run is still valid (not aborted, not superseded)
+
   const isStale = (capturedId: number) => abortRef.current || generationIdRef.current !== capturedId;
 
-  // ── PHASE 1: Generate Blueprint ──
+
   const generateBlueprint = async () => {
-    // Claim a unique generation ID; any older async ops with a different ID will bail out
+
     const myId = ++generationIdRef.current;
     abortRef.current = false;
     setStatus('planning');
@@ -288,9 +288,9 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     }
   };
 
-  // ── PHASE 2: Generate Questions (linear, halt on failure) ──
+
   const startQuestionGeneration = async (blueprint: any[]) => {
-    const myId = generationIdRef.current; // Capture current generation ID
+    const myId = generationIdRef.current;
     abortRef.current = false;
     setStatus('generating');
     setGeneratedQuestions([]);
@@ -298,7 +298,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     setCurrentSubjectIndex(0);
     setCurrentSegmentIndex(0);
 
-    // Reserve ALL credits upfront
+
     const totalCredits = getTotalQuestionCredits();
     if (!getUseOwnKey()) {
       const reserved = await reserveAllCredits(totalCredits);
@@ -323,7 +323,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         setCurrentSubjectIndex(si);
         setCurrentSegmentIndex(sgi);
 
-        // Countdown delay between API calls to avoid rate limits
+
         if (allQuestions.length > 0) {
           for (let count = 10; count > 0; count--) {
             if (isStale(myId)) return;
@@ -337,7 +337,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         const result = await generateOneSegment(subject, si, subject.segments[sgi]);
         if (isStale(myId)) return;
         if (!result) {
-          // Permanent failure — refund ALL credits and halt
+
           await cleanupUploadedFiles();
           await refundAllCredits(totalCredits);
           setStatus('failed');
@@ -358,14 +358,14 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     await handleSaveExam(allQuestions);
   };
 
-  // Generate one segment with retry logic
+
   const generateOneSegment = async (subject: any, subjectIndex: number, segment: any): Promise<any[] | null> => {
     const maxRetries = 2;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         if (attempt > 0) {
-          await new Promise(r => setTimeout(r, 2000)); // Wait before retry
+          await new Promise(r => setTimeout(r, 2000));
         }
 
         const authToken = await getAuthToken();
@@ -419,7 +419,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
 
         if (!response.ok) {
           console.error(`Segment ${segment.range} attempt ${attempt + 1} failed: ${response.status}`);
-          continue; // Try again
+          continue;
         }
 
         const data = await response.json();
@@ -433,10 +433,10 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       }
     }
 
-    return null; // All retries exhausted
+    return null;
   };
 
-  // Start the pipeline when modal opens
+
   useEffect(() => {
     if (show && status === 'idle' && !hasStartedBlueprintRef.current) {
       hasStartedBlueprintRef.current = true;
@@ -444,7 +444,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     }
   }, [show, status]);
 
-  // When blueprint is ready, auto-start question generation
+
   useEffect(() => {
     if (examBlueprint && status === 'planning' && !hasStartedQuestionsRef.current) {
       hasStartedQuestionsRef.current = true;
@@ -452,28 +452,28 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     }
   }, [examBlueprint, status]);
 
-  // (auto-save removed — generation pipeline calls handleSaveExam directly)
 
-  // ── PHASE 3: Save Exam ──
+
+
   const handleSaveExam = async (questionsOverride?: any[] | React.MouseEvent) => {
     if (isSaving || hasSavedRef.current) return;
     hasSavedRef.current = true;
     setIsSaving(true);
- 
+
     const authToken = await getAuthToken();
- 
+
     let totalQuestions = 0;
     let totalMarks = 0;
- 
+
     examData.subjects.forEach((subject: any) => {
       subject.questionTypes.forEach((q: any) => {
         totalQuestions += q.count;
         totalMarks += q.count * q.correctMarks;
       });
     });
- 
+
     const targetQuestions = Array.isArray(questionsOverride) ? questionsOverride : generatedQuestions;
- 
+
     const examDocument = {
       examName: examData.examName,
       examType: examData.examType || 'practice',
@@ -524,7 +524,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     }
   };
 
-  // Restart everything from scratch
+
   const handleRestart = () => {
     setStatus('idle');
     setExamBlueprint(null);
@@ -542,7 +542,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
 
   if (!show) return null;
 
-  // Count total segments for progress
+
   const totalSegments = examBlueprint?.reduce((t: number, s: any) => t + (s.segments?.length || 0), 0) || 0;
 
   return (
@@ -556,16 +556,16 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
       >
         <header className="p-4 flex items-center justify-between border-b border-zinc-200 dark:border-gray-900 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <button 
-              onClick={async () => { 
-                abortRef.current = true; 
+            <button
+              onClick={async () => {
+                abortRef.current = true;
                 generationIdRef.current++;
                 await cleanupUploadedFiles();
                 if (reservedCredits > 0) {
                   await refundAllCredits(reservedCredits);
                 }
-                window.location.reload(); 
-              }} 
+                window.location.reload();
+              }}
               className="p-2 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-full transition-colors"
             >
               <ChevronLeft className="w-6 h-6" />
@@ -575,7 +575,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 pb-32">
-          {/* Planning phase */}
           {status === 'planning' && !examBlueprint && (
             <div className="flex flex-col items-center justify-center h-full">
               <Loader2 className="w-10 h-10 text-blue-500 dark:text-blue-400 animate-spin mb-4" />
@@ -583,7 +582,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             </div>
           )}
 
-          {/* Failed state */}
           {status === 'failed' && (
             <div className="flex flex-col items-center justify-center h-full gap-4">
               <AlertCircle className="w-12 h-12 text-red-500 dark:text-red-400" />
@@ -601,10 +599,8 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             </div>
           )}
 
-          {/* Blueprint + generation progress */}
           {examBlueprint && (status === 'generating' || status === 'done') && (
             <div className="space-y-4">
-              {/* Progress bar */}
               <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-blue-500 dark:text-blue-400 font-medium" style={{ fontSize: fontSize.xs }}>
@@ -624,7 +620,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
                 </div>
               </div>
 
-              {/* Segment list */}
               <div className="space-y-4">
                 {examBlueprint.map((item: any, idx: number) => (
                   <div key={idx} className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-4 space-y-3">
@@ -664,7 +659,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
           )}
         </main>
 
-        {/* Fixed Footer */}
         {status === 'done' && (
           <footer className="p-4 border-t border-zinc-200 dark:border-gray-900 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md fixed bottom-0 left-0 right-0 z-10">
             <button

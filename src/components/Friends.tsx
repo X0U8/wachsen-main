@@ -8,7 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import localStorageCache from '../lib/localStorage';
 import { fontSize } from '../lib/utils';
 
-// Sub-components
+
 import { MissingCategoryModal } from './friends/MissingCategoryModal';
 import { ExamSelectorModal } from './friends/ExamSelectorModal';
 import { ActionConfirmModals } from './friends/ActionConfirmModals';
@@ -55,7 +55,7 @@ export default function Friends() {
   const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
 
-  // Challenges Specific States
+
   const [challengesExamTypeId, setChallengesExamTypeId] = useState<string | null>(null);
   const [showMissingCategoryModal, setShowMissingCategoryModal] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
@@ -80,7 +80,7 @@ export default function Friends() {
   const [examOffset, setExamOffset] = useState(0);
   const [hasMoreExams, setHasMoreExams] = useState(false);
 
-  // Public Profile States
+
   const [selectedProfileForDetails, setSelectedProfileForDetails] = useState<any | null>(null);
   const [showPublicProfileModal, setShowPublicProfileModal] = useState(false);
 
@@ -88,13 +88,13 @@ export default function Friends() {
   const [challengeActionLoading, setChallengeActionLoading] = useState<string | null>(null);
   const [challengeError, setChallengeError] = useState('');
 
-  // Confirmation states
+
   const [confirmSendExamId, setConfirmSendExamId] = useState<string | null>(null);
   const [sendingChallengeLoading, setSendingChallengeLoading] = useState(false);
   const [confirmAcceptChallenge, setConfirmAcceptChallenge] = useState<{ id: string; examId: string } | null>(null);
   const [confirmDeclineChallengeId, setConfirmDeclineChallengeId] = useState<string | null>(null);
 
-  // 1. Verify if 'challenges' category exists with correct properties
+
   const checkChallengesCategory = async () => {
     if (!userProfile?.id) return;
     try {
@@ -118,7 +118,7 @@ export default function Friends() {
     }
   };
 
-  // 2. Create the special challenges category, ignoring plan constraints
+
   const handleCreateChallengesCategory = async () => {
     if (!userProfile?.id) return;
     setCreatingCategory(true);
@@ -166,7 +166,7 @@ export default function Friends() {
     return 3;
   };
 
-  // Paginated Sent/Received Challenges Fetchers
+
   const fetchReceivedChallenges = async (offset = 0) => {
     if (!userProfile?.id) return;
     if (offset === 0) {
@@ -354,7 +354,7 @@ export default function Friends() {
     }
   };
 
-  // Helper to fetch current user's exams for the selector modal with search/pagination
+
   const fetchExamsForChallenge = async (offset = 0, query = '', append = false) => {
     if (!userProfile?.id) return;
     setLoadingMyExams(true);
@@ -408,7 +408,7 @@ export default function Friends() {
     await fetchExamsForChallenge(0, '');
   };
 
-  // Check if a pending challenge exists between sender and receiver
+
   const checkPendingChallenge = async (friendId: string) => {
     if (!userProfile?.id) return false;
     try {
@@ -434,14 +434,14 @@ export default function Friends() {
     setSendingChallengeLoading(true);
 
     try {
-      // 1. Safety check: pending challenge check
+
       const isPending = await checkPendingChallenge(selectedFriendForChallenge.id);
       if (isPending) {
         setChallengeError('They have not responded to your last challenge yet.');
         return;
       }
 
-      // 2. Limit check: daily send count
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const { count, error: countError } = await supabase
@@ -458,7 +458,7 @@ export default function Friends() {
         return;
       }
 
-      // 3. Insert challenge
+
       const { error } = await supabase
         .from('challenges')
         .insert({
@@ -507,7 +507,7 @@ export default function Friends() {
         throw new Error('Please create the "challenges" category first.');
       }
 
-      // Copy the exam questions and layout to the active user as a challenge exam type
+
       const { data: examData, error: examErr } = await supabase
         .from('exams')
         .select('examName, totalQuestions, difficulty, totalTime, subjects, generatedExam, correct_marks, negative_marks, ExamPlan')
@@ -516,7 +516,7 @@ export default function Friends() {
 
       if (examErr || !examData) throw examErr || new Error('Exam details not found');
 
-      // Insert new exam for receiver
+
       const { data: newExam, error: insErr } = await supabase
         .from('exams')
         .insert({
@@ -544,7 +544,7 @@ export default function Friends() {
 
       if (insErr || !newExam) throw insErr || new Error('Failed to copy exam');
 
-      // Set challenge status to 'active' and store copied exam ID
+
       const { error } = await supabase
         .from('challenges')
         .update({
@@ -807,7 +807,7 @@ export default function Friends() {
         <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
           <button
             onClick={() => setActiveTab('friends')}
-            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'friends'
+            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold  tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'friends'
               ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-650 dark:hover:text-gray-300'
               }`}
@@ -817,7 +817,7 @@ export default function Friends() {
           </button>
           <button
             onClick={() => setActiveTab('challenges')}
-            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'challenges'
+            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold  tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'challenges'
               ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-650 dark:hover:text-gray-300'
               }`}
@@ -827,13 +827,13 @@ export default function Friends() {
           </button>
           <button
             onClick={() => setActiveTab('search')}
-            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'search'
+            className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold  tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${activeTab === 'search'
               ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
               : 'text-zinc-400 dark:text-gray-550 hover:text-zinc-650 dark:hover:text-gray-300'
               }`}
             style={{ fontSize: fontSize.xs }}
           >
-            Search & Req
+            Search
           </button>
         </div>
 
@@ -895,7 +895,6 @@ export default function Friends() {
         )}
       </main>
 
-      {/* Modals */}
       <MissingCategoryModal
         isOpen={showMissingCategoryModal}
         creating={creatingCategory}

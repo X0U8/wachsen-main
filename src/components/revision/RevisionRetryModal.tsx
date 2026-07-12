@@ -69,17 +69,13 @@ export default function RevisionRetryModal({
           </button>
         </div>
 
-        {/* Conditional Layout: Show summary only when all questions answered */}
         {!isFinished ? (
           <div className="flex-grow flex flex-col justify-between overflow-hidden mt-4 space-y-4">
-            {/* Progress indicator */}
             <div className="flex items-center justify-between text-[10px] text-zinc-500 font-semibold uppercase tracking-wider flex-shrink-0">
               <span>Question {currentRetryIndex + 1} of {retryData.length}</span>
             </div>
 
-            {/* Scrollable Question Content Area */}
             <div className="flex-grow overflow-y-auto pr-1 space-y-4">
-              {/* Single question view */}
               <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-850/80 rounded-2xl p-5 space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-center text-xs font-bold text-zinc-650 dark:text-zinc-300 flex-shrink-0">
@@ -90,7 +86,6 @@ export default function RevisionRetryModal({
                       <MathText text={question.question || question.text || ''} />
                     </div>
 
-                    {/* MCQ & True-False: Option Buttons */}
                     {(isMCQ || isTrueFalse) ? (
                       <div className="space-y-2">
                         {question.shuffledOptions && question.shuffledOptions.map((option: string, optIdx: number) => (
@@ -99,14 +94,14 @@ export default function RevisionRetryModal({
                             onClick={() => !result && handleRetryAnswer(question.id, option)}
                             disabled={!!result}
                             className={`w-full p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${result
-                                ? result.isCorrect && String(question.correctAnswer ?? question.correct_answer) === option
-                                  ? 'bg-green-500/10 border-green-500/40 text-green-600 dark:text-green-400 font-medium'
-                                  : answer === option && !result.isCorrect
-                                    ? 'bg-red-500/10 border-red-500/40 text-red-655 dark:text-red-400 font-medium'
-                                    : 'bg-zinc-100/50 dark:bg-zinc-900/20 border-zinc-200 dark:border-zinc-850/50 opacity-40 text-zinc-450 dark:text-zinc-600'
-                                : answer === option
-                                  ? 'bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-semibold'
-                                  : 'bg-white dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-850 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800/30 text-zinc-750 dark:text-zinc-300'
+                              ? result.isCorrect && String(question.correctAnswer ?? question.correct_answer) === option
+                                ? 'bg-green-500/10 border-green-500/40 text-green-600 dark:text-green-400 font-medium'
+                                : answer === option && !result.isCorrect
+                                  ? 'bg-red-500/10 border-red-500/40 text-red-655 dark:text-red-400 font-medium'
+                                  : 'bg-zinc-100/50 dark:bg-zinc-900/20 border-zinc-200 dark:border-zinc-850/50 opacity-40 text-zinc-450 dark:text-zinc-600'
+                              : answer === option
+                                ? 'bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-semibold'
+                                : 'bg-white dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-850 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800/30 text-zinc-750 dark:text-zinc-300'
                               }`}
                           >
                             <div className="flex items-center gap-2">
@@ -141,11 +136,10 @@ export default function RevisionRetryModal({
                       </div>
                     ) : null}
 
-                    {/* Result display */}
                     {result && (
                       <div className={`mt-3 p-3 rounded-xl text-xs font-semibold ${result.isCorrect
-                          ? 'bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400'
-                          : 'bg-red-500/10 border border-red-500/30 text-red-655 dark:text-red-400'
+                        ? 'bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400'
+                        : 'bg-red-500/10 border border-red-500/30 text-red-655 dark:text-red-400'
                         }`}>
                         {result.isCorrect ? 'Correct!' : 'Incorrect'}
                       </div>
@@ -155,7 +149,6 @@ export default function RevisionRetryModal({
               </div>
             </div>
 
-            {/* Navigation / Next button (User must answer to move on) */}
             {result && (
               <div className="mt-4 flex-shrink-0">
                 <button

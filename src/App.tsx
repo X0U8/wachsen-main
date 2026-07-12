@@ -50,10 +50,10 @@ function MainApp() {
         try {
           const { data } = await supabase.from('profiles').select('is_ban').eq('id', session.user.id).single();
           if (data?.is_ban) setBanned(true);
-        } catch {}
+        } catch { }
         setBanChecked(true);
 
-        // Pre-load exam types in background
+
         const cached = localStorageCache.get(localStorageCache.keys.EXAM_CATEGORIES);
         if (cached && Array.isArray(cached) && cached.length > 0) {
           setExamTypesReady(true);
@@ -71,7 +71,7 @@ function MainApp() {
               }));
               localStorageCache.set(localStorageCache.keys.EXAM_CATEGORIES, examTypes);
             }
-          } catch {}
+          } catch { }
           setExamTypesReady(true);
         }
       } else {
@@ -87,7 +87,7 @@ function MainApp() {
     return () => { subscription.unsubscribe(); };
   }, []);
 
-  // Show loading until session, ban, exam types, and profile are all resolved
+
   if (sessionLoading || (session && !banChecked) || (session && !examTypesReady) || profileLoading) {
     return <Loading />;
   }

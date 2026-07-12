@@ -35,7 +35,7 @@ export default function PlanWizard({
   setErrorMsg,
   onCancel
 }: PlanWizardProps) {
-  const [step, setStep] = useState<number>(1); // 1 = Exam Name, 2 = Subjects, 3 = Syllabus/Chapters, 4 = Days Slider
+  const [step, setStep] = useState<number>(1);
   const [subjectText, setSubjectText] = useState<string>('');
 
   const handleAddSubject = () => {
@@ -322,7 +322,7 @@ export default function PlanWizard({
   );
 }
 
-// Simple internal Loader helper since Loader2 is used conditionally
+
 function Loader2({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg

@@ -6,7 +6,7 @@ import { fontSize } from '../lib/utils';
 interface ConceptCardData {
   question: string;
   options: string[];
-  correctAnswers: number[]; // indices of correct options, e.g. [0, 2]
+  correctAnswers: number[];
   explanation: string;
 }
 
@@ -53,7 +53,7 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
 
   const handleCheckAnswer = () => {
     const correctAnswers = currentCard.correctAnswers || [];
-    // Compare selectedOptions and correctAnswers exactly (order-independent)
+
     const isCorrect =
       selectedOptions.length === correctAnswers.length &&
       selectedOptions.every(val => correctAnswers.includes(val));
@@ -78,7 +78,6 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg h-[600px] flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white">
-        {/* Top Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div>
@@ -96,7 +95,6 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
 
         {!isFinished ? (
           <div className="flex-grow flex flex-col justify-between overflow-hidden mt-4 space-y-4">
-            {/* Progress Bar */}
             <div className="space-y-1.5 flex-shrink-0">
               <div className="flex items-center justify-between text-zinc-500 font-semibold tracking-wider" style={{ fontSize: fontSize.xs }}>
                 <span>Card {currentIndex + 1} of {cards.length}</span>
@@ -110,16 +108,13 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
               </div>
             </div>
 
-            {/* Flashcard Scrollable Content Area */}
             <div className="flex-grow overflow-y-auto pr-1 space-y-4">
-              {/* Question Text */}
               <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-5 space-y-3">
                 <div className="text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal h-32 overflow-y-auto pr-1" style={{ fontSize: fontSize.sm }}>
                   <MathText text={currentCard.question} />
                 </div>
               </div>
 
-              {/* 4 Options Grid */}
               <div className="space-y-2">
                 {currentCard.options && currentCard.options.map((option, optIdx) => {
                   const isSelected = selectedOptions.includes(optIdx);
@@ -158,7 +153,6 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
                 })}
               </div>
 
-              {/* Explanation (Back card view) */}
               {isFlipped && (
                 <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2 animate-in fade-in duration-200">
                   <div className="font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider" style={{ fontSize: fontSize.xs }}>Explanation</div>
@@ -169,7 +163,6 @@ export default function ConceptCards({ onClose, cards = [] }: ConceptCardsProps)
               )}
             </div>
 
-            {/* Bottom Actions */}
             <div className="pt-2 flex-shrink-0">
               {!isFlipped ? (
                 <button

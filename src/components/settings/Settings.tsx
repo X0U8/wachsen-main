@@ -40,7 +40,7 @@ export default function Settings() {
     if (savedKey) setMeshKey(savedKey);
     const savedModels = localStorage.getItem('mesh_models');
     if (savedModels) {
-      try { const m = JSON.parse(savedModels); if (Array.isArray(m) && m.length > 0) setModels(m); } catch {}
+      try { const m = JSON.parse(savedModels); if (Array.isArray(m) && m.length > 0) setModels(m); } catch { }
     }
     const savedActive = localStorage.getItem('mesh_active_model');
     if (savedActive) setActiveModel(savedActive);
@@ -124,7 +124,7 @@ export default function Settings() {
           if (db.name) indexedDB.deleteDatabase(db.name);
         }
       }
-    } catch {}
+    } catch { }
     await logout();
   };
 
@@ -169,15 +169,18 @@ export default function Settings() {
             />
           </div>
 
-          <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-3">
+          <div
+            onClick={() => navigate('/subscription')}
+            className="w-full text-left bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-3 cursor-pointer hover:border-zinc-300 dark:hover:border-gray-700 transition-all"
+          >
+
             <Row
               label="Subscription"
               sub={userProfile?.PremiumType || 'Free plan'}
               right={
-                <button onClick={() => navigate('/subscription')}
-                  className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-gray-200 transition-colors cursor-pointer">
+                <div className="p-1 text-zinc-400">
                   <ChevronRight className="w-4 h-4" />
-                </button>
+                </div>
               }
             />
           </div>

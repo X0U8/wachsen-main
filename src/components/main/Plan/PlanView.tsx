@@ -38,7 +38,6 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
     <div className="fixed inset-0 z-[100] bg-zinc-50 dark:bg-zinc-950 overflow-y-auto p-6 md:p-10 animate-fadeIn">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Toast alerts */}
         {errorMsg && (
           <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl flex items-center gap-3 animate-fadeIn">
             <span className="font-medium text-xs leading-relaxed">{errorMsg}</span>
@@ -57,7 +56,6 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
           </div>
         )}
 
-        {/* Top bar header */}
         <div className="flex items-center justify-between border-b border-black/15 dark:border-white/20 pb-4 gap-4">
           <button
             onClick={onBack}
@@ -73,7 +71,6 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
           <div className="w-10" />
         </div>
 
-        {/* Navigation Tabs bar - Supports mobile hiding of full text */}
         <div className="flex bg-zinc-100 dark:bg-gray-900/80 p-1.5 rounded-2xl gap-1">
           <button
             onClick={() => setActiveTab('monthly')}
@@ -120,7 +117,6 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
           </button>
         </div>
 
-        {/* Tab content rendering */}
         <div className="pt-2">
           {activeTab === 'monthly' && (
             <PlanViewMonthly createdAt={createdAt} planJson={planJson} />

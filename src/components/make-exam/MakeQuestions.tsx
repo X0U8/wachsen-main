@@ -49,7 +49,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
   const [applyingTemplate, setApplyingTemplate] = useState(false);
   const [generating, setGenerating] = useState(false);
 
-  // Add no-scrollbar style
+
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -60,7 +60,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     return () => style.remove();
   }, []);
 
-  // Close template dropdown on outside click
+
   useEffect(() => {
     if (!showTemplateList) return;
     const handler = (e: MouseEvent) => {
@@ -90,7 +90,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
   const [endDateTime, setEndDateTime] = useState('anytime');
   const [accessType, setAccessType] = useState<'anytime' | 'specific'>('anytime');
 
-  // Time picker state (for specific schedule)
+
   const [startDate, setStartDate] = useState('');
   const [startHour, setStartHour] = useState(12);
   const [startMinute, setStartMinute] = useState(0);
@@ -136,7 +136,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     setStartDate(sd); setStartHour(h); setStartMinute(min); setStartAmPm(ap);
     const startIso = toISO(sd, h, min, ap);
 
-    // End = start + max(30, duration)
+
     const addMins = Math.max(30, totalTime);
     const end = new Date(new Date(startIso).getTime() + addMins * 60000);
     const ed = end.toISOString().slice(0, 10);
@@ -162,7 +162,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     selectedTypes.includes('integer') && NON_INT_SUBJECTS.has(sub.name.toLowerCase().trim())
   );
 
-  // Get max questions based on premium tier
+
   const getMaxTemplates = () => {
     const premiumType = userProfile?.PremiumType || '';
     if (premiumType.toLowerCase().includes('peak')) return 30;
@@ -176,16 +176,16 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     if (premiumType.toLowerCase().includes('peak')) return 125;
     if (premiumType.toLowerCase().includes('rise')) return 100;
     if (premiumType.toLowerCase().includes('lite')) return 75;
-    return 25; // Free tier
+    return 25;
   };
 
-  // Get max subjects based on premium tier
+
   const getMaxSubjects = () => {
     const premiumType = (userProfile as any)?.PremiumType || '';
     if (premiumType.toLowerCase().includes('peak')) return 10;
     if (premiumType.toLowerCase().includes('rise')) return 8;
     if (premiumType.toLowerCase().includes('lite')) return 5;
-    return 3; // Free tier
+    return 3;
   };
 
   const maxQuestions = getMaxQuestions();
@@ -398,7 +398,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
 
   return (
     <>
-      {/* Main AI Form */}
       <motion.div
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
@@ -463,7 +462,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
         <main className="flex-1 overflow-y-auto p-4 space-y-8 pb-32 no-scrollbar">
           {step === 'details' && (
             <>
-              {/* Basic Details */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2 text-blue-500 mb-2">
                   <h3 className="font-medium tracking-wider" style={{ fontSize: fontSize.xs }}>Basic Details</h3>
@@ -619,7 +617,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                 </div>
               </section>
 
-              {/* Question Types */}
               <section className="space-y-4">
                 <div className="flex items-center gap-2 text-blue-500">
                   <h3 className="font-medium tracking-wider" style={{ fontSize: fontSize.xs }}>Question Types</h3>
@@ -695,7 +692,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             </>
           )}
 
-          {/* Subject Selection */}
           {step === 'subjects' && (
             <section className="space-y-6">
               <div className="flex items-center justify-between">
@@ -791,7 +787,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
 
         </main>
 
-        {/* Footer */}
         <footer className="p-4 border-t border-zinc-200 dark:border-gray-900 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md fixed bottom-0 left-0 right-0 z-10">
           <div className="max-w-md mx-auto">
             {step === 'details' ? (
@@ -841,7 +836,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           </div>
         </footer>
 
-        {/* Template Save Modal */}
         {showTemplateModal && (
           <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6"
             onClick={(e) => { if (e.target === e.currentTarget) { setShowTemplateModal(false); setTemplateName(''); } }}>
@@ -893,7 +887,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
       />
 
 
-      {/* Upgrade Modal */}
       {showUpgradeModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-sm space-y-4">

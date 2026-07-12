@@ -2,7 +2,7 @@ import { useState, useRef, DragEvent, ChangeEvent, useEffect, MouseEvent as Reac
 import { Upload, X, FileText, Sparkles, Image as ImageIcon, Camera, RefreshCw } from 'lucide-react';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
-// @ts-ignore
+
 import * as pdfjsLib from 'pdfjs-dist';
 
 export interface ScannedFile {
@@ -41,7 +41,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isPdfProcessing, setIsPdfProcessing] = useState(false);
 
-  // Crop Editor States
+
   const [cropQueue, setCropQueue] = useState<CropQueueItem[]>([]);
   const [cropIndex, setCropIndex] = useState<number>(0);
   const [zoom, setZoom] = useState<number>(1);
@@ -55,19 +55,19 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cropImgRef = useRef<HTMLImageElement>(null);
 
-  // Propagate files changes to parent — done in effect to avoid calling parent setState during render
+
   useEffect(() => {
     onFilesChange(files);
   }, [files]);
 
-  // Get max allowed scanning pages based on tier
+
   const getScanLimit = () => {
     if (maxPages) return maxPages;
     const premiumType = userProfile?.PremiumType || '';
     if (premiumType.toLowerCase().includes('peak')) return 25;
     if (premiumType.toLowerCase().includes('rise')) return 20;
     if (premiumType.toLowerCase().includes('lite')) return 15;
-    return 10; // Free tier pages limit
+    return 10;
   };
 
   const scanLimit = getScanLimit();
@@ -114,7 +114,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
 
           for (let i = 1; i <= pdfDoc.numPages; i++) {
             const page = await pdfDoc.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 }); // Good readability resolution
+            const viewport = page.getViewport({ scale: 1.5 });
 
             const canvas = document.createElement('canvas');
             canvas.width = viewport.width;
@@ -139,7 +139,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                     });
                   }
                   resBlob();
-                }, 'image/jpeg', 0.80); // Compress each page to 80% quality JPEG
+                }, 'image/jpeg', 0.80);
               });
             }
           }
@@ -154,7 +154,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
     });
   };
 
-  // Convert files and queue images for crop if necessary
+
   const handleFiles = async (fileList: FileList) => {
     const imagesToCrop: CropQueueItem[] = [];
     const directFiles: ScannedFile[] = [];
@@ -168,7 +168,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
 
       if (!isImage && !isPdf) continue;
 
-      // File Size limits
+
       if (isPdf && file.size > 10 * 1024 * 1024) {
         limitExceededMsg = `PDF "${file.name}" exceeds the 10MB limit.`;
         continue;
@@ -179,7 +179,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
       }
 
       if (isImage) {
-        // Enforce page limits for crops
+
         if (currentTotalPages + 1 > scanLimit) {
           limitExceededMsg = `Page limit of ${scanLimit} reached. Cannot add "${file.name}".`;
           break;
@@ -223,7 +223,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
     }
   };
 
-  // Image load details inside Cropper to calculate base dimensions
+
   const onCropImageLoad = () => {
     if (cropImgRef.current) {
       const img = cropImgRef.current;
@@ -233,7 +233,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
       let baseW = 0;
       let baseH = 0;
 
-      // Fit to cover a 256x256 square viewport
+
       if (w > h) {
         baseH = 256;
         baseW = 256 * (w / h);
@@ -254,7 +254,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
   const constrainOffset = (x: number, y: number, currentZoom: number) => {
     const scaledW = imgDimensions.baseW * currentZoom;
     const scaledH = imgDimensions.baseH * currentZoom;
-    
+
     const minX = 256 - scaledW;
     const maxX = 0;
     const minY = 256 - scaledH;
@@ -266,7 +266,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
     };
   };
 
-  // Pan controls
+
   const handleDragStart = (clientX: number, clientY: number) => {
     setIsDragging(true);
     setDragStart({ x: clientX - offset.x, y: clientY - offset.y });
@@ -283,14 +283,14 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
     setIsDragging(false);
   };
 
-  // Zoom adjustor
+
   const handleZoomChange = (newZoom: number) => {
     setZoom(newZoom);
-    // Recalculate offsets to fit container boundaries
+
     setOffset(prev => constrainOffset(prev.x, prev.y, newZoom));
   };
 
-  // Canvas Crop & Export at 512x512 resolution
+
   const cropImage = () => {
     const currentItem = cropQueue[cropIndex];
     if (currentItem && cropImgRef.current && canvasRef.current) {
@@ -311,8 +311,8 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
 
         ctx.drawImage(
           img,
-          srcX, srcY, srcSize, srcSize, // Source selected area
-          0, 0, 512, 512 // Destination 512x512 size
+          srcX, srcY, srcSize, srcSize,
+          0, 0, 512, 512
         );
 
         canvas.toBlob((blob) => {
@@ -333,20 +333,20 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
       }
     }
 
-    // Clean current preview URL and advance
+
     URL.revokeObjectURL(currentItem.previewUrl);
-    
+
     if (cropIndex + 1 < cropQueue.length) {
       setCropIndex(cropIndex + 1);
     } else {
-      // Finished all crops
+
       setCropQueue([]);
       setCropIndex(0);
     }
   };
 
   const cancelCrop = () => {
-    // Revoke all remaining urls
+
     cropQueue.forEach(item => URL.revokeObjectURL(item.previewUrl));
     setCropQueue([]);
     setCropIndex(0);
@@ -359,12 +359,12 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
       }
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: facingMode, width: { ideal: 1024 }, height: { ideal: 1024 } },
         audio: false
       });
-      
+
       setCameraStream(stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -399,22 +399,22 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
-      
+
       if (context) {
         const size = Math.min(video.videoWidth, video.videoHeight);
         canvas.width = 512;
         canvas.height = 512;
-        
+
         const startX = (video.videoWidth - size) / 2;
         const startY = (video.videoHeight - size) / 2;
-        
+
         context.drawImage(video, startX, startY, size, size, 0, 0, 512, 512);
-        
+
         canvas.toBlob((blob) => {
           if (blob) {
             const timestamp = new Date().getTime();
             const file = new File([blob], `scan_capture_${timestamp}.jpg`, { type: 'image/jpeg' });
-            
+
             if (totalPages + 1 <= scanLimit) {
               const scannedFile: ScannedFile = {
                 id: Math.random().toString(36).substr(2, 9),
@@ -473,7 +473,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
   const updatePages = (id: string, count: number) => {
     const fileToUpdate = files.find(f => f.id === id);
     if (!fileToUpdate) return;
-    
+
     const pageDifference = count - fileToUpdate.pagesCount;
     if (totalPages + pageDifference > scanLimit) {
       return;
@@ -520,10 +520,8 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
         </div>
       )}
 
-      {/* Always-mounted offscreen canvas used by both camera capture and image cropper */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Interactive Drag/Zoom Image Cropper overlay */}
       {currentCropItem && (
         <div className="relative border border-black/15 dark:border-white/20 rounded-2xl bg-zinc-950 flex flex-col items-center p-4 gap-4">
           <div className="flex items-center justify-between w-full">
@@ -534,9 +532,8 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
               <X className="w-4 h-4" />
             </button>
           </div>
- 
-          {/* Interactive Pan and Zoom square boundary */}
-          <div 
+
+          <div
             className="relative w-full max-w-[256px] aspect-square rounded-xl overflow-hidden bg-black border border-zinc-800 cursor-move select-none"
             onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)}
             onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)}
@@ -563,11 +560,9 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                 userSelect: 'none'
               }}
             />
-            {/* Guide crosshair */}
             <div className="absolute inset-0 border-2 border-dashed border-blue-500/50 rounded-xl pointer-events-none flex items-center justify-center" />
           </div>
- 
-          {/* Zoom Slider Controls */}
+
           <div className="w-full max-w-[256px] space-y-1">
             <div className="flex justify-between text-zinc-400" style={{ fontSize: '0.65rem' }}>
               <span>Scale zoom:</span>
@@ -583,7 +578,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
               className="w-full accent-blue-500 cursor-pointer"
             />
           </div>
- 
+
           <button
             type="button"
             onClick={cropImage}
@@ -595,10 +590,8 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
         </div>
       )}
 
-      {/* Drag & Drop Upload Zone */}
       {!cameraActive && !currentCropItem && (
         <div className="flex flex-col gap-2">
-          {/* PDF processing overlay */}
           {isPdfProcessing ? (
             <div className="border-2 border-dashed border-blue-500/40 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-blue-500/5">
               <div className="relative">
@@ -616,11 +609,10 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
               onDragLeave={handleDrag}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                dragActive
+              className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${dragActive
                   ? 'border-blue-500 bg-blue-500/5'
                   : 'border-zinc-300 dark:border-gray-800 hover:border-zinc-400 dark:hover:border-gray-700 hover:bg-zinc-50 dark:hover:bg-white/5'
-              }`}
+                }`}
             >
               <input
                 ref={fileInputRef}
@@ -657,7 +649,6 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
         </div>
       )}
 
-      {/* Camera Active Module View */}
       {cameraActive && !currentCropItem && (
         <div className="relative border border-zinc-200 dark:border-gray-800 rounded-2xl bg-black overflow-hidden flex flex-col items-center justify-center p-4 min-h-[340px]">
           <div className="relative w-full max-w-[280px] aspect-square rounded-xl overflow-hidden bg-zinc-950 border border-zinc-800">
@@ -667,7 +658,6 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
               playsInline
               className="w-full h-full object-cover"
             />
-            {/* Centered Guide Overlay */}
             <div className="absolute inset-0 border-2 border-dashed border-blue-500/60 rounded-xl pointer-events-none flex items-center justify-center">
               <div className="text-white/50 text-[10px] font-medium bg-black/50 px-2 py-0.5 rounded backdrop-blur-[2px]">
                 512 x 512 Crop Frame
@@ -720,7 +710,6 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
         </div>
       )}
 
-      {/* File Previews List */}
       {files.length > 0 && !currentCropItem && (
         <div className="space-y-3">
           <div className="grid gap-2 max-h-48 overflow-y-auto pr-1 animate-fadeIn">
@@ -751,7 +740,6 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                   </div>
                 </div>
 
-                {/* Subject Selector Dropdown */}
                 <select
                   value={file.subjectId || ''}
                   onChange={(e) => {
@@ -768,7 +756,6 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                   ))}
                 </select>
 
-                {/* PDF Page estimation adjustment */}
                 {file.type === 'application/pdf' && (
                   <div className="flex items-center gap-1.5 bg-zinc-200/50 dark:bg-gray-900/60 rounded-lg px-2 py-1 shrink-0">
                     <span className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: '0.65rem' }}>Pages:</span>
@@ -795,7 +782,6 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
             ))}
           </div>
 
-          {/* Bulk Subject Selector */}
           {selectedSubjects.length > 0 && files.length > 1 && (
             <div className="flex items-center justify-between gap-3 p-3 bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/10 dark:border-violet-500/20 rounded-xl">
               <span className="text-zinc-600 dark:text-gray-300 font-medium" style={{ fontSize: '0.75rem' }}>
@@ -807,7 +793,7 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                   if (!subId) return;
                   const subName = selectedSubjects.find(s => s.id === subId)?.name || '';
                   applySubjectToAll(subId, subName);
-                  e.target.value = ''; // Reset select placeholder
+                  e.target.value = '';
                 }}
                 className="bg-zinc-100 dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-lg px-2 py-1 text-zinc-700 dark:text-gray-300 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                 style={{ maxWidth: '140px' }}

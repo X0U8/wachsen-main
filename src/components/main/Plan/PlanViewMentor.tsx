@@ -31,7 +31,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
   const [loadingCategories, setLoadingCategories] = useState<boolean>(true);
   const [showSelectModal, setShowSelectModal] = useState<boolean>(false);
 
-  // Chat states
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(20);
   const [inputValue, setInputValue] = useState<string>('');
@@ -49,7 +49,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
   const diffDays = Math.max(0, Math.floor((currentMidnight - createdMidnight) / (1000 * 60 * 60 * 24)));
   const currentActiveMonth = Math.floor(diffDays / 30) + 1;
 
-  // Load Categories on mount
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -68,12 +68,12 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
               ? cat.subjects.some((s: string) => s.toLowerCase() === 'any')
               : typeof cat.subjects === 'string' && (cat.subjects as string).toLowerCase() === 'any';
 
-            // Hide challenges and others if they have academicLevel = 'any' or subjects = 'any'
+
             if (nameLower === 'challenges' || nameLower === 'others') {
               if (hasAnyAcademic || hasAnySubject) return false;
             }
 
-            // Also hide if academic level or subjects are 'any'
+
             if (hasAnyAcademic || hasAnySubject) return false;
 
             return true;
@@ -81,7 +81,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
 
           setCategories(filtered.map(f => ({ id: f.id, name: f.name })));
 
-          // Check if category is already linked in localStorage
+
           const savedCatId = localStorage.getItem(`mentor_linked_category_${planId}`);
           if (savedCatId) {
             const found = filtered.find(c => c.id === savedCatId);
@@ -102,7 +102,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
     }
   }, [userProfile?.id, planId]);
 
-  // Load chat history from IndexedDB when planId is ready
+
   useEffect(() => {
     const loadChat = async () => {
       const savedChats = await idbGet(`mentor_chat_${planId}`);
@@ -112,7 +112,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
     loadChat();
   }, [planId]);
 
-  // Auto scroll to bottom
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, visibleCount]);
@@ -140,7 +140,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
 
     const useOwnKey = localStorage.getItem('use_own_key') === 'true';
 
-    // Verify system key setting
+
     if (useOwnKey) {
       setErrorMsg("Mentor AI can only be queried using our default credit system. Please disable 'Use Own Key' in Settings.");
       setSending(false);
@@ -156,7 +156,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
       return;
     }
 
-    // 1. Instantly append User message to state
+
     const userMsgObj: Message = {
       id: Math.random().toString(36).substring(2),
       sender: 'user',
@@ -171,7 +171,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
       const session = await supabase.auth.getSession();
       const authToken = session.data?.session?.access_token || '';
 
-      // 2. Fetch active tasks context (Current Month)
+
       const { data: activeTasksRecord } = await supabase
         .from('study_plan_details')
         .select('details_json')
@@ -181,7 +181,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
 
       const activeTasks = activeTasksRecord?.details_json || [];
 
-      // 3. Fetch user's performance history for linked category (last 5 completed exams)
+
       const { data: categoryExams } = await supabase
         .from('exams')
         .select('id, examName, ExamPlan')
@@ -210,13 +210,13 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
         });
       }
 
-      // 4. Send API request with short context payload
+
       const response = await fetch('/api/mentor-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessageText,
-          chatHistory: updatedMessages.slice(-10), // Send last 10 messages only for token efficiency
+          chatHistory: updatedMessages.slice(-10),
           activeTasks,
           examsPerformance,
           currentTime: new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }),
@@ -230,7 +230,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
         throw new Error(data.error || 'Failed to fetch response from Mentor.');
       }
 
-      // 5. Append AI message response
+
       const aiMsgObj: Message = {
         id: Math.random().toString(36).substring(2),
         sender: 'ai',
@@ -250,7 +250,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
     }
   };
 
-  // Slice visible messages based on pagination limit
+
   const visibleMessages = messages.slice(-visibleCount);
   const showLoadOlder = messages.length > visibleCount;
 
@@ -279,7 +279,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
         </div>
       ) : (
         <div className="border border-black/15 dark:border-white/20 bg-white dark:bg-zinc-900/40 rounded-3xl overflow-hidden flex flex-col h-[600px] shadow-sm animate-fadeIn relative">
-          
+
           <div className="px-4 py-3 bg-zinc-50/50 dark:bg-zinc-950/40 border-b border-black/15 dark:border-white/20 flex items-center justify-between gap-4 shrink-0">
             <div className="flex items-center gap-2">
               <h4 className="font-semibold text-zinc-700 dark:text-gray-300" style={{ fontSize: fontSize.xs }}>
@@ -373,7 +373,6 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
       {showSelectModal && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-sm flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white text-left animate-in zoom-in-95 duration-200">
-            {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-900">
               <h3 className="font-bold text-zinc-800 dark:text-white tracking-wider" style={{ fontSize: fontSize.sm }}>Select Exam Type</h3>
               <button
@@ -384,7 +383,6 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
               </button>
             </div>
 
-            {/* List */}
             <div className="my-4 max-h-60 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
               {loadingCategories ? (
                 <div className="flex items-center justify-center py-6">
@@ -411,7 +409,6 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
               )}
             </div>
 
-            {/* Footer */}
             <div className="border-t border-zinc-100 dark:border-zinc-900 pt-3">
               <button
                 onClick={() => setShowSelectModal(false)}

@@ -39,7 +39,7 @@ function normalizeResultQuestions(rawGeneratedExam: unknown, parsedSubjects: any
 
   const subjectsList = Array.isArray(parsedSubjects) ? parsedSubjects : [];
 
-  // Newer exams are stored as a flat array of question objects.
+
   if (Array.isArray(parsed) && parsed.length > 0 && (parsed[0]?.question || parsed[0]?.text)) {
     const subjectMap = new Map<string, any[]>();
 
@@ -150,7 +150,7 @@ export default function ResultDetails() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [expandedSubjectIdx, setExpandedSubjectIdx] = useState<number | null>(null);
 
-  // AI Tutor state
+
   const [tutorQuestion, setTutorQuestion] = useState<any>(null);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [examMeta, setExamMeta] = useState<{
@@ -195,7 +195,7 @@ export default function ResultDetails() {
       }));
     }
 
-    // Fallback: build unique subjects list directly from the questions array
+
     const uniqueSubjects = new Map<string, number>();
     questions.forEach(q => {
       const sName = q.subject || q.subjectName || 'Unknown';
@@ -299,7 +299,7 @@ export default function ResultDetails() {
         let examDoc: any = null;
 
         if (viewUserId && examId) {
-          // If viewUserId is different from the logged in user, we must verify the challenge link
+
           if (viewUserId !== userProfile.id) {
             setIsRestrictedView(true);
             const { data: chCheck, error: chErr } = await supabase
@@ -317,7 +317,7 @@ export default function ResultDetails() {
           }
           setIsAuthorized(true);
 
-          // Find the result matching viewUserId and examId
+
           const { data: resData, error: getResultError } = await supabase
             .from('results')
             .select('*')
@@ -327,14 +327,14 @@ export default function ResultDetails() {
 
           if (getResultError) throw getResultError;
           if (!resData) {
-            // No result found for this user/exam
+
             setResult(null);
             setLoading(false);
             return;
           }
           resDoc = resData;
         } else {
-          // Standard view by resultId
+
           setIsAuthorized(true);
 
           const cacheKey = `result_details_${resultId}`;
@@ -344,7 +344,7 @@ export default function ResultDetails() {
             resDoc = cached.resDoc;
             examDoc = cached.examDoc;
           } else {
-            // Fetch result document from Supabase
+
             const { data, error: getResultError } = await supabase
               .from('results')
               .select('*')
@@ -355,7 +355,7 @@ export default function ResultDetails() {
             resDoc = data;
           }
 
-          // If the owner of the result is not the logged-in user, verify challenge relationship
+
           if (resDoc && resDoc.userId !== userProfile.id) {
             setIsRestrictedView(true);
             const { data: chCheck } = await supabase
@@ -379,7 +379,7 @@ export default function ResultDetails() {
           setLoading(false);
           setLoadingQuestions(true);
 
-          // If we already loaded examDoc from cache, great. Otherwise fetch from Supabase
+
           if (!examDoc) {
             const { data: examDocs, error: examError } = await supabase
               .from('exams')
@@ -399,7 +399,7 @@ export default function ResultDetails() {
         }
 
         if (examDoc) {
-          // Set subjects column if exists (contains chapter info)
+
           let subjectsParsed: any[] = [];
           if (examDoc.subjects) {
             subjectsParsed = parseStoredValue(examDoc.subjects, []);
@@ -419,14 +419,14 @@ export default function ResultDetails() {
             setSubjectQuestionCounts(counts);
           }
 
-          // Set ExamPlan if exists
+
           if (examDoc.ExamPlan) {
             const planParsed = parseStoredValue(examDoc.ExamPlan, null);
             setExamPlan(planParsed);
           }
         }
 
-        // Live check for revision (never cached)
+
         if (resDoc && !isRestrictedView) {
           try {
             const { data: existingRev } = await supabase
@@ -451,7 +451,7 @@ export default function ResultDetails() {
     fetchResult();
   }, [resultId, viewUserId, examId, userProfile?.id]);
 
-  // Scroll listener for scroll-to-top button
+
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 400);
@@ -460,7 +460,7 @@ export default function ResultDetails() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Reset selection when filter changes
+
   useEffect(() => {
     setSelectedQuestionId(null);
   }, [filter]);
@@ -469,7 +469,7 @@ export default function ResultDetails() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Analytics Calculations
+
   const analytics = useMemo(() => {
     if (!result || questions.length === 0) return null;
 
@@ -486,7 +486,7 @@ export default function ResultDetails() {
 
     const avgTimePerAttempt = attempted > 0 ? (totalTimeTakenSec / attempted) : 0;
 
-    // Chapter-wise analytics: computed by matching question subject names
+
     const chapterAnalytics: Record<string, { correct: number, wrong: number, total: number, start: number, end: number, subject: string }> = {};
     analysisSubjects.forEach((subject: any, idx: number) => {
       const key = String(idx);
@@ -505,13 +505,13 @@ export default function ResultDetails() {
       });
     });
 
-    // 1. Line Graph Data (Time consumed per question)
+
     const timePerQuestionData = questions.map((q, idx) => ({
       name: `Q${idx + 1}`,
       time: questionTimes[q.id] || 0
     }));
 
-    // 2. Difficulty vs Performance Data
+
     const difficultyDataMap: Record<string, { correct: number, wrong: number, skipped: number }> = {
       easy: { correct: 0, wrong: 0, skipped: 0 },
       medium: { correct: 0, wrong: 0, skipped: 0 },
@@ -532,19 +532,19 @@ export default function ResultDetails() {
       ...stats
     }));
 
-    // 3. Doughnut Data
+
     const doughnutData = [
       { name: 'Correct', value: correctIds?.length || 0, color: '#22c55e' },
       { name: 'Wrong', value: wrongIds?.length || 0, color: '#ef4444' },
       { name: 'Skipped', value: (questions?.length || 0) - (correctIds?.length || 0) - (wrongIds?.length || 0), color: '#4b5563' }
     ];
 
-    // 4. Mental Health / Performance Matrix
+
     const performanceMatrix = {
-      quickRight: 0, // Quick thinking skill
-      quickWrong: 0, // Concept not clear / Blind guess / Silly mistake
-      slowRight: 0,  // Tough question / Confused
-      slowWrong: 0   // Silly mistake / Conceptually incorrect
+      quickRight: 0,
+      quickWrong: 0,
+      slowRight: 0,
+      slowWrong: 0
     };
 
     questions.forEach(q => {
@@ -579,7 +579,7 @@ export default function ResultDetails() {
     };
   }, [result, questions, analysisSubjects, subjectQuestionCounts]);
 
-  // Filter questions by status
+
   const filteredQuestions = useMemo(() => {
     if (!analytics) return [];
     return questions.filter(q => {
@@ -589,7 +589,7 @@ export default function ResultDetails() {
     });
   }, [questions, analytics, filter]);
 
-  // Get currently selected question (or first one as default)
+
   const selectedQuestion = useMemo(() => {
     if (filteredQuestions.length === 0) return null;
     return filteredQuestions.find(q => q.id === selectedQuestionId) || filteredQuestions[0];
@@ -676,7 +676,6 @@ export default function ResultDetails() {
       </header>
 
       <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full space-y-12">
-        {/* Top Marks Display */}
         <div className="text-center  space-y-2 py-4">
           <div className="text-5xl font-black text-zinc-900 dark:text-white" style={{ fontSize: fontSize['3xl'] }}>
             {result.marksObtained}<span className="text-blue-500">/</span><span className="text-gray-600">{result.totalMarks}</span>
@@ -684,7 +683,6 @@ export default function ResultDetails() {
 
         </div>
 
-        {/* Score Overview Cards - One Row on all screens */}
         <div className="grid grid-cols-4 gap-2 md:gap-4">
           {analytics ? [
             { label: 'Final Score', value: result.marksObtained, color: 'text-zinc-900 dark:text-white font-bold' },
@@ -709,7 +707,6 @@ export default function ResultDetails() {
           ))}
         </div>
 
-        {/* Graphs Grid */}
         {loadingQuestions ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[1, 2, 3, 4].map(i => (
@@ -724,7 +721,6 @@ export default function ResultDetails() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* 1. Line Graph: Time per Question */}
             <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-4">
               <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Time Spent Per Question</h3>
               <div className="overflow-x-auto">
@@ -761,7 +757,6 @@ export default function ResultDetails() {
               </div>
             </div>
 
-            {/* 2. Stacked Bar: Difficulty vs Performance */}
             <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-6">
               <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Difficulty Analysis</h3>
               <div className="h-64 w-full">
@@ -782,7 +777,6 @@ export default function ResultDetails() {
               </div>
             </div>
 
-            {/* 3. Doughnut: Global Distribution */}
             <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-6">
               <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Global Status</h3>
               <div className="h-64 w-full flex items-center justify-center">
@@ -810,10 +804,9 @@ export default function ResultDetails() {
               </div>
             </div>
 
-            {/* 4.  Performance Line Chart */}
             <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-6">
               <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Performance Matrix</h3>
-              <div className="grid grid-cols-2 gap-3 h-64">
+              <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
                 {[
                   { label: 'Quick + Right', value: analytics.performanceMatrix.quickRight, desc: 'Quick Thinking Skill', color: 'bg-green-500/5 dark:bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-300' },
                   { label: 'Quick + Wrong', value: analytics.performanceMatrix.quickWrong, desc: 'Silly Mistake / Blind Guess', color: 'bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300' },
@@ -829,7 +822,6 @@ export default function ResultDetails() {
               </div>
             </div>
 
-            {/* 5. Topic-wise Analysis — uses planner data when available */}
             {analysisSubjects.length > 0 && (() => {
               return (
                 <>
@@ -879,7 +871,6 @@ export default function ResultDetails() {
                     </div>
                   </div>
 
-                  {/* 6. Subject-wise Breakdown chart */}
                   <div className="bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 p-6 rounded-3xl space-y-4">
                     <h3 className="text-zinc-500 dark:text-gray-400" style={{ fontSize: fontSize.xs }}>Subject-wise Breakdown</h3>
                     <div className="h-64 overflow-x-auto">
@@ -933,7 +924,6 @@ export default function ResultDetails() {
           </div>
         )}
 
-        {/* Question Review List */}
         {!isRestrictedView && (
           loadingQuestions ? (
             <div className="space-y-4">
@@ -991,7 +981,6 @@ export default function ResultDetails() {
                 </div>
               </div>
 
-              {/* Question Number Grid - click to view */}
               <div className="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-12 lg:grid-cols-16 gap-1.5 justify-center">
                 {filteredQuestions.map((q) => {
                   const originalIndex = questions.findIndex(qq => qq.id === q.id);
@@ -1014,7 +1003,6 @@ export default function ResultDetails() {
                 })}
               </div>
 
-              {/* Selected Question Detail View */}
               {selectedQuestion && (() => {
                 const q = selectedQuestion;
                 const originalIndex = questions.findIndex(qq => qq.id === q.id);
@@ -1083,7 +1071,6 @@ export default function ResultDetails() {
                           </div>
                         </div>
 
-                        {/* Ask AI Tutor Button */}
                         <div className="flex justify-end pt-3 mt-1 border-t border-zinc-200/50 dark:border-gray-800/50">
                           <button
                             onClick={() => setTutorQuestion(q)}
@@ -1113,7 +1100,6 @@ export default function ResultDetails() {
         />
       )}
 
-      {/* AI Tutor Chat Overlay */}
       {tutorQuestion && (
         <AITutorModal
           isOpen={!!tutorQuestion}
@@ -1129,7 +1115,6 @@ export default function ResultDetails() {
         />
       )}
 
-      {/* Print Exam Preview Overlay */}
       {showPrintPreview && (
         <PrintQuestion
           isOpen={showPrintPreview}

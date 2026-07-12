@@ -84,13 +84,15 @@ export default function Exam() {
   };
 
   const greeting = `${getGreeting()}`;
+  const fullGreeting = `${greeting}, ${userProfile?.name || 'User'}`;
 
   useEffect(() => {
-    const textLength = greeting.length;
+    setShowIcon(false);
+    const textLength = fullGreeting.length;
     const typingDuration = textLength * 200;
     const timer = setTimeout(() => setShowIcon(true), typingDuration + 100);
     return () => clearTimeout(timer);
-  }, [greeting]);
+  }, [fullGreeting]);
 
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -310,7 +312,7 @@ export default function Exam() {
     const hasAnySubject = Array.isArray(cat.subjects)
       ? cat.subjects.some((s: string) => s.toLowerCase() === 'any')
       : typeof cat.subjects === 'string' && (cat.subjects as string).toLowerCase() === 'any';
-    
+
     if (hasAnyAcademic || hasAnySubject) return true;
     return false;
   };
@@ -332,12 +334,11 @@ export default function Exam() {
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100 font-sans antialiased select-none pb-24">
       <header className="sticky top-0 z-40 w-full px-4 sm:px-6 py-3 sm:py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-900/80 flex items-center justify-between transition-colors duration-300">
         <div>
-          <h1 className="flex items-center gap-2 font-semibold tracking-tight text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.lg }}>
-            <TextType text={greeting} typingSpeed={200} pauseDuration={2000} showCursor={false} loop={false} />
-            <span className="hidden md:inline">, {userProfile?.name || 'User'}</span>
-            {userProfile?.PremiumType && userProfile.PremiumType !== 'Free' && (
-              <span className="hidden md:inline">
-                <PlanIcon planName={userProfile.PremiumType} className="ml-1 shrink-0 inline-block align-middle" />
+          <h1 className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-semibold tracking-tight text-zinc-800 dark:text-gray-100" style={{ fontSize: fontSize.base }}>
+            <TextType text={fullGreeting} typingSpeed={200} pauseDuration={2000} showCursor={false} loop={false} />
+            {userProfile?.PremiumType && userProfile.PremiumType !== 'Free' && showIcon && (
+              <span className="animate-fade-in inline-block align-middle">
+                <PlanIcon planName={userProfile.PremiumType} className="ml-1 shrink-0" />
               </span>
             )}
           </h1>
@@ -371,7 +372,7 @@ export default function Exam() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold uppercase tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${tab === t
+              className={`flex-1 py-2 sm:py-2.5 px-3 sm:px-4 font-semibold  tracking-wider rounded-lg transition-all duration-200 cursor-pointer ${tab === t
                 ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
                 : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
                 }`}

@@ -20,7 +20,7 @@ export default function Results() {
   const userId = userProfile?.id || null;
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Fetch exam types for filtering
+
   useEffect(() => {
     if (!userId) return;
     const fetchExamTypes = async () => {
@@ -127,8 +127,8 @@ export default function Results() {
 
           {showFilterDropdown && (
             <>
-              <div 
-                className="fixed inset-0 z-40 cursor-default" 
+              <div
+                className="fixed inset-0 z-40 cursor-default"
                 onClick={() => setShowFilterDropdown(false)}
               />
               <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
@@ -142,11 +142,10 @@ export default function Results() {
                       setExtraResults([]);
                       setShowFilterDropdown(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${
-                      !selectedExamTypeId
+                    className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${!selectedExamTypeId
                         ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
                         : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                    }`}
+                      }`}
                     style={{ fontSize: fontSize.xs }}
                   >
                     <span>All Exam Types</span>
@@ -161,11 +160,10 @@ export default function Results() {
                         setExtraResults([]);
                         setShowFilterDropdown(false);
                       }}
-                      className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${
-                        selectedExamTypeId === type.id
+                      className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${selectedExamTypeId === type.id
                           ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
                           : 'text-zinc-650 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                      }`}
+                        }`}
                       style={{ fontSize: fontSize.xs }}
                     >
                       <span className="truncate">{type.name}</span>
@@ -180,7 +178,6 @@ export default function Results() {
       </header>
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-5 pb-6 flex flex-col gap-3">
-        {/* Search Bar */}
         <div className="flex items-center gap-1.5 w-full bg-white dark:bg-gray-900/40 p-2 rounded-xl border border-zinc-200 dark:border-gray-800/80 mb-2">
           <input
             type="text"

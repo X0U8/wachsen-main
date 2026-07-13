@@ -192,15 +192,7 @@ export default function ConceptCards({ onClose, cards = [], topics, userId, cate
                 })}
               </div>
 
-              {isFlipped && (
-                <div className="mt-3 p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2 animate-in fade-in duration-200">
-                  <div
-                    className="font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-xs">Explanation</div>
-                  <div className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-xs">
-                    <MathText text={currentCard.explanation} />
-                  </div>
-                </div>
-              )}
+              
             </div>
 
             <div className="pt-2 flex-shrink-0">

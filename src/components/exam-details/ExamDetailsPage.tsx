@@ -78,13 +78,12 @@ For each question, provide:
 1. "question": The conceptual question text.
 2. "options": An array of exactly 4 choices.
 3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).
-4. "explanation": A concise explanation of the correct answers.
 
 For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
 VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes so it is valid JSON and parses correctly.
 
 Return ONLY a valid JSON array matching this format:
-[{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2], "explanation": "..."}]`,
+[{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2]}]`,
           correctAnswer: '',
           userAnswer: '',
           userId: userProfile?.id,

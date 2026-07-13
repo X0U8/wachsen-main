@@ -174,9 +174,14 @@ export default function RevisionLog() {
     }
     if (!examId) {
       setExtraRevisionLogs([]);
-      setRevisionList([]);
+      const newCacheKey = `cached_revision_logs_${userProfile?.id}_${selectedExamTypeId}_${activeSearchQuery}`;
+      try {
+        setRevisionList(JSON.parse(localStorage.getItem(newCacheKey) || '[]'));
+      } catch {
+        setRevisionList([]);
+      }
     }
-  }, [selectedExamTypeId, activeSearchQuery, examId]);
+  }, [selectedExamTypeId, activeSearchQuery, examId, userProfile?.id]);
 
 
   useEffect(() => {

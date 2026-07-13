@@ -25,7 +25,8 @@ export default async function handler(req, res) {
       apiKey: userKey,
       useOwnKey,
       provider,
-      model
+      model,
+      stream = false
     } = req.body;
 
     const isByok = !!(useOwnKey && userKey && userKey.trim());
@@ -88,6 +89,29 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
     const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);
     const apiLabel = isMistral ? 'Mistral' : 'Mesh';
 
+    let finalCredits = null;
+    let creditsDeducted = 0;
+    const refundCredits = async () => {
+      if (creditsDeducted > 0 && authedSupabase && userId) {
+        const { data: updated } = await authedSupabase.from('profiles')
+          .update({ credits: currentCredits })
+          .eq('id', userId)
+          .select('credits');
+        finalCredits = updated?.[0]?.credits ?? currentCredits;
+        creditsDeducted = 0;
+      }
+    };
+
+    if (stream && !useOwnKey && authedSupabase && userId) {
+      creditsDeducted = 1;
+      const newCreditsTotal = Math.max(0, currentCredits - creditsDeducted);
+      const { data: updated } = await authedSupabase.from('profiles')
+        .update({ credits: newCreditsTotal })
+        .eq('id', userId)
+        .select('credits');
+      finalCredits = updated?.[0]?.credits ?? newCreditsTotal;
+    }
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -98,20 +122,47 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
         model: activeModel,
         messages: conversationMessages,
         temperature: 0.7,
-        ...(!isMistral && { reasoning: { enabled: false } })
+        ...(!isMistral && { reasoning: { enabled: false } }),
+        stream: stream
       })
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      return res.status(502).json({ error: `${apiLabel} API request failed`, code: data.error?.code, details: data.error?.message || JSON.stringify(data) });
+      const errText = await response.text();
+      let errData = {};
+      try { errData = JSON.parse(errText); } catch (_) {}
+      await refundCredits();
+      return res.status(502).json({
+        error: `${apiLabel} API request failed`,
+        code: errData.error?.code,
+        details: errData.error?.message || errText
+      });
     }
 
+    if (stream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Content-Encoding', 'none');
+
+      try {
+        const reader = response.body.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          res.write(value);
+        }
+      } catch (streamErr) {
+        console.error('Ask question stream error:', streamErr);
+      } finally {
+        res.end();
+      }
+      return;
+    }
+
+    const data = await response.json();
     const reply = data.choices?.[0]?.message?.content || '';
 
-    let finalCredits = null;
-    let creditsDeducted = 0;
     if (!useOwnKey && authedSupabase && userId) {
       creditsDeducted = 1;
       const newCreditsTotal = Math.max(0, currentCredits - creditsDeducted);

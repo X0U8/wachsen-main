@@ -225,21 +225,81 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
         })
       });
 
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch response from Mentor.');
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData: any = {};
+        try { errorData = JSON.parse(errorText); } catch (_) {}
+        throw new Error(errorData.error || 'Failed to fetch response from Mentor.');
       }
 
-
+      const aiMsgId = Math.random().toString(36).substring(2);
       const aiMsgObj: Message = {
-        id: Math.random().toString(36).substring(2),
+        id: aiMsgId,
         sender: 'ai',
-        text: data.response,
+        text: '',
         timestamp: Date.now()
       };
-      const finalizedMessages = [...updatedMessages, aiMsgObj];
-      setMessages(finalizedMessages);
-      await idbSet(`mentor_chat_${planId}`, finalizedMessages);
+      
+      let currentMessages = [...updatedMessages, aiMsgObj];
+      setMessages(currentMessages);
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Failed to initialize stream reader.');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const cleanLine = line.trim();
+          if (!cleanLine || cleanLine === 'data: [DONE]') continue;
+
+          if (cleanLine.startsWith('data: ')) {
+            try {
+              const jsonStr = cleanLine.substring(6);
+              const parsed = JSON.parse(jsonStr);
+              const token = parsed.choices?.[0]?.delta?.content || '';
+              if (token) {
+                accumulatedText += token;
+                currentMessages = currentMessages.map(m =>
+                  m.id === aiMsgId ? { ...m, text: accumulatedText } : m
+                );
+                setMessages(currentMessages);
+              }
+            } catch (err) {
+              console.warn('Error parsing SSE stream line:', cleanLine, err);
+            }
+          }
+        }
+      }
+
+      if (buffer && buffer.startsWith('data: ')) {
+        try {
+          const cleanLine = buffer.trim();
+          if (cleanLine && cleanLine !== 'data: [DONE]') {
+            const jsonStr = cleanLine.substring(6);
+            const parsed = JSON.parse(jsonStr);
+            const token = parsed.choices?.[0]?.delta?.content || '';
+            if (token) {
+              accumulatedText += token;
+              currentMessages = currentMessages.map(m =>
+                m.id === aiMsgId ? { ...m, text: accumulatedText } : m
+              );
+              setMessages(currentMessages);
+            }
+          }
+        } catch (_) {}
+      }
+
+      await idbSet(`mentor_chat_${planId}`, currentMessages);
       refreshCredits();
 
     } catch (err: any) {

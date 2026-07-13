@@ -120,23 +120,84 @@ export default function AITutorModal({
           apiKey: useOwnKey ? userApiKey : undefined,
           useOwnKey,
           provider: activeProvider,
-          model: activeModel
+          model: activeModel,
+          stream: true
         })
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to ask tutor');
+        const errorText = await response.text();
+        let errorData: any = {};
+        try { errorData = JSON.parse(errorText); } catch (_) {}
+        throw new Error(errorData.error || 'Failed to ask tutor');
       }
 
-      setChatHistory(prev => [...prev, { role: 'assistant', content: data.reply }]);
-      if (data.creditsDeducted > 0) {
+      let currentHistory = [...updatedHistory, { role: 'assistant' as const, content: '' }];
+      setChatHistory(currentHistory);
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Failed to initialize stream reader.');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const cleanLine = line.trim();
+          if (!cleanLine || cleanLine === 'data: [DONE]') continue;
+
+          if (cleanLine.startsWith('data: ')) {
+            try {
+              const jsonStr = cleanLine.substring(6);
+              const parsed = JSON.parse(jsonStr);
+              const token = parsed.choices?.[0]?.delta?.content || '';
+              if (token) {
+                accumulatedText += token;
+                currentHistory = currentHistory.map((msg, index) =>
+                  index === currentHistory.length - 1 ? { ...msg, content: accumulatedText } : msg
+                );
+                setChatHistory(currentHistory);
+              }
+            } catch (err) {
+              console.warn('Error parsing SSE stream line:', cleanLine, err);
+            }
+          }
+        }
+      }
+
+      if (buffer && buffer.startsWith('data: ')) {
+        try {
+          const cleanLine = buffer.trim();
+          if (cleanLine && cleanLine !== 'data: [DONE]') {
+            const jsonStr = cleanLine.substring(6);
+            const parsed = JSON.parse(jsonStr);
+            const token = parsed.choices?.[0]?.delta?.content || '';
+            if (token) {
+              accumulatedText += token;
+              currentHistory = currentHistory.map((msg, index) =>
+                index === currentHistory.length - 1 ? { ...msg, content: accumulatedText } : msg
+              );
+              setChatHistory(currentHistory);
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!useOwnKey) {
         refreshCredits();
       }
     } catch (err: any) {
       console.error(err);
       showNotification('error', err.message || 'Failed to communicate with tutor');
-      setChatHistory(prev => prev.filter((_, i) => i !== prev.length - 1));
+      setChatHistory(prev => prev.filter((_, i) => i < updatedHistory.length));
       if (!customMessage) {
         setChatInput(messageText);
       }

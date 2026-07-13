@@ -115,7 +115,8 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
           model: MESH_MODEL,
           messages: messagesPayload,
           temperature: 0.7,
-          reasoning: { enabled: false }
+          reasoning: { enabled: false },
+          stream: true
         })
       });
     } catch (fetchErr) {
@@ -124,35 +125,35 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
       return res.status(502).json({ error: 'Failed to contact AI gateway', details: fetchErr.message });
     }
 
-    const responseText = await response.text();
-    console.log(`[MENTOR CHAT] Gateway status: ${response.status}`);
-
-    let data = {};
-    try {
-      if (responseText) {
-        data = JSON.parse(responseText);
-      }
-    } catch (parseErr) {
-      console.error('[MENTOR CHAT] Failed to parse JSON response:', parseErr);
-    }
-
     if (!response.ok) {
+      const errText = await response.text();
+      let errData = {};
+      try { errData = JSON.parse(errText); } catch (_) {}
       await refundCredits();
       return res.status(502).json({
         error: `Mesh API request failed`,
-        code: data.error?.code,
-        details: data.error?.message || responseText
+        code: errData.error?.code,
+        details: errData.error?.message || errText
       });
     }
 
-    const content = data.choices?.[0]?.message?.content || '';
-    if (!content) {
-      await refundCredits();
-      return res.status(502).json({ error: `Mesh API returned empty content` });
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Content-Encoding', 'none');
+
+    try {
+      const reader = response.body.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+    } catch (streamErr) {
+      console.error('[MENTOR CHAT] Streaming error:', streamErr);
+    } finally {
+      res.end();
     }
-
-    return res.json({ success: true, response: content.trim() });
-
   } catch (error) {
     console.error('Mentor chat handler exception:', error);
     await refundCredits();

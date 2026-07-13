@@ -165,7 +165,7 @@ STRICT RULES:
           messages: messages,
           temperature: 0.7,
           response_format: { type: 'json_object' },
-          ...(!isMistral && { reasoning: { enabled: false } })
+          ...(!isMistral && { reasoning_effort: "none" })
         })
       });
     } catch (fetchErr) {
@@ -222,7 +222,7 @@ STRICT RULES:
             ],
             temperature: 0.1,
             response_format: { type: 'json_object' },
-            ...(!isMistral && { reasoning: { enabled: false } })
+            ...(!isMistral && { reasoning_effort: "none" })
           })
         });
 

@@ -210,7 +210,7 @@ ${formatExample}`;
         ],
         temperature: 0.4,
         response_format: { type: 'json_object' },
-        ...(!isMistral && { reasoning: { enabled: false } })
+        ...(!isMistral && { reasoning_effort: "none" })
       })
     });
 
@@ -245,7 +245,7 @@ ${formatExample}`;
             ],
             temperature: 0.1,
             response_format: { type: 'json_object' },
-            ...(!isMistral && { reasoning: { enabled: false } })
+            ...(!isMistral && { reasoning_effort: "none" })
           })
         });
 

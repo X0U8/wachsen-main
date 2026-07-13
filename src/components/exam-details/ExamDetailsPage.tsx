@@ -769,6 +769,7 @@ Return ONLY a valid JSON array matching this format:
               <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Generating Cards</h3>
               <p className="text-zinc-500 dark:text-zinc-400 text-xs">Do not close or navigate away</p>
             </div>
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto" />
             <div className="space-y-2">
               <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
                 <div
@@ -777,7 +778,7 @@ Return ONLY a valid JSON array matching this format:
                 />
               </div>
               <p className="text-zinc-500 dark:text-zinc-400 text-[10px] font-semibold">
-                {cardGenProgress < 10 ? `Generating... (~${cardGenProgress}/10 questions)` : 'Finalizing...'}
+                {cardGenProgress < 10 ? `${cardGenProgress}/10 questions` : 'Finalizing...'}
               </p>
             </div>
           </div>

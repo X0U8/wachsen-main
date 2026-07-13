@@ -115,7 +115,7 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
           model: MESH_MODEL,
           messages: messagesPayload,
           temperature: 0.7,
-          reasoning: { enabled: false },
+          reasoning_effort: "none",
           stream: true
         })
       });

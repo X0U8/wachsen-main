@@ -131,7 +131,7 @@ STRICT INSTRUCTIONS:
           ],
           temperature: 0.7,
           response_format: { type: 'json_object' },
-          reasoning: { enabled: false }
+          reasoning_effort: "none"
         })
       });
     } catch (fetchErr) {
@@ -181,7 +181,7 @@ STRICT INSTRUCTIONS:
             ],
             temperature: 0.1,
             response_format: { type: 'json_object' },
-            reasoning: { enabled: false }
+            reasoning_effort: "none"
           })
         });
 

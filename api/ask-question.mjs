@@ -123,7 +123,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
         model: activeModel,
         messages: conversationMessages,
         temperature: 0.7,
-        ...(!isMistral && { reasoning: { enabled: false } }),
+        ...(!isMistral && { reasoning_effort: "none" }),
         stream: stream
       })
     });

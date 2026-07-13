@@ -126,7 +126,7 @@ STRICT RULES:
         ],
         temperature: 0.7,
         response_format: { type: 'json_object' },
-        ...(!isMistral && { reasoning: { enabled: false } })
+        ...(!isMistral && { reasoning_effort: "none" })
       })
     });
 
@@ -162,7 +162,7 @@ STRICT RULES:
               ],
               temperature: 0.1,
               response_format: { type: 'json_object' },
-              ...(!isMistral && { reasoning: { enabled: false } })
+              ...(!isMistral && { reasoning_effort: "none" })
             })
         });
 

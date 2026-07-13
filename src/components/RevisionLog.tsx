@@ -124,12 +124,10 @@ export default function RevisionLog() {
   const [examPlan, setExamPlan] = useState<any>(null);
   const [showSegmentSelector, setShowSegmentSelector] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-  const [selectedExamTypeId, setSelectedExamTypeId] = useState<string | null>(null);
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
 
-  const cacheKey = `cached_revision_logs_${userProfile?.id}_${selectedExamTypeId}_${activeSearchQuery}`;
+  const cacheKey = `cached_revision_logs_${userProfile?.id}_${activeSearchQuery}`;
   const [revisionList, setRevisionList] = useState<any[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(cacheKey) || '[]');
@@ -141,16 +139,13 @@ export default function RevisionLog() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const filterMountedRef = useRef(false);
-
-  const [examTypes, setExamTypes] = useState<any[]>([]);
 
   const { data: initialList, isLoading: loadingInitialList, error: queryError } = useQuery({
-    queryKey: ['revisionLogs', userProfile?.id, selectedExamTypeId, activeSearchQuery],
+    queryKey: ['revisionLogs', userProfile?.id, activeSearchQuery],
     queryFn: async () => {
       const sessionData = await supabase.auth.getSession();
       const authToken = sessionData.data.session?.access_token || '';
-      const response = await fetch(`/api/search?type=revision&userId=${userProfile?.id}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=0`);
+      const response = await fetch(`/api/search?type=revision&userId=${userProfile?.id}&authToken=${authToken}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=0`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to search revision logs');
       const list = data.revisionList || [];
@@ -168,39 +163,15 @@ export default function RevisionLog() {
   }, [initialList, examId]);
 
   useEffect(() => {
-    if (!filterMountedRef.current) {
-      filterMountedRef.current = true;
-      return;
-    }
     if (!examId) {
       setExtraRevisionLogs([]);
-      const newCacheKey = `cached_revision_logs_${userProfile?.id}_${selectedExamTypeId}_${activeSearchQuery}`;
       try {
-        setRevisionList(JSON.parse(localStorage.getItem(newCacheKey) || '[]'));
+        setRevisionList(JSON.parse(localStorage.getItem(cacheKey) || '[]'));
       } catch {
         setRevisionList([]);
       }
     }
-  }, [selectedExamTypeId, activeSearchQuery, examId, userProfile?.id]);
-
-
-  useEffect(() => {
-    if (!userProfile?.id) return;
-    const fetchExamTypes = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('examtypes')
-          .select('id, name')
-          .eq('userId', userProfile.id)
-          .order('created_at', { ascending: true });
-        if (error) throw error;
-        setExamTypes(data || []);
-      } catch (err) {
-        console.error('Error fetching exam types:', err);
-      }
-    };
-    fetchExamTypes();
-  }, [userProfile?.id]);
+  }, [activeSearchQuery, examId, userProfile?.id]);
 
 
 
@@ -547,7 +518,7 @@ Return ONLY a valid JSON array matching this format:
       const sessionData = await supabase.auth.getSession();
       const authToken = sessionData.data.session?.access_token || '';
 
-      const response = await fetch(`/api/search?type=revision&userId=${userProfile.id}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=${offset}`);
+      const response = await fetch(`/api/search?type=revision&userId=${userProfile.id}&authToken=${authToken}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=${offset}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to load more revision logs');
 
@@ -636,62 +607,7 @@ Return ONLY a valid JSON array matching this format:
           <h1 className="font-semibold text-zinc-800 dark:text-gray-100 text-base">Revision Log</h1>
         </div>
       ) : (
-        <>
-          <h1 className="font-semibold text-zinc-800 dark:text-gray-100 text-base">Revision Logs</h1>
-          <div className="relative">
-            <button
-              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-              className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer flex items-center gap-1"
-            >
-              <Filter className="w-4 h-4" />
-            </button>
-
-            {showFilterDropdown && (
-              <>
-                <div
-                  className="fixed inset-0 z-40 cursor-default"
-                  onClick={() => setShowFilterDropdown(false)}
-                />
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div
-                    className="font-semibold text-zinc-400 dark:text-zinc-500 px-3 py-1.5 uppercase tracking-wider text-xs">
-                    Filter by Exam Type
-                  </div>
-                  <div className="space-y-0.5 max-h-48 overflow-y-auto">
-                    <button
-                      onClick={() => {
-                        setSelectedExamTypeId(null);
-                        setShowFilterDropdown(false);
-                      }}
-                      className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${!selectedExamTypeId
-                        ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
-                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                        } text-xs`}>
-                      <span>All Exam Types</span>
-                      {!selectedExamTypeId && <Check className="w-3.5 h-3.5" />}
-                    </button>
-
-                    {examTypes.map((type) => (
-                      <button
-                        key={type.id}
-                        onClick={() => {
-                          setSelectedExamTypeId(type.id);
-                          setShowFilterDropdown(false);
-                        }}
-                        className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${selectedExamTypeId === type.id
-                          ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
-                          : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
-                          } text-xs`}>
-                        <span className="truncate">{type.name}</span>
-                        {selectedExamTypeId === type.id && <Check className="w-3.5 h-3.5" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </>
+        <h1 className="font-semibold text-zinc-800 dark:text-gray-100 text-base">Revision Logs</h1>
       )}
     </header>
   );

@@ -118,6 +118,8 @@ export default function RevisionLog() {
   const [showConceptCards, setShowConceptCards] = useState(false);
   const [conceptCards, setConceptCards] = useState<any[]>([]);
   const [activeTopics, setActiveTopics] = useState('');
+  const [conceptSubject, setConceptSubject] = useState('');
+  const [conceptDifficulty, setConceptDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
   const [cardGenProgress, setCardGenProgress] = useState(0);
   const [examCategoryId, setExamCategoryId] = useState<string | null>(null);
   const [academicLevel, setAcademicLevel] = useState<string>('');
@@ -264,12 +266,22 @@ export default function RevisionLog() {
     }
   };
 
-  const generateConceptCards = async (selectedTopics: string) => {
+  const generateConceptCards = async ({
+    subject,
+    topics,
+    difficulty
+  }: {
+    subject?: string;
+    topics: string;
+    difficulty?: 'easy' | 'medium' | 'hard' | 'advance';
+  }) => {
     if (generatingCards) return;
     setGeneratingCards(true);
     setCardGenProgress(0);
     try {
-      setActiveTopics(selectedTopics);
+      setActiveTopics(topics);
+      setConceptSubject(subject || '');
+      setConceptDifficulty(difficulty || 'medium');
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
 
@@ -279,19 +291,21 @@ export default function RevisionLog() {
       const activeModel = localStorage.getItem('mesh_active_model') || '';
 
       const level = academicLevel || 'Grade 10';
+      const diffLabel = difficulty || 'medium';
 
       const replyText = await streamConceptCards(
         {
-          question: `Based on these concepts: ${selectedTopics}. Generate exactly 10 conceptual multiple-choice questions.
-VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. You MUST customize the questions complexity to match this academic level.
-Additionally, you MUST sequence the 10 questions from easiest (question 1) to hardest (question 10) in progressive difficulty order.
+          question: `Subject: ${subject || 'General'}. Topic: ${topics}. Generate exactly 10 theory-based conceptual multiple-choice questions.
+VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. The requested difficulty for this deck is: ${diffLabel}.
+For "easy", ask simpler theory-based recall questions. For "medium", ask standard conceptual understanding questions. For "hard", ask deeper application and analysis questions. For "advance", ask the hardest theory-based questions appropriate for this academic level.
+The questions must be theory-based (definitions, concepts, explanations, principles) rather than pure numerical calculation.
 For each question, provide:
 1. "question": The conceptual question text.
 2. "options": An array of exactly 4 choices.
 3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).
 
 For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
-VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes so it is valid JSON and parses correctly.
+VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\frac, \\theta, \\vec, \\alpha) instead of single backslashes so it is valid JSON and parses correctly.
 
 Return ONLY a valid JSON array matching this format:
 [{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2]}]`,
@@ -633,7 +647,7 @@ Return ONLY a valid JSON array matching this format:
                 setShowSegmentSelector(true);
               } else {
                 if (subtopics.length > 0) {
-                  generateConceptCards(subtopics.join(', '));
+                  generateConceptCards({ topics: subtopics.join(', ') });
                 } else {
                   showNotification('error', 'No topics available to generate concept cards.');
                 }
@@ -667,6 +681,9 @@ Return ONLY a valid JSON array matching this format:
           onClose={() => setShowConceptCards(false)}
           cards={conceptCards}
           topics={activeTopics}
+          deckName={activeTopics}
+          subjectName={conceptSubject}
+          difficulty={conceptDifficulty}
           userId={userProfile?.id}
           categoryId={examCategoryId || ''}
           academicLevel={academicLevel}
@@ -712,7 +729,7 @@ Return ONLY a valid JSON array matching this format:
           isOpen={showSegmentSelector}
           onClose={() => setShowSegmentSelector(false)}
           examPlan={examPlan}
-          onSelectSegment={(topics) => generateConceptCards(topics)}
+          onSelectSegment={(selection) => generateConceptCards(selection)}
         />
       )}
       {notification && (

@@ -12,7 +12,8 @@ interface CheatCardsProps {
   onClose: () => void;
   cards: CheatCardData[];
   topics?: string;
-  deckName?: string;
+  subjectName?: string;
+  difficulty?: string;
   userId?: string;
   categoryId?: string;
   academicLevel?: string;
@@ -22,7 +23,8 @@ export default function CheatCards({
   onClose,
   cards = [],
   topics,
-  deckName,
+  subjectName,
+  difficulty,
   userId,
   categoryId,
   academicLevel
@@ -47,6 +49,8 @@ export default function CheatCards({
         user_id: userId,
         category_id: categoryId || null,
         academic_level: academicLevel || null,
+        subject_name: subjectName || null,
+        difficulty: difficulty || null,
         name: finalName,
         topics: topics || finalName,
         cards
@@ -195,7 +199,7 @@ export default function CheatCards({
             <button
               disabled={savingDeck || saveStatus === 'saved'}
               onClick={() => {
-                const defaultName = deckName || topics || 'Cheat Cards';
+                const defaultName = topics || 'Cheat Cards';
                 setCustomName(defaultName.length > 50 ? `${defaultName.slice(0, 50)}...` : defaultName);
                 setShowNameInputModal(true);
               }}

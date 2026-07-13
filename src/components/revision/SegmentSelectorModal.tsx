@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { fontSize } from '../../lib/utils';
 import MathText from '../../ui/MathText';
@@ -13,7 +13,7 @@ interface SegmentSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
   examPlan: any;
-  onSelectSegment: (topics: string) => void;
+  onSelectSegment: (selection: { subject: string; topics: string; difficulty: 'easy' | 'medium' | 'hard' | 'advance' }) => void;
 }
 
 export default function SegmentSelectorModal({
@@ -22,6 +22,8 @@ export default function SegmentSelectorModal({
   examPlan,
   onSelectSegment
 }: SegmentSelectorModalProps) {
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
+
   if (!isOpen || !examPlan) return null;
 
 
@@ -58,7 +60,7 @@ export default function SegmentSelectorModal({
           <div>
             <h3
               className="font-semibold text-zinc-800 dark:text-white tracking-wider text-base">Select Subtopic</h3>
-            <p className="text-zinc-500 dark:text-zinc-400 text-xs">Choose a topic range to generate 10 concept cards</p>
+            <p className="text-zinc-500 dark:text-zinc-400 text-xs">Choose a topic range and difficulty to generate 10 concept cards</p>
           </div>
           <button
             onClick={onClose}
@@ -68,7 +70,21 @@ export default function SegmentSelectorModal({
           </button>
         </div>
 
-        <div className="flex-grow overflow-y-auto pr-1 my-4 space-y-5">
+        <div className="space-y-1 flex-shrink-0">
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
+          <select
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as typeof difficulty)}
+            className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:border-blue-500 focus:outline-none text-zinc-800 dark:text-white text-xs"
+          >
+            <option value="easy">Easy — theory-based recall</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+            <option value="advance">Advance — hardest for this level</option>
+          </select>
+        </div>
+
+        <div className="flex-grow overflow-y-auto pr-1 my-2 space-y-5">
           {Object.keys(segmentsBySubject).length === 0 ? (
             <div className="text-center py-12 text-zinc-500 dark:text-zinc-400 text-xs">
               No segments found in this exam plan.
@@ -85,7 +101,7 @@ export default function SegmentSelectorModal({
                     <button
                       key={idx}
                       onClick={() => {
-                        onSelectSegment(seg.topics);
+                        onSelectSegment({ subject: seg.subject, topics: seg.topics, difficulty });
                         onClose();
                       }}
                       className="w-full text-left p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 hover:bg-zinc-100/70 dark:hover:bg-zinc-800/30 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all cursor-pointer group"

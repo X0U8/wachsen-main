@@ -17,6 +17,7 @@ import ConceptCards from '../ConceptCards';
 import CheatCards from '../CheatCards';
 import { safeParseJSON } from '../RevisionLog';
 import { streamConceptCards } from '../../lib/streamConceptCards';
+import { NON_INT_SUBJECTS } from '../../data/nonIntSubjects';
 
 interface Exam {
   id: string;
@@ -51,6 +52,8 @@ export default function ExamDetails() {
   const [showTopicInputModal, setShowTopicInputModal] = useState(false);
   const [topicText, setTopicText] = useState('');
   const [activeTopicText, setActiveTopicText] = useState('');
+  const [conceptSubject, setConceptSubject] = useState('');
+  const [conceptDifficulty, setConceptDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
   const [generatingCards, setGeneratingCards] = useState(false);
   const [cardGenProgress, setCardGenProgress] = useState(0);
   const [showConceptCards, setShowConceptCards] = useState(false);
@@ -58,7 +61,8 @@ export default function ExamDetails() {
 
   const [showCheatCardModal, setShowCheatCardModal] = useState(false);
   const [cheatTopicText, setCheatTopicText] = useState('');
-  const [cheatDeckName, setCheatDeckName] = useState('');
+  const [cheatSubject, setCheatSubject] = useState('');
+  const [cheatDifficulty, setCheatDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
   const [generatingCheatCards, setGeneratingCheatCards] = useState(false);
   const [cheatCardProgress, setCheatCardProgress] = useState(0);
   const [showCheatCards, setShowCheatCards] = useState(false);
@@ -66,7 +70,8 @@ export default function ExamDetails() {
 
   const handleGenerateConceptCards = async () => {
     const trimmedTopic = topicText.trim();
-    if (!trimmedTopic) return;
+    const trimmedSubject = conceptSubject.trim();
+    if (!trimmedTopic || trimmedTopic.length < 5) return;
     setGeneratingCards(true);
     setCardGenProgress(0);
     try {
@@ -79,19 +84,21 @@ export default function ExamDetails() {
       const activeModel = localStorage.getItem('mesh_active_model') || '';
 
       const level = examType?.academicLevel || 'Grade 10';
+      const diffLabel = conceptDifficulty;
 
       const replyText = await streamConceptCards(
         {
-          question: `Based on these concepts: ${trimmedTopic}. Generate exactly 10 conceptual multiple-choice questions.
-VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. You MUST customize the questions complexity to match this academic level.
-Additionally, you MUST sequence the 10 questions from easiest (question 1) to hardest (question 10) in progressive difficulty order.
+          question: `Subject: ${trimmedSubject || 'General'}. Topic: ${trimmedTopic}. Generate exactly 10 theory-based conceptual multiple-choice questions.
+VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. The requested difficulty for this deck is: ${diffLabel}.
+For "easy", ask simpler theory-based recall questions. For "medium", ask standard conceptual understanding questions. For "hard", ask deeper application and analysis questions. For "advance", ask the hardest theory-based questions appropriate for this academic level.
+The questions must be theory-based (definitions, concepts, explanations, principles) rather than pure numerical calculation.
 For each question, provide:
 1. "question": The conceptual question text.
 2. "options": An array of exactly 4 choices.
 3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).
 
 For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
-VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes so it is valid JSON and parses correctly.
+VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\frac, \\theta, \\vec, \\alpha) instead of single backslashes so it is valid JSON and parses correctly.
 
 Return ONLY a valid JSON array matching this format:
 [{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2]}]`,
@@ -129,8 +136,8 @@ Return ONLY a valid JSON array matching this format:
 
   const handleGenerateCheatCards = async () => {
     const trimmedTopic = cheatTopicText.trim();
-    const trimmedDeckName = cheatDeckName.trim() || trimmedTopic;
-    if (!trimmedTopic) return;
+    const trimmedSubject = cheatSubject.trim();
+    if (!trimmedTopic || trimmedTopic.length < 5 || !trimmedSubject) return;
 
     setGeneratingCheatCards(true);
     setCheatCardProgress(0);
@@ -145,13 +152,21 @@ Return ONLY a valid JSON array matching this format:
 
       const level = examType?.academicLevel || 'Grade 10';
       const categoryName = examType?.name || '';
+      const isNonInt = NON_INT_SUBJECTS.has(trimmedSubject.toLowerCase());
+      const diffLabel = cheatDifficulty;
+
+      const contentInstruction = isNonInt
+        ? `Generate memorization-focused cheat cards for this ${trimmedSubject} topic. Focus on exam-important facts, must-memorize points, key dates, definitions, rules, and commonly asked theory questions. The cards should help the student recall the most important stuff from this topic for exams.`
+        : `Generate memorization-focused cheat cards for this ${trimmedSubject} topic. Focus mainly on formulas, equations, constants, variables, relationships, and any exam-asked facts or values that must be memorized. Include the formula/equation and what it represents.`;
 
       const replyText = await streamConceptCards(
         {
-          question: `Topic: ${trimmedTopic}. Generate exactly 20 cheat-card style memorization items.
-VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. You MUST customize the complexity to match this level.
+          question: `Subject: ${trimmedSubject}. Topic: ${trimmedTopic}. Generate exactly 20 cheat-card style memorization items.
+VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. The requested difficulty for this deck is: ${diffLabel}.
 Exam category / context: ${categoryName}.
-Each item must be short and designed for fast memorization: formulas, definitions, key facts, constants, dates, rules, or exam-oriented points.
+${contentInstruction}
+For "easy", use simple recall items. For "medium", standard memorization items. For "hard", deeper or more detailed recall. For "advance", the toughest, most exam-critical facts/formulas for this level.
+Each item must be short and designed for fast memorization.
 Front side ("question") should be a 1-2 line prompt that asks what to recall.
 Back side ("answer") should be the concise answer, formula, or fact to memorize.
 Return ONLY a valid JSON array in this exact format:
@@ -173,14 +188,12 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
         20
       );
 
-      const cleanedReply = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
+      const cleanedReply = replyText.replace(/```json\\s*/gi, '').replace(/```\\s*$/gm, '').trim();
       const cards = safeParseJSON(cleanedReply);
 
       setCheatCards(cards);
-      setCheatDeckName(trimmedDeckName);
       setShowCheatCards(true);
       setShowCheatCardModal(false);
-      setCheatTopicText('');
       refreshCredits();
     } catch (err: any) {
       console.error('Error generating cheat cards:', err);
@@ -791,33 +804,76 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             </div>
 
             <p className="text-zinc-550 dark:text-zinc-400 text-xs leading-relaxed text-left">
-              Enter the topic or subtopics .
+              Pick the subject, difficulty, and topic for theory-based practice.
             </p>
 
-            <div className="space-y-1.5 text-left">
-              <textarea
-                rows={3}
-                maxLength={200}
-                placeholder="Enter topic "
-                value={topicText}
-                onChange={(e) => setTopicText(e.target.value)}
-                className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs resize-none leading-relaxed"
-              />
-              <div className="flex justify-end text-[10px] text-zinc-400 font-medium">
-                {topicText.length} / 200
+            <div className="space-y-3 text-left">
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Subject</label>
+                {availableSubjects.length > 0 ? (
+                  <select
+                    value={conceptSubject}
+                    onChange={(e) => setConceptSubject(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                  >
+                    <option value="">Select a subject</option>
+                    {availableSubjects.map((sub: any) => (
+                      <option key={sub.id || sub.name} value={sub.name}>{sub.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    maxLength={100}
+                    placeholder="Enter subject"
+                    value={conceptSubject}
+                    onChange={(e) => setConceptSubject(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
+                <select
+                  value={conceptDifficulty}
+                  onChange={(e) => setConceptDifficulty(e.target.value as typeof conceptDifficulty)}
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                >
+                  <option value="easy">Easy — theory-based recall</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                  <option value="advance">Advance — hardest for this level</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic (min 5 chars)</label>
+                <textarea
+                  rows={3}
+                  maxLength={200}
+                  placeholder="Enter topic or subtopics"
+                  value={topicText}
+                  onChange={(e) => setTopicText(e.target.value)}
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs resize-none leading-relaxed"
+                />
+                <div className="flex justify-between text-[10px] text-zinc-400 font-medium">
+                  <span>{topicText.length < 5 ? 'Topic must be at least 5 characters' : ''}</span>
+                  <span>{topicText.length} / 200</span>
+                </div>
               </div>
             </div>
 
             <div className="flex gap-3 justify-end pt-2">
               <button
-                onClick={() => { setShowTopicInputModal(false); setTopicText(''); }}
+                onClick={() => { setShowTopicInputModal(false); setTopicText(''); setConceptSubject(''); setConceptDifficulty('medium'); }}
                 className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-xl text-xs transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerateConceptCards}
-                disabled={generatingCards || !topicText.trim()}
+                disabled={generatingCards || !topicText.trim() || topicText.trim().length < 5 || !conceptSubject.trim()}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all flex items-center gap-2 justify-center cursor-pointer shadow-md shadow-blue-500/10"
               >
                 {generatingCards ? (
@@ -860,6 +916,9 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           onClose={() => setShowConceptCards(false)}
           cards={conceptCards}
           topics={activeTopicText}
+          deckName={activeTopicText}
+          subjectName={conceptSubject}
+          difficulty={conceptDifficulty}
           userId={userProfile?.id}
           categoryId={id || ''}
           academicLevel={examType?.academicLevel || ''}
@@ -872,7 +931,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
               <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Generate Cheat Cards</h3>
               <button
-                onClick={() => { setShowCheatCardModal(false); setCheatTopicText(''); setCheatDeckName(''); }}
+                onClick={() => { setShowCheatCardModal(false); setCheatTopicText(''); setCheatSubject(''); setCheatDifficulty('medium'); }}
                 className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
@@ -880,23 +939,51 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             </div>
 
             <p className="text-zinc-550 dark:text-zinc-400 text-xs leading-relaxed text-left">
-              Enter the deck name and the topic you want to memorize.
+              Pick the subject, difficulty, and topic to memorize.
             </p>
 
             <div className="space-y-3 text-left">
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Deck Name</label>
-                <input
-                  type="text"
-                  maxLength={50}
-                  placeholder="e.g. Organic Chemistry Formulas"
-                  value={cheatDeckName}
-                  onChange={(e) => setCheatDeckName(e.target.value)}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
-                />
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Subject</label>
+                {availableSubjects.length > 0 ? (
+                  <select
+                    value={cheatSubject}
+                    onChange={(e) => setCheatSubject(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                  >
+                    <option value="">Select a subject</option>
+                    {availableSubjects.map((sub: any) => (
+                      <option key={sub.id || sub.name} value={sub.name}>{sub.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    maxLength={100}
+                    placeholder="Enter subject"
+                    value={cheatSubject}
+                    onChange={(e) => setCheatSubject(e.target.value)}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                  />
+                )}
               </div>
+
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic</label>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
+                <select
+                  value={cheatDifficulty}
+                  onChange={(e) => setCheatDifficulty(e.target.value as typeof cheatDifficulty)}
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                >
+                  <option value="easy">Easy — simple recall</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                  <option value="advance">Advance — hardest for this level</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic (min 5 chars)</label>
                 <textarea
                   rows={3}
                   maxLength={200}
@@ -905,22 +992,23 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                   onChange={(e) => setCheatTopicText(e.target.value)}
                   className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs resize-none leading-relaxed"
                 />
-                <div className="flex justify-end text-[10px] text-zinc-400 font-medium">
-                  {cheatTopicText.length} / 200
+                <div className="flex justify-between text-[10px] text-zinc-400 font-medium">
+                  <span>{cheatTopicText.length < 5 ? 'Topic must be at least 5 characters' : ''}</span>
+                  <span>{cheatTopicText.length} / 200</span>
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3 justify-end pt-2">
               <button
-                onClick={() => { setShowCheatCardModal(false); setCheatTopicText(''); setCheatDeckName(''); }}
+                onClick={() => { setShowCheatCardModal(false); setCheatTopicText(''); setCheatSubject(''); setCheatDifficulty('medium'); }}
                 className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-xl text-xs transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleGenerateCheatCards}
-                disabled={generatingCheatCards || !cheatTopicText.trim()}
+                disabled={generatingCheatCards || !cheatTopicText.trim() || cheatTopicText.trim().length < 5 || !cheatSubject.trim()}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all flex items-center gap-2 justify-center cursor-pointer shadow-md shadow-blue-500/10"
               >
                 {generatingCheatCards ? (
@@ -962,8 +1050,9 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
         <CheatCards
           onClose={() => setShowCheatCards(false)}
           cards={cheatCards}
-          topics={cheatDeckName}
-          deckName={cheatDeckName}
+          topics={cheatTopicText}
+          subjectName={cheatSubject}
+          difficulty={cheatDifficulty}
           userId={userProfile?.id}
           categoryId={id || ''}
           academicLevel={examType?.academicLevel || ''}

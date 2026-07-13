@@ -15,12 +15,15 @@ interface ConceptCardsProps {
   onClose: () => void;
   cards: ConceptCardData[];
   topics?: string;
+  deckName?: string;
+  subjectName?: string;
+  difficulty?: string;
   userId?: string;
   categoryId?: string;
   academicLevel?: string;
 }
 
-export default function ConceptCards({ onClose, cards = [], topics, userId, categoryId, academicLevel }: ConceptCardsProps) {
+export default function ConceptCards({ onClose, cards = [], topics, deckName, subjectName, difficulty, userId, categoryId, academicLevel }: ConceptCardsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -32,10 +35,10 @@ export default function ConceptCards({ onClose, cards = [], topics, userId, cate
   const [showNameInputModal, setShowNameInputModal] = useState(false);
   const [customName, setCustomName] = useState('');
 
-  const handleSaveDeck = async (deckName: string) => {
-    const finalName = deckName.trim();
+  const handleSaveDeck = async (name: string) => {
+    const finalName = name.trim();
     if (!finalName) return;
-    if (!userId || !topics || cards.length === 0 || savingDeck) return;
+    if (!userId || cards.length === 0 || savingDeck) return;
     setSavingDeck(true);
     setSaveStatus('saving');
     try {
@@ -45,8 +48,10 @@ export default function ConceptCards({ onClose, cards = [], topics, userId, cate
           user_id: userId,
           category_id: categoryId || null,
           academic_level: academicLevel || null,
+          subject_name: subjectName || null,
+          difficulty: difficulty || null,
           name: finalName,
-          topics: topics,
+          topics: topics || finalName,
           questions: cards
         });
 
@@ -150,7 +155,7 @@ export default function ConceptCards({ onClose, cards = [], topics, userId, cate
             <div className="flex-grow overflow-y-auto pr-1 space-y-4">
               <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-5 space-y-3">
                 <div
-                  className="text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal h-32 overflow-y-auto pr-1 text-sm">
+                  className="text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal h-40 overflow-y-auto pr-1 text-sm">
                   <MathText text={currentCard.question} />
                 </div>
               </div>
@@ -232,8 +237,8 @@ export default function ConceptCards({ onClose, cards = [], topics, userId, cate
                 <button
                   disabled={savingDeck || saveStatus === 'saved'}
                   onClick={() => {
-                    const defaultName = topics.length > 40 ? `${topics.substring(0, 40)}...` : topics;
-                    setCustomName(defaultName);
+                    const defaultName = deckName || topics || 'Concept Cards';
+                    setCustomName(defaultName.length > 50 ? `${defaultName.substring(0, 50)}...` : defaultName);
                     setShowNameInputModal(true);
                   }}
                   className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs mb-2 ${

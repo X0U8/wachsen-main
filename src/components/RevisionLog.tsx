@@ -141,6 +141,7 @@ export default function RevisionLog() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const filterMountedRef = useRef(false);
 
   const [examTypes, setExamTypes] = useState<any[]>([]);
 
@@ -167,6 +168,10 @@ export default function RevisionLog() {
   }, [initialList, examId]);
 
   useEffect(() => {
+    if (!filterMountedRef.current) {
+      filterMountedRef.current = true;
+      return;
+    }
     if (!examId) {
       setExtraRevisionLogs([]);
       setRevisionList([]);

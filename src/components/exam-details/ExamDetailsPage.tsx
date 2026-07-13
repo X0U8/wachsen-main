@@ -13,6 +13,8 @@ import ExamInfoModal from './ExamInfoModal';
 import TemplateModal from './TemplateModal';
 import EditCategoryModal from './EditCategoryModal';
 import { useTemplateSaving } from '../../hooks/useTemplateSaving';
+import ConceptCards from '../ConceptCards';
+import { safeParseJSON } from '../RevisionLog';
 
 interface Exam {
   id: string;
@@ -42,6 +44,76 @@ export default function ExamDetails() {
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
+  };
+
+  const [showTopicInputModal, setShowTopicInputModal] = useState(false);
+  const [topicText, setTopicText] = useState('');
+  const [activeTopicText, setActiveTopicText] = useState('');
+  const [generatingCards, setGeneratingCards] = useState(false);
+  const [showConceptCards, setShowConceptCards] = useState(false);
+  const [conceptCards, setConceptCards] = useState<any[]>([]);
+
+  const handleGenerateConceptCards = async () => {
+    const trimmedTopic = topicText.trim();
+    if (!trimmedTopic) return;
+    setGeneratingCards(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || '';
+
+      const useOwnKey = localStorage.getItem('use_own_key') === 'true';
+      const userApiKey = localStorage.getItem(localStorage.getItem('provider') === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
+      const activeProvider = localStorage.getItem('provider') || 'mesh';
+      const activeModel = localStorage.getItem('mesh_active_model') || '';
+
+      const response = await fetch('/api/ask-question', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: `Based on these concepts: ${trimmedTopic}. Generate exactly 10 conceptual multiple-choice questions. For each question, provide:
+1. "question": The conceptual question text.
+2. "options": An array of exactly 4 choices.
+3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).
+4. "explanation": A concise explanation of the correct answers.
+
+For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
+VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes so it is valid JSON and parses correctly.
+
+Return ONLY a valid JSON array matching this format:
+[{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2], "explanation": "..."}]`,
+          correctAnswer: '',
+          userAnswer: '',
+          userId: userProfile?.id,
+          authToken,
+          apiKey: useOwnKey ? userApiKey : undefined,
+          useOwnKey,
+          provider: activeProvider,
+          model: activeModel,
+          deductAmount: 10
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`${data.error || 'Failed to generate flashcards'} (${data.details || ''})`);
+      }
+
+      let replyText = data.reply || '[]';
+      replyText = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
+      const cards = safeParseJSON(replyText);
+
+      setActiveTopicText(trimmedTopic);
+      setConceptCards(cards);
+      setShowConceptCards(true);
+      setShowTopicInputModal(false);
+      setTopicText('');
+      refreshCredits();
+    } catch (err: any) {
+      console.error('Error generating concept cards:', err);
+      showNotification('error', err.message || 'Failed to generate concept cards');
+    } finally {
+      setGeneratingCards(false);
+    }
   };
 
   const {
@@ -567,7 +639,8 @@ export default function ExamDetails() {
 
               <button
                 onClick={() => {
-                  setNotification({ message: 'Concept Cards creation mode coming soon!', type: 'info' });
+                  setShowTypeSelector(false);
+                  setShowTopicInputModal(true);
                 }}
                 className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >
@@ -631,6 +704,70 @@ export default function ExamDetails() {
         onClose={() => setShowEditCategoryModal(false)}
         onFormChange={(f) => setEditCategoryForm(f)}
       />
+      {showTopicInputModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative text-zinc-900 dark:text-white flex flex-col gap-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
+              <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Generate Concept Cards</h3>
+              <button
+                onClick={() => { setShowTopicInputModal(false); setTopicText(''); }}
+                className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-zinc-550 dark:text-zinc-400 text-xs leading-relaxed text-left">
+              Enter the topic or subtopics .
+            </p>
+
+            <div className="space-y-1.5 text-left">
+              <textarea
+                rows={3}
+                maxLength={200}
+                placeholder="Enter topic "
+                value={topicText}
+                onChange={(e) => setTopicText(e.target.value)}
+                className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs resize-none leading-relaxed"
+              />
+              <div className="flex justify-end text-[10px] text-zinc-400 font-medium">
+                {topicText.length} / 200
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                onClick={() => { setShowTopicInputModal(false); setTopicText(''); }}
+                className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-xl text-xs transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleGenerateConceptCards}
+                disabled={generatingCards || !topicText.trim()}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all flex items-center gap-2 justify-center cursor-pointer shadow-md shadow-blue-500/10"
+              >
+                {generatingCards ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate (10 credits)'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showConceptCards && (
+        <ConceptCards
+          onClose={() => setShowConceptCards(false)}
+          cards={conceptCards}
+          topics={activeTopicText}
+          userId={userProfile?.id}
+        />
+      )}
       {notification && (
         <Notification
           type={notification.type}

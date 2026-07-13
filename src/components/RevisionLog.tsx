@@ -116,6 +116,7 @@ export default function RevisionLog() {
   const [logData, setLogData] = useState<RevisionLogData | null>(null);
   const [showConceptCards, setShowConceptCards] = useState(false);
   const [conceptCards, setConceptCards] = useState<any[]>([]);
+  const [activeTopics, setActiveTopics] = useState('');
   const [examPlan, setExamPlan] = useState<any>(null);
   const [showSegmentSelector, setShowSegmentSelector] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -305,6 +306,7 @@ export default function RevisionLog() {
     if (generatingCards) return;
     setGeneratingCards(true);
     try {
+      setActiveTopics(selectedTopics);
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
 
@@ -335,7 +337,8 @@ Return ONLY a valid JSON array matching this format:
           apiKey: useOwnKey ? userApiKey : undefined,
           useOwnKey,
           provider: activeProvider,
-          model: activeModel
+          model: activeModel,
+          deductAmount: 10
         })
       });
 
@@ -765,7 +768,14 @@ Return ONLY a valid JSON array matching this format:
 
         <RevisionQuestionsList questions={logData.questions} />
       </main>
-      {showConceptCards && <ConceptCards onClose={() => setShowConceptCards(false)} cards={conceptCards} />}
+      {showConceptCards && (
+        <ConceptCards
+          onClose={() => setShowConceptCards(false)}
+          cards={conceptCards}
+          topics={activeTopics}
+          userId={userProfile?.id}
+        />
+      )}
       {generatingCards && (
         <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md z-[295] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 w-full max-w-[280px] text-center space-y-4 shadow-2xl">

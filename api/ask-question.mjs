@@ -26,7 +26,8 @@ export default async function handler(req, res) {
       useOwnKey,
       provider,
       model,
-      stream = false
+      stream = false,
+      deductAmount = 1
     } = req.body;
 
     const isByok = !!(useOwnKey && userKey && userKey.trim());
@@ -50,14 +51,14 @@ export default async function handler(req, res) {
       });
       const { data: profile } = await authedSupabase.from('profiles').select('credits').eq('id', userId).single();
       currentCredits = profile?.credits || 0;
-      if (currentCredits < 1) {
-        return res.status(400).json({ error: `Insufficient credits. You need at least 1 credit to ask a question. You have ${currentCredits}.` });
+      if (currentCredits < deductAmount) {
+        return res.status(400).json({ error: `Insufficient credits. You need at least ${deductAmount} credits. You have ${currentCredits}.` });
       }
     }
 
     const systemPrompt = `You are a helpful tutor explaining exam questions. Be extremely concise, direct, and explain in short. Avoid unnecessary conversational fluff. Keep explanations brief and to the point, but make sure to write out all mathematical steps and derivations fully and clearly.
  
-Do NOT use raw markdown formatting symbols like headers (###), markdown bolding (**), bullet lists with dashes, or dividers (---). Instead, format your output into separate, clean paragraphs. Start a new line whenever a new step, equation, or part of the explanation begins (e.g. after full stops, colons, or semicolons where appropriate) to make the text clean, readable, and well-spaced.
+Do NOT use raw markdown formatting symbols like headers (###), markdown bolding (**), divider lines (---), or bullet points with dashes. Instead, format your output into separate, clean paragraphs. Start a new line whenever a new step, equation, or part of the explanation begins (e.g. after full stops, colons, or semicolons where appropriate) to make the text clean, readable, and well-spaced.
  
 Wrap any math content, variables, formulas, or equations in single $...$ delimiters for inline LaTeX (e.g. $E = mc^2$).
  
@@ -103,7 +104,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
     };
 
     if (stream && !useOwnKey && authedSupabase && userId) {
-      creditsDeducted = 1;
+      creditsDeducted = deductAmount;
       const newCreditsTotal = Math.max(0, currentCredits - creditsDeducted);
       const { data: updated } = await authedSupabase.from('profiles')
         .update({ credits: newCreditsTotal })
@@ -164,7 +165,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
     const reply = data.choices?.[0]?.message?.content || '';
 
     if (!useOwnKey && authedSupabase && userId) {
-      creditsDeducted = 1;
+      creditsDeducted = deductAmount;
       const newCreditsTotal = Math.max(0, currentCredits - creditsDeducted);
 
       const { data: updated } = await authedSupabase.from('profiles')

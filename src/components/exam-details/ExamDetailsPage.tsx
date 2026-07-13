@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench, ClipboardX, Mic, Binary, GraduationCap, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
@@ -38,6 +38,7 @@ export default function ExamDetails() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   const [showMakeAI, setShowMakeAI] = useState(false);
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
@@ -70,13 +71,22 @@ export default function ExamDetails() {
   const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
 
 
-  const [exams, setExams] = useState<Exam[]>([]);
-  const [selectedExamForInfo, setSelectedExamForInfo] = useState<Exam | null>(null);
-  const [loadingExams, setLoadingExams] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [searchInput, setSearchInput] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
+
+  const cacheKey = `cached_exams_${id}_${userProfile?.id}_${statusFilter}_${sortOrder}_${activeSearchQuery}`;
+  const [exams, setExams] = useState<Exam[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(cacheKey) || '[]');
+    } catch {
+      return [];
+    }
+  });
+  const [selectedExamForInfo, setSelectedExamForInfo] = useState<Exam | null>(null);
+  const [loadingExams, setLoadingExams] = useState(false);
+  const [hasMoreExams, setHasMoreExams] = useState(false);
   const EXAMS_PER_PAGE = 10;
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -124,7 +134,7 @@ export default function ExamDetails() {
   }, [fetchedExamType]);
 
 
-  const { data: initialExams = [], isLoading: loadingExamsInitial } = useQuery({
+  const { data: initialExams, isLoading: loadingExamsInitial } = useQuery({
     queryKey: ['examInstances', id, userProfile?.id, statusFilter, sortOrder, activeSearchQuery],
     queryFn: async () => {
       if (!userProfile?.id) return [];
@@ -151,22 +161,35 @@ export default function ExamDetails() {
         isTemplate: doc.isTemplate || false,
         templateName: doc.templateName || ''
       }));
+      if (id && userProfile?.id) {
+        localStorage.setItem(`cached_exams_${id}_${userProfile.id}_${statusFilter}_${sortOrder}_${activeSearchQuery}`, JSON.stringify(fetchedExams));
+      }
       return fetchedExams;
     },
     enabled: !!id && !!userProfile?.id,
-    staleTime: Infinity,
-    refetchOnMount: false,
-    gcTime: Infinity,
+    staleTime: 0,
   });
 
   useEffect(() => {
-    if (initialExams.length > 0 || !loadingExamsInitial) {
-      setExams(initialExams);
-      setLoadingExams(loadingExamsInitial);
+    if (id && userProfile?.id) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(`cached_exams_${id}_${userProfile.id}_${statusFilter}_${sortOrder}_${activeSearchQuery}`) || '[]');
+        setExams(cached);
+      } catch {
+        setExams([]);
+      }
+    } else {
+      setExams([]);
     }
-  }, [initialExams, loadingExamsInitial]);
+  }, [id, userProfile?.id, statusFilter, sortOrder, activeSearchQuery]);
 
-  const hasMoreExams = exams.length >= EXAMS_PER_PAGE && exams.length % EXAMS_PER_PAGE === 0;
+  useEffect(() => {
+    if (initialExams !== undefined) {
+      setExams(initialExams);
+      setHasMoreExams(initialExams.length === EXAMS_PER_PAGE);
+    }
+    setLoadingExams(loadingExamsInitial);
+  }, [initialExams, loadingExamsInitial]);
 
 
   const fetchExams = async (reset: boolean = false) => {
@@ -204,6 +227,11 @@ export default function ExamDetails() {
         isTemplate: doc.isTemplate || false,
         templateName: doc.templateName || ''
       }));
+      if (fetchedExams.length < EXAMS_PER_PAGE) {
+        setHasMoreExams(false);
+      } else {
+        setHasMoreExams(true);
+      }
       setExams(prev => [...prev, ...fetchedExams]);
     } catch (err) {
       console.error('Error fetching exams:', err);
@@ -387,7 +415,7 @@ export default function ExamDetails() {
               )}
             </div>
           </div>
-          {loadingExamsInitial ? (
+          {loadingExamsInitial && exams.length === 0 ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
             </div>
@@ -471,7 +499,7 @@ export default function ExamDetails() {
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => setShowMakeAI(true)}
+            onClick={() => setShowTypeSelector(true)}
             className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/40 pointer-events-auto"
           >
             <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -504,6 +532,96 @@ export default function ExamDetails() {
           categoryId={id || ''}
           availableSubjects={availableSubjects}
         />
+      )}
+      {showTypeSelector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-5 w-full max-w-xl shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white max-h-[90vh] flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
+              <div>
+                <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-sm sm:text-base">Select Learning Mode</h3>
+                <p className="text-zinc-550 dark:text-zinc-400 text-[10px] sm:text-xs">Choose how you want to prepare and study today</p>
+              </div>
+              <button
+                onClick={() => setShowTypeSelector(false)}
+                className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 py-4 overflow-y-auto">
+              <button
+                onClick={() => {
+                  setShowTypeSelector(false);
+                  setShowMakeAI(true);
+                }}
+                className="group flex flex-col items-start p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-left hover:scale-[1.01]"
+              >
+                <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                  <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                </div>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">AI Question</h4>
+                <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
+                  Generate customized exams with questions parsed from topics or document attachments.
+                </p>
+              </button>
+
+              <button
+                onClick={() => {
+                  setNotification({ message: 'Concept Cards creation mode coming soon!', type: 'info' });
+                }}
+                className="group flex flex-col items-start p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-left hover:scale-[1.01]"
+              >
+                <div className="flex justify-between items-start w-full">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                    <ClipboardX className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                  </div>
+                  <span className="text-[9px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">Soon</span>
+                </div>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Concept Cards</h4>
+                <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
+                  Generate flip card decks for active recall practice on subtopics and key definitions.
+                </p>
+              </button>
+
+              <button
+                onClick={() => {
+                  setNotification({ message: 'Oral Viva mock interview mode coming soon!', type: 'info' });
+                }}
+                className="group flex flex-col items-start p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-left hover:scale-[1.01]"
+              >
+                <div className="flex justify-between items-start w-full">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                    <Mic className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                  </div>
+                  <span className="text-[9px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">Soon</span>
+                </div>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Oral Viva</h4>
+                <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
+                  Practice oral tests with interactive AI questions to master verbal explanation.
+                </p>
+              </button>
+
+              <button
+                onClick={() => {
+                  setNotification({ message: 'Formula Cards training mode coming soon!', type: 'info' });
+                }}
+                className="group flex flex-col items-start p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-left hover:scale-[1.01]"
+              >
+                <div className="flex justify-between items-start w-full">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                    <Binary className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                  </div>
+                  <span className="text-[9px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">Soon</span>
+                </div>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Formula Cards</h4>
+                <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
+                  Drill on formulas, equations, constants, and variable relationships.
+                </p>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       <EditCategoryModal
         show={showEditCategoryModal}

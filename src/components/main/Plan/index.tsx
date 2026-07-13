@@ -13,23 +13,38 @@ export default function PlanContainer() {
   const [userId, setUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: activePlan = null, isLoading: loadingPlan } = useQuery({
+  const cacheKey = `cached_active_study_plan_${userId}`;
+  const [activePlanCached, setActivePlanCached] = useState<any | undefined>(() => {
+    const item = localStorage.getItem(cacheKey);
+    if (item === null) return undefined;
+    try {
+      return JSON.parse(item);
+    } catch {
+      return null;
+    }
+  });
+
+  const { data: activePlanQuery = null, isLoading: loadingPlan } = useQuery({
     queryKey: ['activeStudyPlan', userId],
     queryFn: async () => {
       if (!userId) return null;
       const { data, error } = await supabase
         .from('study_plans')
-        .select('id, created_at, user_id, exam_name, subjects, days, plan_json, exam_type_id')
+        .select('id, created_at, user_id, exam_name, subjects, days, plan_json')
         .eq('user_id', userId)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
-      return data || null;
+      const record = data || null;
+      localStorage.setItem(cacheKey, JSON.stringify(record));
+      return record;
     },
     enabled: !!userId,
   });
+
+  const activePlan = activePlanQuery || activePlanCached;
 
   const [viewRoadmap, setViewRoadmap] = useState<boolean>(false);
   const [showWizard, setShowWizard] = useState<boolean>(false);
@@ -56,6 +71,23 @@ export default function PlanContainer() {
     };
     getSessionUser();
   }, []);
+
+  useEffect(() => {
+    if (userId) {
+      try {
+        const item = localStorage.getItem(`cached_active_study_plan_${userId}`);
+        if (item === null) {
+          setActivePlanCached(undefined);
+        } else {
+          setActivePlanCached(JSON.parse(item));
+        }
+      } catch {
+        setActivePlanCached(null);
+      }
+    } else {
+      setActivePlanCached(undefined);
+    }
+  }, [userId]);
 
   const handleGenerate = async () => {
     if (generating) return;
@@ -118,13 +150,15 @@ export default function PlanContainer() {
           days,
           plan_json: data.plan
         })
-        .select('id, created_at, user_id, exam_name, subjects, days, plan_json, exam_type_id')
+        .select('id, created_at, user_id, exam_name, subjects, days, plan_json')
         .single();
 
       if (saveError) throw saveError;
 
       refreshCredits();
+      localStorage.setItem(cacheKey, JSON.stringify(savedRecord));
       queryClient.setQueryData(['activeStudyPlan', userId], savedRecord);
+      setActivePlanCached(savedRecord);
       setShowWizard(false);
       setViewRoadmap(true);
 
@@ -154,7 +188,9 @@ export default function PlanContainer() {
 
       if (error) throw error;
 
+      localStorage.removeItem(cacheKey);
       queryClient.setQueryData(['activeStudyPlan', userId], null);
+      setActivePlanCached(null);
       setViewRoadmap(false);
       setShowWizard(false);
       setSuccessMsg('Study plan reset successfully.');
@@ -167,7 +203,7 @@ export default function PlanContainer() {
     }
   };
 
-  const isPlanLoading = !userId || loadingPlan;
+  const isPlanLoading = !userId || (loadingPlan && activePlanCached === undefined);
 
   if (isPlanLoading) {
     return (

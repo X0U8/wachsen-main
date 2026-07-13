@@ -4,7 +4,7 @@ import Footer from '../Footer';
 import SpotlightCard from '../../ui/SpotlightCard';
 import TextType from '../../ui/TextType';
 import PlanIcon from '../../ui/PlanIcon';
-import { Plus, Lock, BarChart3, ChartNoAxesCombined } from 'lucide-react';
+import { Plus, Lock, BarChart3, ChartNoAxesCombined, Brain, Mic, Binary, GraduationCap, X } from 'lucide-react';
 import { SettingsIcon } from '../../icons/SettingsIcon';
 import AnalyticsModal from '../profile/AnalyticsModal';
 import { supabase } from '../../services/supabase';
@@ -207,21 +207,39 @@ export default function Exam() {
           .range(0, EXAMS_PER_PAGE - 1);
         if (error) throw error;
         documents = data || [];
+        const mapped = documents
+          .map((doc: any) => ({
+            id: doc.id, name: doc.examName || 'Untitled Exam',
+            startDateTime: doc.startDateTime || '', status: doc.status || 'active',
+            difficulty: doc.difficulty || 'medium', categoryId: doc.categoryId
+          }))
+          .filter((exam: any) => exam.status === 'active' || exam.status === 'Pending');
+        if (userId!) {
+          localStorage.setItem(`cached_upcoming_exams_${userId!}`, JSON.stringify(mapped));
+        }
+        return mapped;
       } catch { documents = []; }
-      return documents
-        .map((doc: any) => ({
-          id: doc.id, name: doc.examName || 'Untitled Exam',
-          startDateTime: doc.startDateTime || '', status: doc.status || 'active',
-          difficulty: doc.difficulty || 'medium', categoryId: doc.categoryId
-        }))
-        .filter((exam: any) => exam.status === 'active' || exam.status === 'Pending');
+      return [];
     },
     enabled: !!userId,
     staleTime: 0, refetchOnMount: true, gcTime: 0,
   });
 
   useEffect(() => {
-    if (initialUpcoming.length > 0 && upcomingExams.length === 0) {
+    if (userId) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(`cached_upcoming_exams_${userId}`) || '[]');
+        setUpcomingExams(cached);
+      } catch {
+        setUpcomingExams([]);
+      }
+    } else {
+      setUpcomingExams([]);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    if (initialUpcoming.length > 0) {
       setUpcomingExams(initialUpcoming);
     }
   }, [initialUpcoming]);

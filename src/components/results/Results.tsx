@@ -39,6 +39,15 @@ export default function Results() {
     fetchExamTypes();
   }, [userId]);
 
+  const cacheKey = `cached_results_${userId}_${selectedExamTypeId}_${activeSearchQuery}`;
+  const cachedResults = (() => {
+    try {
+      return JSON.parse(localStorage.getItem(cacheKey) || '[]');
+    } catch {
+      return [];
+    }
+  })();
+
   const { data: initialResults = [], isLoading: loading } = useQuery({
     queryKey: ['results', userId, selectedExamTypeId, activeSearchQuery],
     queryFn: async () => {
@@ -49,10 +58,12 @@ export default function Results() {
       const response = await fetch(`/api/search?type=results&userId=${userId}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=0`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to search results');
-      return data.results || [];
+      const dataResults = data.results || [];
+      localStorage.setItem(cacheKey, JSON.stringify(dataResults));
+      return dataResults;
     },
     enabled: !!userId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 
   const [hasMore, setHasMore] = useState(false);
@@ -61,7 +72,7 @@ export default function Results() {
     setHasMore(initialResults.length === 10);
   }, [initialResults]);
 
-  const results = [...initialResults, ...extraResults];
+  const results = initialResults.length > 0 ? [...initialResults, ...extraResults] : [...cachedResults, ...extraResults];
 
   const loadMore = async () => {
     if (loadingMore || !hasMore || !userId) return;

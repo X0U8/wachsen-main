@@ -119,17 +119,25 @@ export default function RevisionLog() {
   const [examPlan, setExamPlan] = useState<any>(null);
   const [showSegmentSelector, setShowSegmentSelector] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-  const [revisionList, setRevisionList] = useState<any[]>([]);
+  const [selectedExamTypeId, setSelectedExamTypeId] = useState<string | null>(null);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [activeSearchQuery, setActiveSearchQuery] = useState('');
+
+  const cacheKey = `cached_revision_logs_${userProfile?.id}_${selectedExamTypeId}_${activeSearchQuery}`;
+  const [revisionList, setRevisionList] = useState<any[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(cacheKey) || '[]');
+    } catch {
+      return [];
+    }
+  });
   const [extraRevisionLogs, setExtraRevisionLogs] = useState<any[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [examTypes, setExamTypes] = useState<any[]>([]);
-  const [selectedExamTypeId, setSelectedExamTypeId] = useState<string | null>(null);
-  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
-  const [activeSearchQuery, setActiveSearchQuery] = useState('');
 
   const { data: initialList, isLoading: loadingInitialList, error: queryError } = useQuery({
     queryKey: ['revisionLogs', userProfile?.id, selectedExamTypeId, activeSearchQuery],
@@ -139,7 +147,9 @@ export default function RevisionLog() {
       const response = await fetch(`/api/search?type=revision&userId=${userProfile?.id}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=0`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to search revision logs');
-      return data.revisionList || [];
+      const list = data.revisionList || [];
+      localStorage.setItem(cacheKey, JSON.stringify(list));
+      return list;
     },
     enabled: !!userProfile?.id && !examId,
   });

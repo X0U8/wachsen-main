@@ -888,7 +888,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                   <button
                     onClick={handleGenerate}
                     disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid || hasConflict || (scannedFiles.length > 0 && scannedFiles.some(f => !f.subjectId))}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 text-sm">
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 text-sm">
                     {(() => {
                       const useOwn = localStorage.getItem('use_own_key') === 'true';
                       const prov = localStorage.getItem('provider') || 'mesh';

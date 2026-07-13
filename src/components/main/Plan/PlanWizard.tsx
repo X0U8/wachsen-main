@@ -135,7 +135,7 @@ export default function PlanWizard({
               className="flex-1 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-950/40 border border-black/15 dark:border-white/20 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white font-semibold text-xs" />
             <button
               onClick={handleAddSubject}
-              className="px-4 py-2.5 bg-blue-650 hover:bg-blue-700 text-white rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all cursor-pointer flex items-center justify-center shrink-0"
             >
               <Plus className="w-4 h-4" />
             </button>

@@ -251,7 +251,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     try {
       const { count, error: countError } = await supabase
         .from('templates')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('userId', userProfile.$id);
 
       if (countError) throw countError;
@@ -309,7 +309,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     try {
       const { data, error } = await supabase
         .from('templates')
-        .select('*')
+        .select('difficulty, totalTime, visibility, defaultCorrectMarks, defaultNegativeMarks, selectedTypes, defaultCounts')
         .eq('id', templateToApply.id)
         .single();
       if (error || !data) { showNotification('error', 'Failed to load template'); setTemplateToApply(null); setApplyingTemplate(false); return; }

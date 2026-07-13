@@ -426,7 +426,7 @@ Return ONLY a valid JSON array matching this format:
 
         const { data: revDocs, error: revError } = await supabase
           .from('revision')
-          .select('*')
+          .select('questions, examLogs')
           .eq('userID', userProfile.id)
           .eq('examID', examId)
           .limit(1);

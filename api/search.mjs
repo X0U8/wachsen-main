@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     if (type === 'exams') {
       let query = supabase
         .from('exams')
-        .select('*')
+        .select('id, examName, startDateTime, endDateTime, status, difficulty, examType, totalQuestions, totalMarks, subjects, created_at, isTemplate, templateName')
         .contains('accessIds', [userId]);
 
       if (categoryId) {
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
     } else if (type === 'results') {
       let query = supabase
         .from('results')
-        .select('*')
+        .select('id, created_at, startTime, endTime, marksObtained, totalMarks, examName, examId, userId')
         .eq('userId', userId);
 
       if (selectedExamTypeId) {

@@ -320,7 +320,7 @@ export default function ResultDetails() {
 
           const { data: resData, error: getResultError } = await supabase
             .from('results')
-            .select('*')
+            .select('id, examId, userId, examName, startTime, endTime, marksObtained, totalMarks, correctAnswers, wrongAnswers, userAnswers, timeSpentPerQuestion')
             .eq('userId', viewUserId)
             .eq('examId', examId)
             .maybeSingle();
@@ -347,7 +347,7 @@ export default function ResultDetails() {
 
             const { data, error: getResultError } = await supabase
               .from('results')
-              .select('*')
+              .select('id, examId, userId, examName, startTime, endTime, marksObtained, totalMarks, correctAnswers, wrongAnswers, userAnswers, timeSpentPerQuestion')
               .eq('id', resultId)
               .single();
             if (getResultError) throw getResultError;

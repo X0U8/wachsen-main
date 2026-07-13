@@ -175,7 +175,7 @@ export default function TakeExam() {
           try {
             const { data: resultsData, error: resultsErr } = await supabase
               .from('results')
-              .select('*')
+              .select('id, endTime, userAnswers, reviewList')
               .eq('userId', userProfile.id)
               .eq('examId', instanceId)
               .limit(1);
@@ -336,7 +336,7 @@ export default function TakeExam() {
     try {
       const { data: resultsData, error: resultsErr } = await supabase
         .from('results')
-        .select('*')
+        .select('id, startTime, endTime, userAnswers, reviewList')
         .eq('userId', userProfile.id)
         .eq('examId', instanceId)
         .limit(1);
@@ -398,7 +398,7 @@ export default function TakeExam() {
           endTime: endTimeStr,
           marksObtained: 0,
         })
-        .select()
+        .select('id')
         .single();
       if (!insertError && resultDoc) {
         setResultId(resultDoc.id);
@@ -507,7 +507,7 @@ export default function TakeExam() {
           const { data: newRes, error: insertErr } = await supabase
             .from('results')
             .insert(resultData)
-            .select()
+            .select('id')
             .single();
           if (insertErr) throw insertErr;
           if (newRes) finalResultId = newRes.id;
@@ -516,7 +516,7 @@ export default function TakeExam() {
         const { data: newRes, error: insertErr } = await supabase
           .from('results')
           .insert(resultData)
-          .select()
+          .select('id')
           .single();
         if (insertErr) throw insertErr;
         if (newRes) finalResultId = newRes.id;

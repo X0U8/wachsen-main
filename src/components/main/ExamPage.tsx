@@ -120,7 +120,7 @@ export default function Exam() {
           try {
             const { data, error } = await supabase
               .from('examtypes')
-              .select('*')
+              .select('id, name, subjects, academicLevel')
               .eq('userId', userId!)
               .eq('name', 'challenges')
               .maybeSingle();
@@ -143,7 +143,7 @@ export default function Exam() {
           try {
             const { data, error } = await supabase
               .from('examtypes')
-              .select('*')
+              .select('id, name, subjects, academicLevel')
               .eq('userId', userId!)
               .eq('name', 'others')
               .maybeSingle();
@@ -170,7 +170,7 @@ export default function Exam() {
 
       const { data, error } = await supabase
         .from('examtypes')
-        .select('*')
+        .select('id, name, subjects, academicLevel')
         .eq('userId', userId!)
         .order('created_at', { ascending: true })
         .limit(50);
@@ -201,7 +201,7 @@ export default function Exam() {
       try {
         const { data, error } = await supabase
           .from('exams')
-          .select('*')
+          .select('id, examName, startDateTime, status, difficulty, categoryId')
           .contains('accessIds', [userId!])
           .order('created_at', { ascending: false })
           .range(0, EXAMS_PER_PAGE - 1);
@@ -237,7 +237,7 @@ export default function Exam() {
       try {
         const { data, error } = await supabase
           .from('exams')
-          .select('*')
+          .select('id, examName, startDateTime, status, difficulty, categoryId')
           .contains('accessIds', [userId])
           .order('created_at', { ascending: false })
           .range(upcomingOffset, upcomingOffset + EXAMS_PER_PAGE - 1);
@@ -284,7 +284,7 @@ export default function Exam() {
       const { data: doc, error } = await supabase
         .from('examtypes')
         .insert({ userId, name: data.name, subjects: data.subjects, academicLevel: data.academicLevel })
-        .select('*')
+        .select('id, name, subjects, academicLevel')
         .single();
 
       if (error) throw error;

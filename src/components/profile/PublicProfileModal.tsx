@@ -97,7 +97,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, email, name, username, frequency, source, DOB, gender, country, is_ban, is_premium, premium_ends, credits, profile_picture, last_claimed, premium_type')
           .eq('id', userId)
           .maybeSingle();
 
@@ -300,7 +300,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
 
       const { data: sourceQuestions, error: qErr } = await supabase
         .from('questions')
-        .select('*')
+        .select('questionText, options, correctOption, solutionText, marks, negativeMarks, subject, topic')
         .eq('examId', importTargetExam.id);
 
       if (qErr) throw qErr;

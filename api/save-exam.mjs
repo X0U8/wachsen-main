@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       correct_marks: examData.correct_marks ?? examData.defaultCorrectMarks ?? 4,
       negative_marks: examData.negative_marks ?? examData.defaultNegativeMarks ?? 0,
       ExamPlan: examData.ExamPlan || '{}'
-    }).select().single();
+    }).select('id').single();
 
     if (error) throw error;
 

@@ -19,7 +19,7 @@ export default function PlanContainer() {
       if (!userId) return null;
       const { data, error } = await supabase
         .from('study_plans')
-        .select('*')
+        .select('id, created_at, user_id, exam_name, subjects, days, plan_json, exam_type_id')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -118,7 +118,7 @@ export default function PlanContainer() {
           days,
           plan_json: data.plan
         })
-        .select('*')
+        .select('id, created_at, user_id, exam_name, subjects, days, plan_json, exam_type_id')
         .single();
 
       if (saveError) throw saveError;

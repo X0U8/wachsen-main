@@ -81,7 +81,7 @@ export default function PlanViewDaily({
       try {
         const { data, error } = await supabase
           .from('study_plan_details')
-          .select('*')
+          .select('details_json')
           .eq('plan_id', planId)
           .eq('month_number', selectedMonthNum)
           .maybeSingle();

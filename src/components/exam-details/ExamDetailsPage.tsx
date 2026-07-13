@@ -97,7 +97,7 @@ export default function ExamDetails() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('examtypes')
-        .select('*')
+        .select('id, name, subjects, academicLevel, Percentages')
         .eq('id', id!)
         .single();
       if (error) throw error;

@@ -29,7 +29,7 @@ export function useProfile(userId: string | undefined) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, email, name, username, frequency, source, DOB, gender, country, is_ban, is_premium, premium_ends, credits, profile_picture, last_claimed, premium_type')
         .eq('id', userId)
         .maybeSingle();
 

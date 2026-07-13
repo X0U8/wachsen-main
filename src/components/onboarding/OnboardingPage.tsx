@@ -129,7 +129,7 @@ export default function Onboarding({
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('is_ban, is_premium, premium_ends, credits, profile_picture, last_claimed, premium_type')
           .eq('id', session.user.id)
           .maybeSingle();
         existingProfile = profile;

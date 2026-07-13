@@ -61,7 +61,7 @@ function MainApp() {
           try {
             const { data } = await supabase
               .from('examtypes')
-              .select('*')
+              .select('id, name, subjects, academicLevel')
               .eq('userId', session.user.id)
               .order('created_at', { ascending: true })
               .limit(50);

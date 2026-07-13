@@ -171,7 +171,7 @@ export default function RevisionLog() {
         setRevisionList([]);
       }
     }
-  }, [activeSearchQuery, examId, userProfile?.id]);
+  }, [activeSearchQuery, userProfile?.id]);
 
 
 

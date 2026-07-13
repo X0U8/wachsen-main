@@ -11,6 +11,7 @@ import Footer from './Footer';
 import { fontSize } from '../lib/utils';
 import { idbGet, idbSet } from '../lib/idb';
 import { jsonrepair } from 'jsonrepair';
+import { streamConceptCards } from '../lib/streamConceptCards';
 
 export const safeParseJSON = (str: string) => {
   try {
@@ -117,6 +118,7 @@ export default function RevisionLog() {
   const [showConceptCards, setShowConceptCards] = useState(false);
   const [conceptCards, setConceptCards] = useState<any[]>([]);
   const [activeTopics, setActiveTopics] = useState('');
+  const [cardGenProgress, setCardGenProgress] = useState(0);
   const [examCategoryId, setExamCategoryId] = useState<string | null>(null);
   const [academicLevel, setAcademicLevel] = useState<string>('');
   const [examPlan, setExamPlan] = useState<any>(null);
@@ -307,6 +309,7 @@ export default function RevisionLog() {
   const generateConceptCards = async (selectedTopics: string) => {
     if (generatingCards) return;
     setGeneratingCards(true);
+    setCardGenProgress(0);
     try {
       setActiveTopics(selectedTopics);
       const { data: { session } } = await supabase.auth.getSession();
@@ -318,10 +321,9 @@ export default function RevisionLog() {
       const activeModel = localStorage.getItem('mesh_active_model') || '';
 
       const level = academicLevel || 'Grade 10';
-      const response = await fetch('/api/ask-question', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+
+      const replyText = await streamConceptCards(
+        {
           question: `Based on these concepts: ${selectedTopics}. Generate exactly 10 conceptual multiple-choice questions.
 VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. You MUST customize the questions complexity to match this academic level.
 Additionally, you MUST sequence the 10 questions from easiest (question 1) to hardest (question 10) in progressive difficulty order.
@@ -344,29 +346,23 @@ Return ONLY a valid JSON array matching this format:
           provider: activeProvider,
           model: activeModel,
           deductAmount: 10
-        })
-      });
+        },
+        (count) => setCardGenProgress(count)
+      );
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(`${data.error || 'Failed to generate flashcards'} (${data.details || ''})`);
-      }
-
-      let replyText = data.reply || '[]';
-      replyText = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
-      console.log('AI generated content:', replyText);
-      const cards = safeParseJSON(replyText);
+      const cleanedReply = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
+      const cards = safeParseJSON(cleanedReply);
 
       setConceptCards(cards);
+      setCardGenProgress(10);
       setShowConceptCards(true);
-      if (data.creditsDeducted > 0) {
-        refreshProfile();
-      }
+      refreshProfile();
     } catch (err) {
       console.error('Error generating concept cards:', err);
       showNotification('error', 'Failed to generate concept cards');
     } finally {
       setGeneratingCards(false);
+      setCardGenProgress(0);
     }
   };
 
@@ -796,20 +792,32 @@ Return ONLY a valid JSON array matching this format:
         <RevisionQuestionsList questions={logData.questions} />
       </main>
       {showConceptCards && (
-        <ConceptCards
+      <ConceptCards
           onClose={() => setShowConceptCards(false)}
           cards={conceptCards}
           topics={activeTopics}
           userId={userProfile?.id}
+          categoryId={examCategoryId || ''}
+          academicLevel={academicLevel}
         />
       )}
       {generatingCards && (
         <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md z-[295] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 w-full max-w-[280px] text-center space-y-4 shadow-2xl">
-            <Loader2 className="w-10 h-10 border-4 border-blue-600 dark:border-blue-400 border-t-transparent rounded-full animate-spin mx-auto text-blue-600" />
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-[280px] text-center space-y-4 shadow-2xl">
             <div className="space-y-1">
               <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Generating Cards</h3>
               <p className="text-zinc-500 dark:text-zinc-400 text-xs">Please do not go back or exit</p>
+            </div>
+            <div className="space-y-2">
+              <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${Math.round((cardGenProgress / 10) * 100)}%` }}
+                />
+              </div>
+              <p className="text-zinc-500 dark:text-zinc-400 text-[10px] font-semibold">
+                {cardGenProgress < 10 ? `Generating... (~${cardGenProgress}/10 questions)` : 'Finalizing...'}
+              </p>
             </div>
           </div>
         </div>

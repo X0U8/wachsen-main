@@ -736,7 +736,6 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                   <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
                     <ClipboardX className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
-                  <span className="absolute -top-2 -right-8 text-[8px] font-bold text-blue-500 bg-blue-500/10 px-1 py-0.5 rounded">Soon</span>
                 </div>
                 <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Concept Cards</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
@@ -754,7 +753,6 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                   <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
                     <Mic className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
-                  <span className="absolute -top-2 -right-8 text-[8px] font-bold text-blue-500 bg-blue-500/10 px-1 py-0.5 rounded">Soon</span>
                 </div>
                 <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Oral Viva</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">

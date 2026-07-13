@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Check, AlertCircle } from 'lucide-react';
 import MathText from '../ui/MathText';
 import { fontSize } from '../lib/utils';
 import { supabase } from '../services/supabase';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ConceptCardData {
   question: string;
@@ -29,6 +30,12 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
   const [isFlipped, setIsFlipped] = useState(false);
   const [results, setResults] = useState<Record<number, boolean>>({});
   const [isFinished, setIsFinished] = useState(false);
+  const [questionTimes, setQuestionTimes] = useState<Record<number, number>>({});
+  const [startTime, setStartTime] = useState<number>(Date.now());
+
+  useEffect(() => {
+    setStartTime(Date.now());
+  }, [currentIndex]);
 
   const [savingDeck, setSavingDeck] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -105,6 +112,9 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
   };
 
   const handleNext = () => {
+    const duration = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+    setQuestionTimes(prev => ({ ...prev, [currentIndex]: duration }));
+
     if (currentIndex < cards.length - 1) {
       setIsFlipped(false);
       setSelectedOptions([]);
@@ -116,6 +126,11 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
 
   const correctCount = Object.values(results).filter(Boolean).length;
   const percentage = Math.round((correctCount / cards.length) * 100);
+
+  const chartData = cards.map((_, idx) => ({
+    name: `Q${idx + 1}`,
+    seconds: questionTimes[idx] || 0
+  }));
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
@@ -219,20 +234,49 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
           </div>
         ) : (
           /* Results Summary Screen */
-          (<div className="flex-grow flex flex-col justify-center bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 space-y-4 my-4 overflow-y-auto">
-            <h4
-              className="font-semibold text-zinc-800 dark:text-white uppercase tracking-wider text-xs">Training Summary</h4>
-            <div className="text-zinc-650 dark:text-gray-300 text-xs">
-              <div className="font-bold text-zinc-800 dark:text-white mb-1 text-base">
-                {correctCount} / {cards.length} correct ({percentage}%)
+          <div className="flex-grow flex flex-col justify-between bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 my-3 overflow-y-auto">
+            <div className="text-center space-y-3 flex-grow flex flex-col justify-center">
+              <div>
+                <h4 className="font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider text-[10px]">Training Summary</h4>
+                <div className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">
+                  {correctCount} / {cards.length}
+                </div>
+                <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">Correct Answers</p>
               </div>
-              <div className="text-zinc-500 dark:text-zinc-400 mb-4 text-xs">
+
+              <p className="text-zinc-650 dark:text-zinc-300 text-xs px-2 leading-relaxed">
                 {percentage >= 80
                   ? 'Excellent job! You have fully mastered these concepts.'
                   : percentage >= 50
                     ? 'Good effort! A bit more practice will make it perfect.'
                     : 'Keep revising. Practice makes permanent!'}
+              </p>
+
+              {/* Time spent chart */}
+              <div className="space-y-1.5 pt-2">
+                <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider text-left pl-2">Time Spent per Question (seconds)</p>
+                <div className="h-[130px] w-full bg-white dark:bg-zinc-950/20 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={8} tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#18181b',
+                          borderColor: '#27272a',
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '10px'
+                        }}
+                      />
+                      <Line type="monotone" dataKey="seconds" stroke="#3b82f6" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
+            </div>
+
+            <div className="space-y-2 mt-4">
               {userId && topics && (
                 <button
                   disabled={savingDeck || saveStatus === 'saved'}
@@ -241,7 +285,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
                     setCustomName(defaultName.length > 50 ? `${defaultName.substring(0, 50)}...` : defaultName);
                     setShowNameInputModal(true);
                   }}
-                  className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs mb-2 ${
+                  className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs ${
                     saveStatus === 'saved'
                       ? 'bg-green-600 hover:bg-green-700 text-white cursor-default font-semibold'
                       : saveStatus === 'error'
@@ -264,7 +308,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
                 Close Summary
               </button>
             </div>
-          </div>)
+          </div>
         )}
       </div>
 

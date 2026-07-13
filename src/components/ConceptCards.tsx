@@ -16,9 +16,11 @@ interface ConceptCardsProps {
   cards: ConceptCardData[];
   topics?: string;
   userId?: string;
+  categoryId?: string;
+  academicLevel?: string;
 }
 
-export default function ConceptCards({ onClose, cards = [], topics, userId }: ConceptCardsProps) {
+export default function ConceptCards({ onClose, cards = [], topics, userId, categoryId, academicLevel }: ConceptCardsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -27,24 +29,30 @@ export default function ConceptCards({ onClose, cards = [], topics, userId }: Co
 
   const [savingDeck, setSavingDeck] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [showNameInputModal, setShowNameInputModal] = useState(false);
+  const [customName, setCustomName] = useState('');
 
-  const handleSaveDeck = async () => {
+  const handleSaveDeck = async (deckName: string) => {
+    const finalName = deckName.trim();
+    if (!finalName) return;
     if (!userId || !topics || cards.length === 0 || savingDeck) return;
     setSavingDeck(true);
     setSaveStatus('saving');
     try {
-      const deckName = topics.length > 40 ? `${topics.substring(0, 40)}...` : topics;
       const { error } = await supabase
         .from('saved_concept_cards')
         .insert({
           user_id: userId,
-          name: deckName,
+          category_id: categoryId || null,
+          academic_level: academicLevel || null,
+          name: finalName,
           topics: topics,
           questions: cards
         });
 
       if (error) throw error;
       setSaveStatus('saved');
+      setShowNameInputModal(false);
     } catch (err) {
       console.error('Error saving concept card deck:', err);
       setSaveStatus('error');
@@ -231,7 +239,11 @@ export default function ConceptCards({ onClose, cards = [], topics, userId }: Co
               {userId && topics && (
                 <button
                   disabled={savingDeck || saveStatus === 'saved'}
-                  onClick={handleSaveDeck}
+                  onClick={() => {
+                    const defaultName = topics.length > 40 ? `${topics.substring(0, 40)}...` : topics;
+                    setCustomName(defaultName);
+                    setShowNameInputModal(true);
+                  }}
                   className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs mb-2 ${
                     saveStatus === 'saved'
                       ? 'bg-green-600 hover:bg-green-700 text-white cursor-default font-semibold'
@@ -258,6 +270,48 @@ export default function ConceptCards({ onClose, cards = [], topics, userId }: Co
           </div>)
         )}
       </div>
+
+      {showNameInputModal && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/70 dark:bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl relative text-zinc-900 dark:text-white flex flex-col gap-4 text-left">
+            <div>
+              <h3 className="font-semibold text-zinc-850 dark:text-white text-sm">Save Concept Card Deck</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 text-[10px] mt-0.5">Enter a name to save this flashcard deck for future practice</p>
+            </div>
+            
+            <div className="space-y-1">
+              <input
+                type="text"
+                maxLength={50}
+                placeholder="Deck name"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+              />
+              <div className="flex justify-end text-[9px] text-zinc-400 font-medium">
+                {customName.length} / 50
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-1">
+              <button
+                disabled={savingDeck}
+                onClick={() => setShowNameInputModal(false)}
+                className="px-3.5 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-xl text-xs transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={savingDeck || !customName.trim()}
+                onClick={() => handleSaveDeck(customName)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 justify-center cursor-pointer shadow-md"
+              >
+                {savingDeck ? 'Saving...' : 'Save Deck'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

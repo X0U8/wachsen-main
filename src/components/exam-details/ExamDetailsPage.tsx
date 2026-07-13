@@ -66,11 +66,15 @@ export default function ExamDetails() {
       const activeProvider = localStorage.getItem('provider') || 'mesh';
       const activeModel = localStorage.getItem('mesh_active_model') || '';
 
+      const level = examType?.academicLevel || 'Grade 10';
       const response = await fetch('/api/ask-question', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: `Based on these concepts: ${trimmedTopic}. Generate exactly 10 conceptual multiple-choice questions. For each question, provide:
+          question: `Based on these concepts: ${trimmedTopic}. Generate exactly 10 conceptual multiple-choice questions.
+VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. You MUST customize the questions complexity to match this academic level.
+Additionally, you MUST sequence the 10 questions from easiest (question 1) to hardest (question 10) in progressive difficulty order.
+For each question, provide:
 1. "question": The conceptual question text.
 2. "options": An array of exactly 4 choices.
 3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
@@ -10,15 +10,14 @@ import { fontSize } from '../../lib/utils';
 export default function Results() {
   const navigate = useNavigate();
   const { userProfile } = useUserProfile();
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [extraResults, setExtraResults] = useState<any[]>([]);
   const [examTypes, setExamTypes] = useState<any[]>([]);
   const [selectedExamTypeId, setSelectedExamTypeId] = useState<string | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
   const userId = userProfile?.id || null;
-  const sentinelRef = useRef<HTMLDivElement>(null);
 
 
   useEffect(() => {
@@ -39,87 +38,27 @@ export default function Results() {
     fetchExamTypes();
   }, [userId]);
 
-  const cacheKey = `cached_results_${userId}_${selectedExamTypeId}_${activeSearchQuery}`;
-  const cachedResults = (() => {
-    try {
-      return JSON.parse(localStorage.getItem(cacheKey) || '[]');
-    } catch {
-      return [];
-    }
-  })();
-
-  const { data: initialResults = [], isLoading: loading } = useQuery({
-    queryKey: ['results', userId, selectedExamTypeId, activeSearchQuery],
+  const { data: resultsPage, isLoading: loading } = useQuery<{ items: any[]; hasNext: boolean }>({
+    queryKey: ['results', userId, selectedExamTypeId, activeSearchQuery, page],
     queryFn: async () => {
-      if (!userId) return [];
+      if (!userId) return { items: [], hasNext: false };
       const sessionData = await supabase.auth.getSession();
       const authToken = sessionData.data.session?.access_token || '';
+      const offset = (page - 1) * PAGE_SIZE;
 
-      const response = await fetch(`/api/search?type=results&userId=${userId}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=0`);
+      const response = await fetch(`/api/search?type=results&userId=${userId}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=${PAGE_SIZE + 1}&offset=${offset}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to search results');
-      const dataResults = data.results || [];
-      localStorage.setItem(cacheKey, JSON.stringify(dataResults));
-      return dataResults;
+      const list = data.results || [];
+      return { items: list.slice(0, PAGE_SIZE), hasNext: list.length > PAGE_SIZE };
     },
     enabled: !!userId,
     staleTime: 0,
+    refetchOnMount: 'always',
   });
 
-  const [hasMore, setHasMore] = useState(false);
-
-  useEffect(() => {
-    setHasMore(initialResults.length === 10);
-  }, [initialResults]);
-
-  const results = initialResults.length > 0 ? [...initialResults, ...extraResults] : [...cachedResults, ...extraResults];
-
-  const loadMore = async () => {
-    if (loadingMore || !hasMore || !userId) return;
-    setLoadingMore(true);
-    try {
-      const offset = results.length;
-      const sessionData = await supabase.auth.getSession();
-      const authToken = sessionData.data.session?.access_token || '';
-
-      const response = await fetch(`/api/search?type=results&userId=${userId}&authToken=${authToken}&selectedExamTypeId=${selectedExamTypeId || ''}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=${offset}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to load more results');
-
-      const dataResults = data.results || [];
-      if (dataResults.length > 0) {
-        setExtraResults(prev => [...prev, ...dataResults]);
-      }
-      if (dataResults.length < 10) {
-        setHasMore(false);
-      }
-    } catch (err) {
-      console.error('Error loading more results:', err);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!hasMore || loadingMore) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        loadMore();
-      }
-    }, { rootMargin: '200px' });
-
-    const currentSentinel = sentinelRef.current;
-    if (currentSentinel) {
-      observer.observe(currentSentinel);
-    }
-
-    return () => {
-      if (currentSentinel) {
-        observer.unobserve(currentSentinel);
-      }
-    };
-  }, [hasMore, loadingMore, results.length]);
+  const results = resultsPage?.items || [];
+  const hasNext = resultsPage?.hasNext || false;
 
   if (loading && results.length === 0) {
     return (
@@ -158,7 +97,7 @@ export default function Results() {
                   <button
                     onClick={() => {
                       setSelectedExamTypeId(null);
-                      setExtraResults([]);
+                      setPage(1);
                       setShowFilterDropdown(false);
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${!selectedExamTypeId
@@ -174,7 +113,7 @@ export default function Results() {
                       key={type.id}
                       onClick={() => {
                         setSelectedExamTypeId(type.id);
-                        setExtraResults([]);
+                        setPage(1);
                         setShowFilterDropdown(false);
                       }}
                       className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${selectedExamTypeId === type.id
@@ -200,14 +139,14 @@ export default function Results() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                setExtraResults([]);
+                setPage(1);
                 setActiveSearchQuery(searchInput);
               }
             }}
             className="flex-1 bg-transparent border-none text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none text-xs" />
           <button
             onClick={() => {
-              setExtraResults([]);
+              setPage(1);
               setActiveSearchQuery(searchInput);
             }}
             className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold cursor-pointer transition-colors text-xs">
@@ -217,7 +156,7 @@ export default function Results() {
             <button
               onClick={() => {
                 setSearchInput('');
-                setExtraResults([]);
+                setPage(1);
                 setActiveSearchQuery('');
               }}
               className="px-2 py-1.5 border border-zinc-300 dark:border-gray-700 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-lg text-zinc-500 dark:text-gray-400 cursor-pointer transition-colors font-medium text-xs">
@@ -274,10 +213,23 @@ export default function Results() {
               })}
             </div>
 
-            {hasMore && (
-              <div ref={sentinelRef} className="w-full py-6 flex items-center justify-center gap-2 text-zinc-400 dark:text-zinc-505">
-                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                <span className="uppercase tracking-wider font-semibold text-xs">Loading more results...</span>
+            {results.length > 0 && (
+              <div className="flex items-center justify-center gap-3 pt-4">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1 || loading}
+                  className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+                >
+                  Previous
+                </button>
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Page {page}</span>
+                <button
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={!hasNext || loading}
+                  className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+                >
+                  Next
+                </button>
               </div>
             )}
           </>

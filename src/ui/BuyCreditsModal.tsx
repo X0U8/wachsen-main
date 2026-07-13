@@ -17,7 +17,7 @@ interface BuyCreditsModalProps {
   premiumEnds?: string;
   refreshProfile?: () => Promise<void>;
 }
-
+//have to put in the data
 const countries = [
   { code: 'AL', name: 'Albania', currency: 'ALL', symbol: 'L' },
   { code: 'DZ', name: 'Algeria', currency: 'DZD', symbol: 'د.ج' },

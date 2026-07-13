@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../services/supabase';
@@ -126,52 +126,28 @@ export default function RevisionLog() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
-  const cacheKey = `cached_revision_logs_${userProfile?.id}_${activeSearchQuery}`;
-  const [revisionList, setRevisionList] = useState<any[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(cacheKey) || '[]');
-    } catch {
-      return [];
-    }
-  });
-  const [extraRevisionLogs, setExtraRevisionLogs] = useState<any[]>([]);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  const { data: initialList, isLoading: loadingInitialList, error: queryError } = useQuery({
-    queryKey: ['revisionLogs', userProfile?.id, activeSearchQuery],
+  const { data: revisionPage, isLoading: loadingInitialList, error: queryError } = useQuery<{ items: any[]; hasNext: boolean }>({
+    queryKey: ['revisionLogs', userProfile?.id, activeSearchQuery, page],
     queryFn: async () => {
       const sessionData = await supabase.auth.getSession();
       const authToken = sessionData.data.session?.access_token || '';
-      const response = await fetch(`/api/search?type=revision&userId=${userProfile?.id}&authToken=${authToken}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=0`);
+      const offset = (page - 1) * PAGE_SIZE;
+      const response = await fetch(`/api/search?type=revision&userId=${userProfile?.id}&authToken=${authToken}&query=${encodeURIComponent(activeSearchQuery)}&limit=${PAGE_SIZE + 1}&offset=${offset}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to search revision logs');
       const list = data.revisionList || [];
-      localStorage.setItem(cacheKey, JSON.stringify(list));
-      return list;
+      return { items: list.slice(0, PAGE_SIZE), hasNext: list.length > PAGE_SIZE };
     },
     enabled: !!userProfile?.id && !examId,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
-  useEffect(() => {
-    if (initialList && !examId) {
-      setRevisionList(initialList);
-      setHasMore(initialList.length === 10);
-    }
-  }, [initialList, examId]);
-
-  useEffect(() => {
-    if (!examId) {
-      setExtraRevisionLogs([]);
-      try {
-        setRevisionList(JSON.parse(localStorage.getItem(cacheKey) || '[]'));
-      } catch {
-        setRevisionList([]);
-      }
-    }
-  }, [activeSearchQuery, userProfile?.id]);
+  const revisionList = revisionPage?.items || [];
+  const hasNext = revisionPage?.hasNext || false;
 
 
 
@@ -508,54 +484,7 @@ Return ONLY a valid JSON array matching this format:
     fetchRevisionLog();
   }, [examId, userProfile?.id]);
 
-  const displayList = [...revisionList, ...extraRevisionLogs];
 
-  const loadMore = async () => {
-    if (loadingMore || !hasMore || !userProfile?.id) return;
-    setLoadingMore(true);
-    try {
-      const offset = revisionList.length + extraRevisionLogs.length;
-      const sessionData = await supabase.auth.getSession();
-      const authToken = sessionData.data.session?.access_token || '';
-
-      const response = await fetch(`/api/search?type=revision&userId=${userProfile.id}&authToken=${authToken}&query=${encodeURIComponent(activeSearchQuery)}&limit=10&offset=${offset}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to load more revision logs');
-
-      const dataRevisionList = data.revisionList || [];
-      if (dataRevisionList.length > 0) {
-        setExtraRevisionLogs(prev => [...prev, ...dataRevisionList]);
-      }
-      if (dataRevisionList.length < 10) {
-        setHasMore(false);
-      }
-    } catch (err) {
-      console.error('Error loading more revision logs:', err);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!hasMore || loadingMore || examId) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        loadMore();
-      }
-    }, { rootMargin: '200px' });
-
-    const currentSentinel = sentinelRef.current;
-    if (currentSentinel) {
-      observer.observe(currentSentinel);
-    }
-
-    return () => {
-      if (currentSentinel) {
-        observer.unobserve(currentSentinel);
-      }
-    };
-  }, [hasMore, loadingMore, displayList.length, examId]);
 
   const isPageLoading = examId ? loading : (loadingInitialList && revisionList.length === 0);
   const pageError = examId ? error : (queryError ? (queryError as Error).message : error);
@@ -625,7 +554,7 @@ Return ONLY a valid JSON array matching this format:
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  setExtraRevisionLogs([]);
+                  setPage(1);
                   setActiveSearchQuery(searchInput);
                 }
               }}
@@ -633,7 +562,7 @@ Return ONLY a valid JSON array matching this format:
             />
             <button
               onClick={() => {
-                setExtraRevisionLogs([]);
+                setPage(1);
                 setActiveSearchQuery(searchInput);
               }}
               className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors"
@@ -644,7 +573,7 @@ Return ONLY a valid JSON array matching this format:
               <button
                 onClick={() => {
                   setSearchInput('');
-                  setExtraRevisionLogs([]);
+                  setPage(1);
                   setActiveSearchQuery('');
                 }}
                 className="px-2 py-1.5 border border-zinc-300 dark:border-gray-700 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-lg text-xs text-zinc-500 dark:text-gray-400 cursor-pointer transition-colors font-medium"
@@ -655,12 +584,27 @@ Return ONLY a valid JSON array matching this format:
           </div>
 
           <RevisionLogList
-            revisionList={displayList}
+            revisionList={revisionList}
             onSelectLog={(examID) => navigate(`/revision/${examID}`)}
           />
-          {hasMore && (
-            <div ref={sentinelRef} className="flex justify-center py-4">
-              {loadingMore && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
+
+          {revisionList.length > 0 && (
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1 || loadingInitialList}
+                className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+              >
+                Previous
+              </button>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Page {page}</span>
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={!hasNext || loadingInitialList}
+                className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+              >
+                Next
+              </button>
             </div>
           )}
         </main>

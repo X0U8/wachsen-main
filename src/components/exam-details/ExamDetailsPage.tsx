@@ -14,6 +14,7 @@ import TemplateModal from './TemplateModal';
 import EditCategoryModal from './EditCategoryModal';
 import { useTemplateSaving } from '../../hooks/useTemplateSaving';
 import ConceptCards from '../ConceptCards';
+import CheatCards from '../CheatCards';
 import { safeParseJSON } from '../RevisionLog';
 import { streamConceptCards } from '../../lib/streamConceptCards';
 
@@ -54,6 +55,14 @@ export default function ExamDetails() {
   const [cardGenProgress, setCardGenProgress] = useState(0);
   const [showConceptCards, setShowConceptCards] = useState(false);
   const [conceptCards, setConceptCards] = useState<any[]>([]);
+
+  const [showCheatCardModal, setShowCheatCardModal] = useState(false);
+  const [cheatTopicText, setCheatTopicText] = useState('');
+  const [cheatDeckName, setCheatDeckName] = useState('');
+  const [generatingCheatCards, setGeneratingCheatCards] = useState(false);
+  const [cheatCardProgress, setCheatCardProgress] = useState(0);
+  const [showCheatCards, setShowCheatCards] = useState(false);
+  const [cheatCards, setCheatCards] = useState<any[]>([]);
 
   const handleGenerateConceptCards = async () => {
     const trimmedTopic = topicText.trim();
@@ -115,6 +124,70 @@ Return ONLY a valid JSON array matching this format:
     } finally {
       setGeneratingCards(false);
       setCardGenProgress(0);
+    }
+  };
+
+  const handleGenerateCheatCards = async () => {
+    const trimmedTopic = cheatTopicText.trim();
+    const trimmedDeckName = cheatDeckName.trim() || trimmedTopic;
+    if (!trimmedTopic) return;
+
+    setGeneratingCheatCards(true);
+    setCheatCardProgress(0);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || '';
+
+      const useOwnKey = localStorage.getItem('use_own_key') === 'true';
+      const userApiKey = localStorage.getItem(localStorage.getItem('provider') === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
+      const activeProvider = localStorage.getItem('provider') || 'mesh';
+      const activeModel = localStorage.getItem('mesh_active_model') || '';
+
+      const level = examType?.academicLevel || 'Grade 10';
+      const categoryName = examType?.name || '';
+
+      const replyText = await streamConceptCards(
+        {
+          question: `Topic: ${trimmedTopic}. Generate exactly 20 cheat-card style memorization items.
+VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. You MUST customize the complexity to match this level.
+Exam category / context: ${categoryName}.
+Each item must be short and designed for fast memorization: formulas, definitions, key facts, constants, dates, rules, or exam-oriented points.
+Front side ("question") should be a 1-2 line prompt that asks what to recall.
+Back side ("answer") should be the concise answer, formula, or fact to memorize.
+Return ONLY a valid JSON array in this exact format:
+[{"question": "...", "answer": "..."}]
+
+For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
+VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\frac, \\theta, \\vec, \\alpha) instead of single backslashes so it is valid JSON and parses correctly.`,
+          correctAnswer: '',
+          userAnswer: '',
+          userId: userProfile?.id,
+          authToken,
+          apiKey: useOwnKey ? userApiKey : undefined,
+          useOwnKey,
+          provider: activeProvider,
+          model: activeModel,
+          deductAmount: 20
+        },
+        (count) => setCheatCardProgress(count),
+        20
+      );
+
+      const cleanedReply = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
+      const cards = safeParseJSON(cleanedReply);
+
+      setCheatCards(cards);
+      setCheatDeckName(trimmedDeckName);
+      setShowCheatCards(true);
+      setShowCheatCardModal(false);
+      setCheatTopicText('');
+      refreshCredits();
+    } catch (err: any) {
+      console.error('Error generating cheat cards:', err);
+      showNotification('error', err.message || 'Failed to generate cheat cards');
+    } finally {
+      setGeneratingCheatCards(false);
+      setCheatCardProgress(0);
     }
   };
 
@@ -678,19 +751,17 @@ Return ONLY a valid JSON array matching this format:
 
               <button
                 onClick={() => {
-                  setNotification({ message: 'Formula Cards training mode coming soon!', type: 'info' });
+                  setShowTypeSelector(false);
+                  setShowCheatCardModal(true);
                 }}
                 className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >
-                <div className="relative flex flex-col items-center mb-2.5">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
-                    <Binary className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
-                  </div>
-                  <span className="absolute -top-2 -right-8 text-[8px] font-bold text-blue-500 bg-blue-500/10 px-1 py-0.5 rounded">Soon</span>
+                <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                  <Binary className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                 </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Formula Cards</h4>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Cheat Cards</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                  Drill on formulas, equations, constants, and variable relationships.
+                  Generate flip memorization cards for formulas, facts, and key points.
                 </p>
               </button>
             </div>
@@ -794,6 +865,111 @@ Return ONLY a valid JSON array matching this format:
           academicLevel={examType?.academicLevel || ''}
         />
       )}
+
+      {showCheatCardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative text-zinc-900 dark:text-white flex flex-col gap-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
+              <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Generate Cheat Cards</h3>
+              <button
+                onClick={() => { setShowCheatCardModal(false); setCheatTopicText(''); setCheatDeckName(''); }}
+                className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-zinc-550 dark:text-zinc-400 text-xs leading-relaxed text-left">
+              Enter the deck name and the topic you want to memorize.
+            </p>
+
+            <div className="space-y-3 text-left">
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Deck Name</label>
+                <input
+                  type="text"
+                  maxLength={50}
+                  placeholder="e.g. Organic Chemistry Formulas"
+                  value={cheatDeckName}
+                  onChange={(e) => setCheatDeckName(e.target.value)}
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic</label>
+                <textarea
+                  rows={3}
+                  maxLength={200}
+                  placeholder="Enter topic or subtopics"
+                  value={cheatTopicText}
+                  onChange={(e) => setCheatTopicText(e.target.value)}
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs resize-none leading-relaxed"
+                />
+                <div className="flex justify-end text-[10px] text-zinc-400 font-medium">
+                  {cheatTopicText.length} / 200
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                onClick={() => { setShowCheatCardModal(false); setCheatTopicText(''); setCheatDeckName(''); }}
+                className="px-4 py-2.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-semibold rounded-xl text-xs transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleGenerateCheatCards}
+                disabled={generatingCheatCards || !cheatTopicText.trim()}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all flex items-center gap-2 justify-center cursor-pointer shadow-md shadow-blue-500/10"
+              >
+                {generatingCheatCards ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate (20 credits)'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {generatingCheatCards && (
+        <div className="fixed inset-0 z-[350] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
+            <div className="space-y-1">
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Generating Cheat Cards</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 text-xs">Do not close or navigate away</p>
+            </div>
+            <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto" />
+            <div className="space-y-2">
+              <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${Math.round((cheatCardProgress / 20) * 100)}%` }}
+                />
+              </div>
+              <p className="text-zinc-500 dark:text-zinc-400 text-[10px] font-semibold">
+                {cheatCardProgress < 20 ? `${cheatCardProgress}/20 cards` : 'Finalizing...'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      {showCheatCards && (
+        <CheatCards
+          onClose={() => setShowCheatCards(false)}
+          cards={cheatCards}
+          topics={cheatDeckName}
+          deckName={cheatDeckName}
+          userId={userProfile?.id}
+          categoryId={id || ''}
+          academicLevel={examType?.academicLevel || ''}
+        />
+      )}
+
       {notification && (
         <Notification
           type={notification.type}

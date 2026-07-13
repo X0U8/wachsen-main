@@ -12,7 +12,8 @@
  */
 export async function streamConceptCards(
   body: Record<string, unknown>,
-  onProgress: (count: number) => void
+  onProgress: (count: number) => void,
+  maxItems: number = 10
 ): Promise<string> {
   const response = await fetch('/api/ask-question', {
     method: 'POST',
@@ -66,7 +67,7 @@ export async function streamConceptCards(
     // Count how many question objects are fully present in the accumulated text
     const matches = textBuffer.match(objectEndPattern);
     const count = matches ? matches.length : 0;
-    onProgress(Math.min(count, 10));
+    onProgress(Math.min(count, maxItems));
   }
 
   return textBuffer;

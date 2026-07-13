@@ -268,8 +268,7 @@ export default function ResultDetails() {
           userID: userId || result.userId,
           examID: result.examId,
           questions: JSON.stringify(wrongAndSkipped),
-          examLogs: JSON.stringify(examPlan || analysisSubjects),
-          question_count: wrongAndSkipped.length
+          examLogs: JSON.stringify(examPlan || analysisSubjects)
         });
 
       if (error) throw error;

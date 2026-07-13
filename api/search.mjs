@@ -125,7 +125,7 @@ export default async function handler(req, res) {
 
       let query = supabase
         .from('revision')
-        .select('id, examID, created_at, question_count')
+        .select('id, examID, created_at, questions')
         .eq('userID', userId);
 
       if (examIdsFilter) {
@@ -150,8 +150,16 @@ export default async function handler(req, res) {
         const examMap = new Map(examsData?.map(e => [e.id, { examName: e.examName, categoryId: e.categoryId }]) || []);
         const mapped = data.map(r => {
           const eInfo = r.examID ? examMap.get(r.examID) : null;
+          let count = 0;
+          try {
+            const parsed = JSON.parse(r.questions || '[]');
+            count = Array.isArray(parsed) ? parsed.length : 0;
+          } catch (_) {}
           return {
-            ...r,
+            id: r.id,
+            examID: r.examID,
+            created_at: r.created_at,
+            question_count: count,
             exams: eInfo ? { examName: eInfo.examName, categoryId: eInfo.categoryId } : null
           };
         });

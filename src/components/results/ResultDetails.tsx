@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Loader2, CheckCircle2, XCircle, Clock, Award, ChevronLeft, ChevronUp,
   BarChart3, Brain, Target, Zap, AlertTriangle, Info, PieChart, Activity, Sparkle, X, Printer
@@ -159,6 +160,7 @@ export default function ResultDetails() {
     correctMarks: number;
     negativeMarks: number;
   }>({ totalTime: 60, totalMarks: 100, correctMarks: 4, negativeMarks: 0 });
+  const queryClient = useQueryClient();
   const [hasRevisionLog, setHasRevisionLog] = useState(true);
   const [isCreatingRevision, setIsCreatingRevision] = useState(false);
 
@@ -274,6 +276,12 @@ export default function ResultDetails() {
 
       setHasRevisionLog(true);
       showNotification('success', 'Revision log created successfully!');
+      // Drop all localStorage revision caches so next visit re-fetches fresh data
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('cached_revision_logs_'))
+        .forEach(k => localStorage.removeItem(k));
+      // Invalidate React Query cache so RevisionLog re-fetches immediately
+      queryClient.invalidateQueries({ queryKey: ['revisionLogs'] });
     } catch (err: any) {
       console.error(err);
       showNotification('error', err.message || 'Failed to create revision log');

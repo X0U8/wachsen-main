@@ -169,6 +169,7 @@ export default function RevisionLog() {
   useEffect(() => {
     if (!examId) {
       setExtraRevisionLogs([]);
+      setRevisionList([]);
     }
   }, [selectedExamTypeId, activeSearchQuery, examId]);
 

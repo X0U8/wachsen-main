@@ -77,10 +77,10 @@ export default function SegmentSelectorModal({
             onChange={(e) => setDifficulty(e.target.value as typeof difficulty)}
             className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:border-blue-500 focus:outline-none text-zinc-800 dark:text-white text-xs"
           >
-            <option value="easy">Easy — theory-based recall</option>
+            <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
-            <option value="advance">Advance — hardest for this level</option>
+            <option value="advance">Advance</option>
           </select>
         </div>
 

@@ -90,7 +90,7 @@ export default function ExamDetails() {
         {
           question: `Subject: ${trimmedSubject || 'General'}. Topic: ${trimmedTopic}. Generate exactly 10 theory-based conceptual multiple-choice questions.
 VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. The requested difficulty for this deck is: ${diffLabel}.
-For "easy", ask simpler theory-based recall questions. For "medium", ask standard conceptual understanding questions. For "hard", ask deeper application and analysis questions. For "advance", ask the hardest theory-based questions appropriate for this academic level.
+For "easy", ask simpler theory-based recall questions. For "medium", ask standard conceptual understanding questions. For "hard", ask deeper application and analysis questions. For "advance", generate the absolute hardest theory-based questions possible for this topic and academic level — questions that require deep mastery, complex reasoning, edge cases, and the toughest exam-level understanding.
 The questions must be theory-based (definitions, concepts, explanations, principles) rather than pure numerical calculation.
 For each question, provide:
 1. "question": The conceptual question text.
@@ -98,7 +98,7 @@ For each question, provide:
 3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).
 
 For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
-VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\frac, \\theta, \\vec, \\alpha) instead of single backslashes so it is valid JSON and parses correctly.
+VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes so it is valid JSON and parses correctly.
 
 Return ONLY a valid JSON array matching this format:
 [{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2]}]`,
@@ -165,7 +165,7 @@ Return ONLY a valid JSON array matching this format:
 VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. The requested difficulty for this deck is: ${diffLabel}.
 Exam category / context: ${categoryName}.
 ${contentInstruction}
-For "easy", use simple recall items. For "medium", standard memorization items. For "hard", deeper or more detailed recall. For "advance", the toughest, most exam-critical facts/formulas for this level.
+For "easy", use simple recall items. For "medium", standard memorization items. For "hard", deeper or more detailed recall. For "advance", generate the absolute hardest memorization items possible for this topic and academic level — the most exam-critical, complex, and demanding facts/formulas the student must master.
 Each item must be short and designed for fast memorization.
 Front side ("question") should be a 1-2 line prompt that asks what to recall.
 Back side ("answer") should be the concise answer, formula, or fact to memorize.
@@ -173,7 +173,7 @@ Return ONLY a valid JSON array in this exact format:
 [{"question": "...", "answer": "..."}]
 
 For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
-VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\frac, \\theta, \\vec, \\alpha) instead of single backslashes so it is valid JSON and parses correctly.`,
+VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes so it is valid JSON and parses correctly.`,
           correctAnswer: '',
           userAnswer: '',
           userId: userProfile?.id,
@@ -840,15 +840,15 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                   onChange={(e) => setConceptDifficulty(e.target.value as typeof conceptDifficulty)}
                   className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                 >
-                  <option value="easy">Easy — theory-based recall</option>
+                  <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
                   <option value="hard">Hard</option>
-                  <option value="advance">Advance — hardest for this level</option>
+                  <option value="advance">Advance</option>
                 </select>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic (min 5 chars)</label>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic</label>
                 <textarea
                   rows={3}
                   maxLength={200}
@@ -983,7 +983,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic (min 5 chars)</label>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic</label>
                 <textarea
                   rows={3}
                   maxLength={200}

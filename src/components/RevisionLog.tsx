@@ -297,7 +297,7 @@ export default function RevisionLog() {
         {
           question: `Subject: ${subject || 'General'}. Topic: ${topics}. Generate exactly 10 theory-based conceptual multiple-choice questions.
 VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. The requested difficulty for this deck is: ${diffLabel}.
-For "easy", ask simpler theory-based recall questions. For "medium", ask standard conceptual understanding questions. For "hard", ask deeper application and analysis questions. For "advance", ask the hardest theory-based questions appropriate for this academic level.
+For "easy", ask simpler theory-based recall questions. For "medium", ask standard conceptual understanding questions. For "hard", ask deeper application and analysis questions. For "advance", generate the absolute hardest theory-based questions possible for this topic and academic level — questions that require deep mastery, complex reasoning, edge cases, and the toughest exam-level understanding.
 The questions must be theory-based (definitions, concepts, explanations, principles) rather than pure numerical calculation.
 For each question, provide:
 1. "question": The conceptual question text.
@@ -305,7 +305,7 @@ For each question, provide:
 3. "correctAnswers": An array of the 0-based indices of all correct options (note: multiple options can be correct).
 
 For any math content, variables, formulas, or equations, use ONLY $...$ delimiters (single dollar signs) for inline LaTeX (e.g., $E = mc^2$). NEVER use \( \) or \[ \] delimiters. NEVER double-wrap expressions.
-VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\frac, \\theta, \\vec, \\alpha) instead of single backslashes so it is valid JSON and parses correctly.
+VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the JSON strings, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes so it is valid JSON and parses correctly.
 
 Return ONLY a valid JSON array matching this format:
 [{"question": "...", "options": ["...", "...", "...", "..."], "correctAnswers": [0, 2]}]`,

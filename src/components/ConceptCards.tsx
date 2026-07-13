@@ -119,7 +119,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg h-[600px] flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg h-[520px] flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div>
@@ -153,9 +153,9 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
             </div>
 
             <div className="flex-grow overflow-y-auto pr-1 space-y-4">
-              <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-5 space-y-3">
+              <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-4 space-y-2">
                 <div
-                  className="text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal h-40 overflow-y-auto pr-1 text-sm">
+                  className="text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal max-h-28 overflow-y-auto pr-1 text-sm">
                   <MathText text={currentCard.question} />
                 </div>
               </div>

@@ -195,7 +195,7 @@ export default function CheatCards({
             Prev
           </button>
 
-          {userId && (
+          {userId && currentIndex === cards.length - 1 ? (
             <button
               disabled={savingDeck || saveStatus === 'saved'}
               onClick={() => {
@@ -219,6 +219,8 @@ export default function CheatCards({
                 ? 'Retry Save'
                 : 'Save Deck'}
             </button>
+          ) : (
+            <div className="w-20" />
           )}
 
           <button

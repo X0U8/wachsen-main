@@ -111,66 +111,73 @@ export default async function handler(req, res) {
     }
 
     rules.push(`${ruleIdx++}. Set the 'difficulty' field for every question: at least 80% of the questions generated must have a 'difficulty' value matching '${difficulty.toLowerCase()}', and the remaining questions should have other difficulty levels ('easy', 'medium', 'hard', or 'advance') to create a natural spread.`);
-    rules.push(`${ruleIdx++}. MATH/LATEX FORMATTING: For ALL mathematical expressions, use ONLY single dollar sign delimiters $...$. NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap like $\\(...\\)$. Correct: "$\\frac{1}{2}$", "$x^2 + y^2$", "$\\vec{F} = m\\vec{a}$". WRONG (never do this): "$\\(\\frac{1}{2}\\)$", "\\(x^2\\)", "\\[F = ma\\]".`);
+    rules.push(`${ruleIdx++}. MATH/LATEX FORMATTING: For ALL mathematical expressions, use ONLY single dollar sign delimiters $...$. NEVER use \\( \\) or \\[ \\] delimiters. NEVER double-wrap like $\\(...\\)$. Correct: "$\\\\frac{1}{2}$", "$x^2 + y^2$", "$\\\\vec{F} = m\\\\vec{a}$". WRONG (never do this): "$\\(\\\\frac{1}{2}\\)$", "\\(x^2\\)", "\\[F = ma\\]".`);
 
     const exampleQuestions = [];
     if (hasMcq) {
+      const topicLabel = (Array.isArray(segment.topics) && segment.topics[0]) ? segment.topics[0] : 'concept';
       exampleQuestions.push({
         id: 1,
         type: "mcq",
-        question: "What is the capital of France?",
-        options: ["Option P value", "Option Q value", "Option R value", "Option S value"],
-        correct_answer: "Option S value",
+        question: `Sample MCQ on ${subjectName}: what is the core idea of "${topicLabel}"?`,
+        options: ["Correct definition", "Distractor A", "Distractor B", "Distractor C"],
+        correct_answer: "Correct definition",
         difficulty: "easy"
       });
       exampleQuestions.push({
         id: 2,
         type: "mcq",
-        question: "Which of the following is a prime number?",
-        options: ["Option P value", "Option Q value", "Option R value", "Option S value"],
-        correct_answer: "Option Q value",
+        question: `Which statement best describes a key concept in ${subjectName} related to "${topicLabel}"?`,
+        options: ["Correct statement", "Wrong statement A", "Wrong statement B", "Wrong statement C"],
+        correct_answer: "Correct statement",
         difficulty: "easy"
       });
-      exampleQuestions.push({
-        id: 3,
-        type: "mcq",
-        question: "If $F = \\frac{Gm_1 m_2}{r^2}$, what happens to $F$ when $r$ is doubled?",
-        options: ["$F$ becomes $\\frac{F}{4}$", "$F$ becomes $\\frac{F}{2}$", "$F$ remains the same", "$F$ doubles"],
-        correct_answer: "$F$ becomes $\\frac{F}{4}$",
-        difficulty: "medium"
-      });
+      if (questionCount > 2) {
+        exampleQuestions.push({
+          id: 3,
+          type: "mcq",
+          question: `Which of the following expressions is correct for the ${topicLabel} topic in ${subjectName}?`,
+          options: ["$\\\\frac{\\\\text{value}_1}{\\\\text{value}_2}$", "$\\\\text{wrong}_1$", "$\\\\text{wrong}_2$", "$\\\\text{wrong}_3$"],
+          correct_answer: "$\\\\frac{\\\\text{value}_1}{\\\\text{value}_2}$",
+          difficulty: "medium"
+        });
+      }
     }
     if (hasInteger) {
       exampleQuestions.push({
         id: 1,
         type: "integer",
-        question: "Compute $5 + 3$.",
-        correct_answer: "8",
+        question: `Sample integer on ${subjectName}: compute $2 + 2$.`,
+        correct_answer: "4",
         difficulty: "easy"
       });
-      exampleQuestions.push({
-        id: 2,
-        type: "integer",
-        question: "What is the value of $10 - 2$?",
-        correct_answer: "8",
-        difficulty: "easy"
-      });
+      if (questionCount > 1) {
+        exampleQuestions.push({
+          id: 2,
+          type: "integer",
+          question: `Another sample integer on ${subjectName}: evaluate $10 \\\\div 2$.`,
+          correct_answer: "5",
+          difficulty: "easy"
+        });
+      }
     }
     if (hasTrueFalse) {
       exampleQuestions.push({
         id: 1,
         type: "true_false",
-        question: "Water boils at $100^\\circ$C.",
+        question: `Sample true/false for ${subjectName}: "${topicLabel}" is a key part of ${subjectName}.`,
         correct_answer: "true",
         difficulty: "easy"
       });
-      exampleQuestions.push({
-        id: 2,
-        type: "true_false",
-        question: "Sound travels faster in a vacuum than in air.",
-        correct_answer: "false",
-        difficulty: "easy"
-      });
+      if (questionCount > 1) {
+        exampleQuestions.push({
+          id: 2,
+          type: "true_false",
+          question: `Another sample true/false for ${subjectName}: the opposite of "${topicLabel}" applies here.`,
+          correct_answer: "false",
+          difficulty: "easy"
+        });
+      }
     }
 
     const formatExample = JSON.stringify({ questions: exampleQuestions }, null, 2);
@@ -188,7 +195,7 @@ DIFFICULTY GUIDELINES:
 - EASY: Generate very basic, straightforward, easiest questions. Simple direct formula application.
 - MEDIUM: Generate average, moderate-difficulty questions requiring basic problem-solving steps.
 - HARD: Generate complex, challenging, multi-step questions requiring advanced logical deduction.
-- ADVANCE: Generate the toughest, most complex, advanced, and extremely non-trivial questions possible.
+- ADVANCE: Generate the absolute hardest, most complex, advanced, and extremely non-trivial questions possible for this topic and academic level. Do not hold back — these should push the student to their absolute limit and cover the toughest exam-level edge cases.
 
 STRICT RULES:
 ${rules.join('\n')}

@@ -115,69 +115,54 @@ export default async function handler(req, res) {
 
     const exampleQuestions = [];
     if (hasMcq) {
-      const topicLabel = (Array.isArray(segment.topics) && segment.topics[0]) ? segment.topics[0] : 'concept';
       exampleQuestions.push({
         id: 1,
         type: "mcq",
-        question: `Sample MCQ on ${subjectName}: what is the core idea of "${topicLabel}"?`,
-        options: ["Correct definition", "Distractor A", "Distractor B", "Distractor C"],
-        correct_answer: "Correct definition",
+        question: "Sample question: what is the definition of this concept?",
+        options: ["Correct option text", "Wrong option A", "Wrong option B", "Wrong option C"],
+        correct_answer: "Correct option text",
         difficulty: "easy"
       });
       exampleQuestions.push({
         id: 2,
         type: "mcq",
-        question: `Which statement best describes a key concept in ${subjectName} related to "${topicLabel}"?`,
-        options: ["Correct statement", "Wrong statement A", "Wrong statement B", "Wrong statement C"],
-        correct_answer: "Correct statement",
-        difficulty: "easy"
+        question: "Which of the following best describes this idea?",
+        options: ["Correct option", "Incorrect option 1", "Incorrect option 2", "Incorrect option 3"],
+        correct_answer: "Correct option",
+        difficulty: "medium"
       });
-      if (questionCount > 2) {
-        exampleQuestions.push({
-          id: 3,
-          type: "mcq",
-          question: `Which of the following expressions is correct for the ${topicLabel} topic in ${subjectName}?`,
-          options: ["$\\\\frac{\\\\text{value}_1}{\\\\text{value}_2}$", "$\\\\text{wrong}_1$", "$\\\\text{wrong}_2$", "$\\\\text{wrong}_3$"],
-          correct_answer: "$\\\\frac{\\\\text{value}_1}{\\\\text{value}_2}$",
-          difficulty: "medium"
-        });
-      }
     }
     if (hasInteger) {
       exampleQuestions.push({
         id: 1,
         type: "integer",
-        question: `Sample integer on ${subjectName}: compute $2 + 2$.`,
-        correct_answer: "4",
+        question: "Sample integer question: what is $2 + 3$?",
+        correct_answer: "5",
         difficulty: "easy"
       });
-      if (questionCount > 1) {
-        exampleQuestions.push({
-          id: 2,
-          type: "integer",
-          question: `Another sample integer on ${subjectName}: evaluate $10 \\\\div 2$.`,
-          correct_answer: "5",
-          difficulty: "easy"
-        });
-      }
+      exampleQuestions.push({
+        id: 2,
+        type: "integer",
+        question: "Another integer sample: evaluate $10 - 4$.",
+        correct_answer: "6",
+        difficulty: "easy"
+      });
     }
     if (hasTrueFalse) {
       exampleQuestions.push({
         id: 1,
         type: "true_false",
-        question: `Sample true/false for ${subjectName}: "${topicLabel}" is a key part of ${subjectName}.`,
+        question: "Sample true/false statement about the topic.",
         correct_answer: "true",
         difficulty: "easy"
       });
-      if (questionCount > 1) {
-        exampleQuestions.push({
-          id: 2,
-          type: "true_false",
-          question: `Another sample true/false for ${subjectName}: the opposite of "${topicLabel}" applies here.`,
-          correct_answer: "false",
-          difficulty: "easy"
-        });
-      }
+      exampleQuestions.push({
+        id: 2,
+        type: "true_false",
+        question: "Another true/false claim that is false.",
+        correct_answer: "false",
+        difficulty: "easy"
+      });
     }
 
     const formatExample = JSON.stringify({ questions: exampleQuestions }, null, 2);
@@ -195,7 +180,7 @@ DIFFICULTY GUIDELINES:
 - EASY: Generate very basic, straightforward, easiest questions. Simple direct formula application.
 - MEDIUM: Generate average, moderate-difficulty questions requiring basic problem-solving steps.
 - HARD: Generate complex, challenging, multi-step questions requiring advanced logical deduction.
-- ADVANCE: Generate the absolute hardest, most complex, advanced, and extremely non-trivial questions possible for this topic and academic level. Do not hold back — these should push the student to their absolute limit and cover the toughest exam-level edge cases.
+- ADVANCE: Generate the absolute hardest, most complex, advanced, and extremely non-trivial questions possible for this topic and academic level. Do not hold back — these should push the student to their absolute limit and cover the toughest exam-level edge cases you can make. 
 
 STRICT RULES:
 ${rules.join('\n')}
@@ -274,11 +259,11 @@ ${formatExample}`;
 
     if (!response.ok) {
       console.error(`${apiLabel} API request failed:`, response.status, responseText);
-      return res.status(502).json({ 
-        error: `${apiLabel} API request failed`, 
-        code: data.error?.code, 
-        details: data.error?.message || responseText, 
-        request_id: data.error?.request_id 
+      return res.status(502).json({
+        error: `${apiLabel} API request failed`,
+        code: data.error?.code,
+        details: data.error?.message || responseText,
+        request_id: data.error?.request_id
       });
     }
 

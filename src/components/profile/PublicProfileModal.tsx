@@ -1,4 +1,5 @@
 import { Clipboard, Check, Loader2, AlertCircle, BookOpen, Download, ChevronLeft, ChevronRight, X, ChevronUp, ChevronDown } from 'lucide-react';
+import MathText from '../../ui/MathText';
 import { useUserProfile } from '../../lib/UserContext.tsx';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -496,8 +497,8 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                                   <div className={`flex-1 text-zinc-500 dark:text-zinc-400 text-xs overflow-hidden ${isExpanded ? 'space-y-1' : 'line-clamp-1 truncate'}`}>
                                     {groupedPlan.map((g, idx) => (
                                       <div key={idx} className={isExpanded ? "leading-relaxed animate-fade-in" : "inline mr-3"}>
-                                        <strong className="text-zinc-700 dark:text-zinc-300 uppercase">{g.subject}:</strong>{' '}
-                                        <span>{g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'}</span>
+                                        <strong className="text-zinc-700 dark:text-zinc-300 uppercase"><MathText text={g.subject} />:</strong>{' '}
+                                        <span><MathText text={g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'} /></span>
                                         {!isExpanded && idx < groupedPlan.length - 1 && <span className="text-zinc-400"> | </span>}
                                       </div>
                                     ))}

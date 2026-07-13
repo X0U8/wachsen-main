@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../services/supabase';
+import MathText from '../../../ui/MathText';
 import { useUserProfile } from '../../../lib/UserContext.tsx';
 import { Lock, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
 import { fontSize } from '../../../lib/utils';
@@ -250,10 +251,10 @@ export default function PlanViewDaily({
                     className="p-3.5 bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-2xl space-y-1 hover:border-zinc-300 dark:hover:border-gray-700 transition-colors shadow-sm"
                   >
                     <span className="text-[10px] font-bold text-zinc-400 dark:text-gray-500 uppercase tracking-widest block">
-                      {sub.subjectName}
+                      <MathText text={sub.subjectName} />
                     </span>
                     <p className="text-zinc-755 dark:text-gray-300 text-[11px] leading-relaxed font-medium">
-                      {sub.task || 'Revision / Mock practice'}
+                      <MathText text={sub.task || 'Revision / Mock practice'} />
                     </p>
                   </div>
                 ))}

@@ -60,36 +60,50 @@ const resolveConceptsFromPlan = (questions: any[], planData: any) => {
   const planSubjects = Array.isArray(planData) ? planData : (planData?.subjects || []);
 
   return questions.map((q: any, qIdx: number) => {
-    if (q.chapter || q.concept) return { ...q, concept: q.chapter || q.concept };
-
-    const targetSubject = planSubjects?.find((sub: any) =>
-      sub.name?.toLowerCase() === q.subject?.toLowerCase() ||
-      sub.subject?.toLowerCase() === q.subject?.toLowerCase()
-    );
-
-    const segments = targetSubject?.planSubject?.segments || targetSubject?.segments;
+    const qNum = parseInt(q.id) || (typeof q.originalIndex === 'number' ? q.originalIndex : qIdx) + 1;
 
     let resolvedTopic = '';
-    if (Array.isArray(segments)) {
-      const qNum = (typeof q.originalIndex === 'number' ? q.originalIndex : qIdx) + 1;
-      for (const segment of segments) {
-        if (!segment.range) continue;
-        const [start, end] = segment.range.split('-').map(Number);
-        if (qNum >= start && qNum <= (end || start)) {
-          if (Array.isArray(segment.topics)) {
-            resolvedTopic = segment.topics.join(', ');
-          } else {
-            resolvedTopic = segment.topics || '';
+    let resolvedSubject = '';
+
+    for (const sub of planSubjects) {
+      const segments = sub.planSubject?.segments || sub.segments;
+      if (Array.isArray(segments)) {
+        for (const segment of segments) {
+          if (!segment.range) continue;
+          const [start, end] = segment.range.split('-').map(Number);
+          if (qNum >= start && qNum <= (end || start)) {
+            const subName = sub.subject || sub.name || '';
+            const topicsText = Array.isArray(segment.topics)
+              ? segment.topics.join(', ')
+              : (segment.topics || '');
+            
+            resolvedSubject = subName;
+            resolvedTopic = topicsText;
+            break;
           }
-          break;
         }
       }
+      if (resolvedTopic) break;
     }
 
-    return {
-      ...q,
-      concept: resolvedTopic || 'Review Topic'
-    };
+    let conceptText = '';
+    if (resolvedSubject && resolvedTopic) {
+      conceptText = `${resolvedSubject}: ${resolvedTopic}`;
+    } else if (resolvedTopic) {
+      conceptText = resolvedTopic;
+    }
+
+    const currentConcept = q.concept || q.chapter || '';
+    const isPlaceholder = !currentConcept || 
+      /review/i.test(currentConcept) || 
+      /subtopic/i.test(currentConcept) || 
+      currentConcept === 'N/A';
+
+    if (conceptText && (isPlaceholder || conceptText !== currentConcept)) {
+      return { ...q, concept: conceptText };
+    }
+
+    return { ...q, concept: currentConcept || 'Review Topic' };
   });
 };
 

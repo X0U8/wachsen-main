@@ -88,8 +88,7 @@ STRICT RULES:
 1. Return ONLY the valid JSON object — no markdown, no code fences, no extra text.
 2. Do not change the subjects list, subjectName, or month numbers.
 3. Distribute the chapters/topics evenly and in a logical order (e.g. foundational topics in early months, advanced/review topics in later months).
-4. MATH/LATEX FORMATTING: For ALL mathematical expressions, use ONLY single dollar sign delimiters $...$. NEVER use \\( \\) or \\[ \\] delimiters.
-5. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.`;
+4. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.`;
 
     console.log(`[STUDY PLAN] Sending request to: ${MESH_API_URL}`);
     console.log(`[STUDY PLAN] Using model: ${MESH_MODEL}`);

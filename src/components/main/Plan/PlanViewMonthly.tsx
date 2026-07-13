@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import MathText from '../../../ui/MathText';
 import { fontSize } from '../../../lib/utils';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 
@@ -81,7 +82,7 @@ export default function PlanViewMonthly({ createdAt, planJson }: PlanViewMonthly
                   >
                     <h5
                       className="font-semibold text-blue-500 dark:text-blue-400 border-b border-zinc-100 dark:border-gray-800 pb-1.5 text-xs">
-                      {sub.subjectName}
+                      <MathText text={sub.subjectName} />
                     </h5>
                     {sub.chapters && sub.chapters.length > 0 ? (
                       <ul className="space-y-1.5">
@@ -90,7 +91,7 @@ export default function PlanViewMonthly({ createdAt, planJson }: PlanViewMonthly
                             key={cIdx}
                             className="text-zinc-650 dark:text-gray-350 flex items-start gap-1.5 leading-relaxed text-sm">
                             <span className="w-1.5 h-1.5 rounded-full bg-blue-500/60 mt-1.5 shrink-0" />
-                            <span>{chap}</span>
+                            <span><MathText text={chap} /></span>
                           </li>
                         ))}
                       </ul>

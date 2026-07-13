@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { fontSize } from '../../lib/utils';
+import MathText from '../../ui/MathText';
 
 interface Segment {
   subject: string;
@@ -77,7 +78,7 @@ export default function SegmentSelectorModal({
               <div key={subject} className="space-y-2">
                 <div
                   className="font-bold text-zinc-500 dark:text-zinc-400 tracking-widest pl-1 text-xs">
-                  {subject}
+                  <MathText text={subject} />
                 </div>
                 <div className="space-y-2">
                   {list.map((seg, idx) => (
@@ -93,7 +94,7 @@ export default function SegmentSelectorModal({
                         <div className="space-y-1">
                           <div
                             className="font-medium text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors text-sm">
-                            {seg.topics || 'General Review'}
+                            <MathText text={seg.topics || 'General Review'} />
                           </div>
                           <div className="text-zinc-500 dark:text-zinc-400 text-xs">
                             Questions {seg.range}

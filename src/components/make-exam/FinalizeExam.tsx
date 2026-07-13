@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import MathText from '../../ui/MathText';
 import { motion } from 'framer-motion';
 import Notification from '../../ui/Notification';
 import { useUserProfile } from '../../lib/UserContext';
@@ -621,7 +622,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
               <div className="space-y-4">
                 {examBlueprint.map((item: any, idx: number) => (
                   <div key={idx} className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-4 space-y-3">
-                    <h4 className="text-zinc-900 dark:text-gray-100 font-medium text-sm">{item.name}</h4>
+                    <h4 className="text-zinc-900 dark:text-gray-100 font-medium text-sm"><MathText text={item.name} /></h4>
                     <div className="space-y-2">
                       {item.segments.map((seg: any, sIdx: number) => {
                         const segKey = `${idx}-${sIdx}`;
@@ -643,7 +644,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
                             </div>
                             <div className="space-y-1">
                               {seg.topics.map((topic: string, tIdx: number) => (
-                                <div key={tIdx} className="text-gray-400 dark:text-gray-400 text-xs">• {topic}</div>
+                                <div key={tIdx} className="text-gray-400 dark:text-gray-400 text-xs">• <MathText text={topic} /></div>
                               ))}
                             </div>
                           </div>

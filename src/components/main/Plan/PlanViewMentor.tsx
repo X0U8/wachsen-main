@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../services/supabase';
+import MathText from '../../../ui/MathText';
 import { useUserProfile } from '../../../lib/UserContext.tsx';
 import { idbGet, idbSet } from '../../../lib/idb';
 import { Send, Sparkles, Loader2, RefreshCw, HelpCircle, Info, Database, X } from 'lucide-react';
@@ -376,7 +377,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
                       ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
                       : 'bg-zinc-200/60 dark:bg-zinc-800 text-zinc-800 dark:text-gray-200 rounded-bl-none border border-black/15 dark:border-white/20 shadow-xs'
                       } text-xs`}>
-                    {msg.text}
+                    <MathText text={msg.text} />
                   </div>
                 </div>
               ))

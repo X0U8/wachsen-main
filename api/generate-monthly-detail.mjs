@@ -109,9 +109,8 @@ STRICT INSTRUCTIONS:
 2. Do not change the subjects, labels, or date ranges. Just populate the "task" values.
 3. Make sure the student can complete all assigned chapters for the month within these 15 blocks.
 4. It is acceptable if some subjects have light/empty tasks in certain blocks to prevent overloading the student, but ensure overall completion.
-5. MATH/LATEX FORMATTING: For ALL mathematical expressions, use ONLY single dollar sign delimiters $...$. NEVER use \\( \\) or \\[ \\] delimiters.
-6. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.
-7. CHAPTER-WISE TEST RECOMMENDATIONS: Whenever a chapter or topic of a subject is completed within a block, you MUST explicitly instruct the user to take a chapter-wise practice test for that chapter to check their comprehension (e.g., 'Read: electrostatics, Test: take a chapter-wise test on electrostatics').`;
+5. VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting, you MUST use double backslashes (e.g., \\\\frac, \\\\theta, \\\\vec, \\\\alpha) instead of single backslashes. If you output a single backslash like \\frac, it will break JSON parsing and make the result invalid JSON.
+6. CHAPTER-WISE TEST RECOMMENDATIONS: Whenever a chapter or topic of a subject is completed within a block, you MUST explicitly instruct the user to take a chapter-wise practice test for that chapter to check their comprehension (e.g., 'Read: electrostatics, Test: take a chapter-wise test on electrostatics').`;
 
     console.log(`[MONTH DETAIL] Sending request to: ${MESH_API_URL}`);
     console.log(`[MONTH DETAIL] Using model: ${MESH_MODEL}`);
@@ -147,7 +146,7 @@ STRICT INSTRUCTIONS:
       if (responseText) {
         data = JSON.parse(responseText);
       }
-    } catch (parseErr) {}
+    } catch (parseErr) { }
 
     if (!response.ok) {
       await refundCredits();

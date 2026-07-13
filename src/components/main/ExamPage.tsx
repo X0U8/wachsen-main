@@ -182,9 +182,6 @@ export default function Exam() {
       return examTypes;
     },
     enabled: !!userId,
-    staleTime: Infinity,
-    refetchOnMount: false,
-    gcTime: Infinity
   });
 
   useEffect(() => {

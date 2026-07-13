@@ -539,7 +539,6 @@ export default function ExamDetails() {
             <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
               <div>
                 <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-sm sm:text-base">Select Learning Mode</h3>
-                <p className="text-zinc-550 dark:text-zinc-400 text-[10px] sm:text-xs">Choose how you want to prepare and study today</p>
               </div>
               <button
                 onClick={() => setShowTypeSelector(false)}
@@ -555,10 +554,10 @@ export default function ExamDetails() {
                   setShowTypeSelector(false);
                   setShowMakeAI(true);
                 }}
-                className="group flex flex-col items-start p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-left hover:scale-[1.01]"
+                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >
                 <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
-                  <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                  <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                 </div>
                 <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">AI Question</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
@@ -570,13 +569,13 @@ export default function ExamDetails() {
                 onClick={() => {
                   setNotification({ message: 'Concept Cards creation mode coming soon!', type: 'info' });
                 }}
-                className="group flex flex-col items-start p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-left hover:scale-[1.01]"
+                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >
-                <div className="flex justify-between items-start w-full">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
-                    <ClipboardX className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                <div className="relative flex flex-col items-center mb-2.5">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                    <ClipboardX className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
-                  <span className="text-[9px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">Soon</span>
+                  <span className="absolute -top-2 -right-8 text-[8px] font-bold text-blue-500 bg-blue-500/10 px-1 py-0.5 rounded">Soon</span>
                 </div>
                 <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Concept Cards</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
@@ -588,13 +587,13 @@ export default function ExamDetails() {
                 onClick={() => {
                   setNotification({ message: 'Oral Viva mock interview mode coming soon!', type: 'info' });
                 }}
-                className="group flex flex-col items-start p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-left hover:scale-[1.01]"
+                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >
-                <div className="flex justify-between items-start w-full">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
-                    <Mic className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                <div className="relative flex flex-col items-center mb-2.5">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                    <Mic className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
-                  <span className="text-[9px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">Soon</span>
+                  <span className="absolute -top-2 -right-8 text-[8px] font-bold text-blue-500 bg-blue-500/10 px-1 py-0.5 rounded">Soon</span>
                 </div>
                 <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Oral Viva</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
@@ -606,13 +605,13 @@ export default function ExamDetails() {
                 onClick={() => {
                   setNotification({ message: 'Formula Cards training mode coming soon!', type: 'info' });
                 }}
-                className="group flex flex-col items-start p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-left hover:scale-[1.01]"
+                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >
-                <div className="flex justify-between items-start w-full">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
-                    <Binary className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+                <div className="relative flex flex-col items-center mb-2.5">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                    <Binary className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
-                  <span className="text-[9px] font-bold text-blue-500 bg-blue-500/10 px-1.5 py-0.5 rounded">Soon</span>
+                  <span className="absolute -top-2 -right-8 text-[8px] font-bold text-blue-500 bg-blue-500/10 px-1 py-0.5 rounded">Soon</span>
                 </div>
                 <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Formula Cards</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">

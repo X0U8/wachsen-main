@@ -59,9 +59,9 @@ export default async function handler(req, res) {
       }
     }
 
+    let currentQuestionIndex = 1;
     const subjectsTemplate = subjects.map(sub => {
       const segments = [];
-      let currentQuestionIndex = 1;
 
       sub.questionTypes.forEach(qt => {
         const type = qt.type.toLowerCase();
@@ -106,7 +106,8 @@ ${JSON.stringify(jsonTemplate, null, 2)}
 STRICT RULES:
 1. Return ONLY the valid JSON object — no markdown, no code fences, no extra text.
 2. Do not change the range, name, type, or number of segments.
-3. Ensure every "topics" array contains 2 to 4 relevant subtopic strings.`;
+3. Ensure every "topics" array contains 2 to 4 relevant subtopic strings.
+4. The question ranges are continuous across all subjects (e.g. if the first subject ends at range 5 like 1-5, the next subject must start at range 6-10, not reset to 1-5). You must keep the exact range values provided in the JSON template without altering them.`;
 
     const apiUrl = isMistral ? MISTRAL_API_URL : MESH_API_URL;
     const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);

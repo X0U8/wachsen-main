@@ -166,7 +166,7 @@ Return ONLY a valid JSON array in this exact format:
             <div className="p-1.5 bg-blue-500/10 text-blue-500 rounded-lg">
               <Edit3 className="w-4 h-4" />
             </div>
-            <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Create Long Answer</h3>
+            <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Create LAQ Exam</h3>
           </div>
           <button
             onClick={onClose}
@@ -208,7 +208,7 @@ Return ONLY a valid JSON array in this exact format:
             <input
               type="text"
               maxLength={100}
-              placeholder="e.g. Genetics Long Answer"
+              placeholder="e.g. Genetics LAQ Exam"
               value={examName}
               onChange={(e) => setExamName(e.target.value)}
               className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"

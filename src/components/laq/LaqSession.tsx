@@ -5,6 +5,7 @@ import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import { evaluateLaqAnswer, LaqAnswerEvaluation } from './evaluateAnswer';
 import { analyzeLaqSession, LaqAnswerRecord } from './analyzeLaqSession';
+import Notification from '../../ui/Notification';
 import type { LaqQuestion } from './MakeLaq';
 
 export interface LaqExam {
@@ -57,6 +58,30 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   const [currentElapsedSeconds, setCurrentElapsedSeconds] = useState(0);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'Are you sure you want to leave? Your exam progress will be lost.';
+      return e.returnValue;
+    };
+
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+      setNotification({ type: 'error', message: 'Navigation is disabled during the exam. Please use the Finish button to submit.' });
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    window.history.pushState(null, '', window.location.href);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const elapsedRef = useRef<NodeJS.Timeout | null>(null);
@@ -607,6 +632,14 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 }

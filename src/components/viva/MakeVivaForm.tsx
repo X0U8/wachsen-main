@@ -121,7 +121,7 @@ Return ONLY a valid JSON array in this exact format:
       }
 
       const { data: inserted, error: insertError } = await supabase
-        .from('viva_exams')
+        .from('laq_exam')
         .insert({
           user_id: userProfile.id,
           category_id: categoryId,

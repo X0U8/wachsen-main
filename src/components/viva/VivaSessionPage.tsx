@@ -12,7 +12,7 @@ export default function VivaSessionPage() {
     queryKey: ['vivaExam', vivaId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('viva_exams')
+        .from('laq_exam')
         .select('id, name, subject_name, topics, difficulty, question_count, time_limit_minutes, status, questions, ai_analysis, created_at')
         .eq('id', vivaId!)
         .single();

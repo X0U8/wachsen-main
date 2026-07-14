@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench, ClipboardX, Mic, Binary, GraduationCap, X } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench, ClipboardX, Mic, Binary, GraduationCap, X, SquarePen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
@@ -347,11 +347,10 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 py-2 sm:py-2.5 px-2 sm:px-4 font-semibold tracking-wider rounded-lg transition-all duration-200 cursor-pointer text-xs ${
-                  activeTab === tab.key
+                className={`flex-1 py-2 sm:py-2.5 px-2 sm:px-4 font-semibold tracking-wider rounded-lg transition-all duration-200 cursor-pointer text-xs ${activeTab === tab.key
                     ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
                     : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -469,7 +468,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               >
                 <div className="relative flex flex-col items-center mb-2.5">
                   <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
-                    <Mic className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
+                    <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
                 </div>
                 <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Long Answer</h4>

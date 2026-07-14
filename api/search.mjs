@@ -161,7 +161,7 @@ export default async function handler(req, res) {
       }
     } else if (type === 'viva') {
       let query = supabase
-        .from('viva_exams')
+        .from('laq_exam')
         .select('id, name, subject_name, topics, difficulty, question_count, status, created_at')
         .eq('user_id', userId)
         .eq('category_id', categoryId);

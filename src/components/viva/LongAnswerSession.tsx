@@ -219,7 +219,7 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
       }));
 
       const { error: updateError } = await supabase
-        .from('viva_exams')
+        .from('laq_exam')
         .update({
           status: 'completed',
           ai_analysis: {

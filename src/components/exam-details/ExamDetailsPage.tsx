@@ -15,6 +15,7 @@ import ExamListTab from './ExamListTab';
 import VivaListTab from './VivaListTab';
 import ConceptCardsListTab from './ConceptCardsListTab';
 import CheatCardsListTab from './CheatCardsListTab';
+import MakeVivaForm from '../viva/MakeVivaForm';
 import { safeParseJSON } from '../RevisionLog';
 import { streamConceptCards } from '../../lib/streamConceptCards';
 import { NON_INT_SUBJECTS } from '../../data/nonIntSubjects';
@@ -51,6 +52,8 @@ export default function ExamDetails() {
   const [cheatCardProgress, setCheatCardProgress] = useState(0);
   const [showCheatCards, setShowCheatCards] = useState(false);
   const [cheatCards, setCheatCards] = useState<any[]>([]);
+
+  const [showMakeViva, setShowMakeViva] = useState(false);
 
   const handleGenerateConceptCards = async () => {
     const trimmedTopic = topicText.trim();
@@ -333,28 +336,30 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
         </div>
       </header>
       <main className="flex-1 p-4 pb-32">
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/15 dark:border-white/20 overflow-hidden dark:shadow-[0_0_35px_rgba(255,255,255,0.06)]">
-          <div className="flex items-center gap-1 px-4 py-2 border-b border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-950/30 overflow-x-auto">
-            {[
+        <div className="flex shrink-0 pb-3">
+          <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
+            {([
               { key: 'exams', label: 'Exams' },
               { key: 'viva', label: 'Viva' },
               { key: 'concept', label: 'Concept Cards' },
               { key: 'cheat', label: 'Cheat Cards' },
-            ].map((tab) => (
+            ] as const).map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as typeof activeTab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex-1 py-2 sm:py-2.5 px-2 sm:px-4 font-semibold tracking-wider rounded-lg transition-all duration-200 cursor-pointer text-xs ${
                   activeTab === tab.key
-                    ? 'bg-blue-600 text-white'
-                    : 'text-zinc-600 dark:text-gray-400 hover:bg-zinc-200 dark:hover:bg-gray-800'
+                    ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
+        </div>
 
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/15 dark:border-white/20 overflow-hidden dark:shadow-[0_0_35px_rgba(255,255,255,0.06)]">
           {activeTab === 'exams' && (
             <ExamListTab categoryId={id || ''} userProfile={userProfile} canCreate={examType?.name !== 'challenges' && examType?.name !== 'others'} />
           )}
@@ -389,6 +394,20 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           userProfile={userProfile}
           categoryId={id || ''}
           availableSubjects={availableSubjects}
+        />
+      )}
+      {showMakeViva && (
+        <MakeVivaForm
+          show={showMakeViva}
+          onClose={() => setShowMakeViva(false)}
+          userProfile={userProfile}
+          categoryId={id || ''}
+          availableSubjects={availableSubjects}
+          examType={examType}
+          onCreated={(vivaId) => {
+            setShowMakeViva(false);
+            navigate(`/viva/${vivaId}`);
+          }}
         />
       )}
       {showTypeSelector && (
@@ -443,7 +462,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
 
               <button
                 onClick={() => {
-                  setNotification({ message: 'Viva mock interview mode coming soon!', type: 'info' });
+                  setShowTypeSelector(false);
+                  setShowMakeViva(true);
                 }}
                 className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >

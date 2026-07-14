@@ -5,6 +5,7 @@ import Login from './components/onboarding/Login';
 import Onboarding from './components/onboarding/OnboardingPage';
 import Exam from './components/main/ExamPage';
 import ExamDetails from './components/exam-details/ExamDetailsPage';
+import VivaSessionPage from './components/viva/VivaSessionPage';
 import Settings from './components/settings/Settings';
 import TakeExam from './components/main/TakeExam';
 import Results from './components/results/Results';
@@ -109,6 +110,7 @@ function MainApp() {
       <Route path="/" element={<Navigate to="/exam" />} />
       <Route path="/exam" element={<Exam />} />
       <Route path="/exam-details/:id" element={<ExamDetails />} />
+      <Route path="/viva/:vivaId" element={<VivaSessionPage />} />
       <Route path="/exam/:instanceId" element={<TakeExam />} />
       <Route path="/results" element={<Results />} />
       <Route path="/results/:resultId" element={<ResultDetails />} />

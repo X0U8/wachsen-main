@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import PaginationControls from './PaginationControls';
 
@@ -31,6 +32,7 @@ function formatSimpleDate(dateStr: string) {
 }
 
 export default function VivaListTab({ categoryId, userProfile }: VivaListTabProps) {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [searchInput, setSearchInput] = useState('');
@@ -144,6 +146,7 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
               {vivaExams.map((viva) => (
                 <tr
                   key={viva.id}
+                  onClick={() => navigate(`/viva/${viva.id}`)}
                   className="hover:bg-zinc-100 dark:hover:bg-gray-800/30 transition-colors cursor-pointer group"
                 >
                   <td className="px-4 py-4 font-normal text-zinc-800 dark:text-gray-100 group-hover:text-blue-400 transition-colors">

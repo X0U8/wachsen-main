@@ -693,10 +693,10 @@ export default function ResultDetails() {
 
         <div className="grid grid-cols-4 gap-2 md:gap-4">
           {analytics ? [
-            { label: 'Final Score', value: result.marksObtained, color: 'text-zinc-900 dark:text-white font-bold' },
-            { label: 'Accuracy', value: `${analytics.accuracy}%`, color: 'text-zinc-900 dark:text-white font-bold' },
-            { label: 'Time Taken', value: `${analytics.totalTimeTakenMin}m`, color: 'text-zinc-900 dark:text-white font-bold' },
-            { label: 'Attempted', value: `${analytics.attempted}/${questions.length}`, color: 'text-zinc-900 dark:text-white font-bold' },
+            { label: 'Final Score', value: result.marksObtained, color: 'text-zinc-900 dark:text-white font-semibold' },
+            { label: 'Accuracy', value: `${analytics.accuracy}%`, color: 'text-zinc-900 dark:text-white font-semibold' },
+            { label: 'Time Taken', value: `${analytics.totalTimeTakenMin}m`, color: 'text-zinc-900 dark:text-white font-semibold' },
+            { label: 'Attempted', value: `${analytics.attempted}/${questions.length}`, color: 'text-zinc-900 dark:text-white font-semibold' },
           ].map((card, i) => (
             <div key={i} className="bg-white dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 p-3 md:p-6 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center text-center space-y-1 md:space-y-2">
               <p

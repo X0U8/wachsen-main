@@ -82,9 +82,9 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
               <div className="flex items-center gap-2">
                 <span
                   className={`px-2 py-0.5 rounded-full uppercase tracking-wider font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
-                      exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
-                        exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
-                          'bg-yellow-500/10 text-yellow-500'
+                    exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
+                      exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
+                        'bg-yellow-500/10 text-yellow-500'
                     } text-xs`}>
                   {exam.status}
                 </span>
@@ -161,13 +161,13 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
                           onClick={() => {
                             onClose();
                             if (resultId) {
-                              navigate(`/result/${resultId}`);
+                              navigate(`/results/${resultId}`);
                             } else {
                               navigate(`/results`);
                             }
                           }}
                           disabled={fetchingResult}
-                          className="w-full py-4 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-2xl transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 group text-base cursor-pointer font-semibold"
+                          className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-2xl transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 group text-base cursor-pointer font-semibold"
                         >
                           {fetchingResult ? (
                             <Loader2 className="w-5 h-5 animate-spin" />

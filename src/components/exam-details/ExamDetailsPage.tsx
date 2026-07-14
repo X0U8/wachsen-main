@@ -277,6 +277,42 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
     gcTime: Infinity,
   });
 
+  // Count pending exams for this category to enforce 100-exam spam limit
+  const { data: pendingExamCount = 0 } = useQuery({
+    queryKey: ['pendingExamCount', id, userProfile?.id],
+    queryFn: async () => {
+      if (!id || !userProfile?.id) return 0;
+      const { count, error } = await supabase
+        .from('exams')
+        .select('id', { count: 'exact', head: true })
+        .eq('categoryId', id)
+        .eq('status', 'pending')
+        .contains('accessIds', [userProfile.id]);
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!id && !!userProfile?.id,
+    staleTime: 30000,
+  });
+
+  // Count pending LAQ exams for this category
+  const { data: pendingLaqCount = 0 } = useQuery({
+    queryKey: ['pendingLaqCount', id, userProfile?.id],
+    queryFn: async () => {
+      if (!id || !userProfile?.id) return 0;
+      const { count, error } = await supabase
+        .from('laq_exam')
+        .select('id', { count: 'exact', head: true })
+        .eq('category_id', id)
+        .eq('user_id', userProfile.id)
+        .eq('status', 'pending');
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!id && !!userProfile?.id,
+    staleTime: 30000,
+  });
+
   useEffect(() => {
     if (!fetchedExamType) return;
     setExamType(fetchedExamType);
@@ -494,6 +530,11 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             <div className="grid grid-cols-2 gap-3 py-4 overflow-y-auto">
               <button
                 onClick={() => {
+                  if ((pendingExamCount as number) >= 100) {
+                    setShowTypeSelector(false);
+                    showNotification('error', 'You already have 100+ pending exams in this category that you haven\'t taken yet.');
+                    return;
+                  }
                   setShowTypeSelector(false);
                   setShowMakeAI(true);
                 }}
@@ -528,6 +569,11 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
 
               <button
                 onClick={() => {
+                  if ((pendingLaqCount as number) >= 100) {
+                    setShowTypeSelector(false);
+                    showNotification('error', 'You already have 100+ pending LAQ exams in this category that you haven\'t taken yet.');
+                    return;
+                  }
                   setShowTypeSelector(false);
                   setShowMakeLaq(true);
                 }}

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, BarChart3, MessageSquare, CheckCircle2, AlertCircle, XCircle, Clock, Award, Target, Sparkle } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, AlertCircle, XCircle, Clock, Sparkle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useUserProfile } from '../../lib/UserContext';
+import AITutorModal from '../results/AITutorModal';
 
 interface LaqAnalysisProps {
   laq: any;
@@ -75,10 +77,27 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+// Map LAQ correctness to AITutorModal status
+function mapCorrectness(correctness: string): 'correct' | 'wrong' | 'skipped' {
+  if (correctness === 'correct') return 'correct';
+  if (correctness === 'partial') return 'wrong';
+  return 'wrong';
+}
+
 export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
   const navigate = useNavigate();
   const analysis = laq?.ai_analysis;
   const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+  const [tutorItem, setTutorItem] = useState<{ question: any; userAnswer: string; index: number; status: 'correct' | 'wrong' | 'skipped' } | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+  const { userProfile, refreshCredits } = useUserProfile();
+  const userId = userProfile?.id || null;
+
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 3500);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100">
@@ -145,7 +164,6 @@ export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
               {/* Feedback Section */}
               <div className="bg-white dark:bg-zinc-950 border border-zinc-200/85 dark:border-zinc-900 rounded-3xl p-6 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center gap-2">
-
                   <h2 className="font-semibold text-xs  tracking-wider text-zinc-450 dark:text-zinc-400">AI Evaluation Feedback</h2>
                 </div>
                 <p className="text-zinc-700 dark:text-zinc-350 text-sm leading-relaxed whitespace-pre-wrap">
@@ -213,25 +231,47 @@ export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
                                 <div className="space-y-1">
                                   <span className="font-semibold text-zinc-450 dark:text-zinc-500  tracking-wider text-[9px]">Your Answer:</span>
                                   <div className="p-3 bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-805 rounded-2xl text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
-                                    “{item.userAnswer}”
+                                    "{item.userAnswer}"
                                   </div>
                                 </div>
                               )}
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1 p-3 bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/10 rounded-2xl">
-
                                   <p className="text-zinc-650 dark:text-zinc-350 leading-relaxed">
                                     {item.overall || 'No evaluation score details.'}
                                   </p>
                                 </div>
 
                                 <div className="space-y-1 p-3 bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-850 rounded-2xl">
-
                                   <p className="text-zinc-650 dark:text-zinc-350 leading-relaxed">
                                     {item.feedback}
                                   </p>
                                 </div>
+                              </div>
+
+                              {/* AI Tutor Button */}
+                              <div className="flex justify-end pt-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTutorItem({
+                                      question: {
+                                        id: `laq-${laq.id}-q${idx}`,
+                                        text: item.question || `Question ${item.questionIndex + 1}`,
+                                        correct_answer: '',
+                                        options: [],
+                                      },
+                                      userAnswer: item.userAnswer || '',
+                                      index: idx + 1,
+                                      status: mapCorrectness(item.correctness),
+                                    });
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/8 hover:bg-blue-500/15 border border-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-semibold transition-all cursor-pointer"
+                                >
+                                  <Sparkle className="w-3 h-3 fill-blue-500 text-blue-500" />
+                                  Ask AI Tutor
+                                </button>
                               </div>
                             </motion.div>
                           )}
@@ -245,6 +285,35 @@ export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
           )}
         </div>
       </main>
+
+      {/* Toast Notification */}
+      {notification && (
+        <div className={`fixed bottom-4 right-4 z-[60] px-4 py-2.5 rounded-2xl text-xs font-semibold shadow-lg border ${
+          notification.type === 'error'
+            ? 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400'
+            : notification.type === 'success'
+            ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400'
+            : 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+
+      {/* AI Tutor Modal */}
+      {tutorItem && (
+        <AITutorModal
+          isOpen={!!tutorItem}
+          onClose={() => setTutorItem(null)}
+          question={tutorItem.question}
+          userAnswer={tutorItem.userAnswer}
+          userId={userId}
+          userProfile={userProfile}
+          refreshCredits={refreshCredits}
+          showNotification={showNotification}
+          originalIndex={tutorItem.index}
+          status={tutorItem.status}
+        />
+      )}
     </div>
   );
 }

@@ -178,7 +178,7 @@ Return ONLY a valid JSON array in this exact format:
         {generating ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
             <div className="space-y-1">
-              <h3 className="font-semibold text-zinc-905 dark:text-white text-sm">Generating LAQ Exam</h3>
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Generating LAQ Exam</h3>
               <p className="text-zinc-500 dark:text-zinc-400 text-xs">Do not close or navigate away</p>
             </div>
             <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto" />
@@ -203,7 +203,7 @@ Return ONLY a valid JSON array in this exact format:
                   <select
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-805 dark:text-white text-xs leading-relaxed"
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                   >
                     <option value="">Select a subject</option>
                     {availableSubjects.map((sub: any) => (
@@ -217,7 +217,7 @@ Return ONLY a valid JSON array in this exact format:
                     placeholder="Enter subject"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-805 dark:text-white text-xs leading-relaxed"
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                   />
                 )}
               </div>
@@ -230,7 +230,7 @@ Return ONLY a valid JSON array in this exact format:
                   placeholder="e.g. Genetics LAQ Exam"
                   value={examName}
                   onChange={(e) => setExamName(e.target.value)}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-805 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-805 dark:text-white text-xs leading-relaxed"
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                 />
               </div>
 
@@ -239,7 +239,7 @@ Return ONLY a valid JSON array in this exact format:
                 <select
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value as typeof difficulty)}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-805 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-805 dark:text-white text-xs leading-relaxed"
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                 >
                   {DIFFICULTIES.map((d) => (
                     <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
@@ -267,7 +267,7 @@ Return ONLY a valid JSON array in this exact format:
                   >
                     +
                   </button>
-                  <span className="text-zinc-400 dark:text-zinc-505 font-medium text-[11px]">({questionCount} Questions = {questionCount * 2} credits)</span>
+                  <span className="text-zinc-400 dark:text-zinc-500 font-medium text-[11px]">({questionCount} Questions = {questionCount * 2} credits)</span>
                 </div>
               </div>
 
@@ -298,7 +298,7 @@ Return ONLY a valid JSON array in this exact format:
                   placeholder="Enter topics or subtopics to be asked"
                   value={topics}
                   onChange={(e) => setTopics(e.target.value)}
-                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-805 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-805 dark:text-white text-xs resize-none leading-relaxed"
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs resize-none leading-relaxed"
                 />
                 <div className="flex justify-between text-[10px] text-zinc-400 font-medium">
                   <span>{topics.trim().length > 0 && topics.trim().length < 5 ? 'Topic must be at least 5 characters' : ''}</span>

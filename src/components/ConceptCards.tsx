@@ -125,7 +125,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
   if (cards.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-lg h-[620px] flex flex-col shadow-2xl relative text-zinc-900 dark:text-white justify-between overflow-hidden">
         <div className="flex items-center justify-between pb-2 border-b border-zinc-150 dark:border-zinc-900 flex-shrink-0">
           <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-xs">Concept Cards</h3>

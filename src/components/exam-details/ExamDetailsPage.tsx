@@ -472,6 +472,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           examType={examType}
           onCreated={() => {
             setShowMakeLaq(false);
+            queryClient.invalidateQueries({ queryKey: ['laqExams'] });
           }}
         />
       )}

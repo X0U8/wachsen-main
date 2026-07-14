@@ -162,7 +162,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   };
 
   const handleAnswerChange = (value: string) => {
-    if (value.length > 500) return;
+    if (value.length > 1000) return;
     setAnswers((prev) => {
       const next = [...prev];
       next[currentIndex] = { ...next[currentIndex], text: value };
@@ -397,16 +397,19 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                   </h2>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-1 relative">
                   <textarea
                     value={currentAnswer?.text || ''}
                     onChange={(e) => handleAnswerChange(e.target.value)}
                     disabled={finished}
                     placeholder="Type your answer here..."
                     rows={8}
-                    maxLength={500}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-805 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-850 dark:text-white text-sm resize-none leading-relaxed disabled:opacity-50 animate-none"
+                    maxLength={1000}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-805 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-850 dark:text-white text-sm resize-none leading-relaxed disabled:opacity-50 animate-none overflow-y-auto"
                   />
+                  <div className="flex justify-end text-[10px] text-zinc-400 dark:text-zinc-500 font-medium px-1">
+                    {(currentAnswer?.text || '').length}/1000
+                  </div>
                 </div>
               </motion.div>
             </AnimatePresence>

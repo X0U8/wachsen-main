@@ -87,12 +87,10 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   useEffect(() => {
     if (!isExamStarted || finished) return;
 
-    let startVal = localStorage.getItem(`laq_start_${laq.id}`);
-    if (!startVal) {
-      startVal = Date.now().toString();
-      localStorage.setItem(`laq_start_${laq.id}`, startVal);
-    }
-    const startTime = Number(startVal);
+    // Always write a fresh start time when the exam begins — never reuse a stale key
+    const freshStart = Date.now().toString();
+    localStorage.setItem(`laq_start_${laq.id}`, freshStart);
+    const startTime = Number(freshStart);
 
     const updateTimer = () => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);

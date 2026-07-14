@@ -450,8 +450,13 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             <ConceptCardsListTab
               categoryId={id || ''}
               userProfile={userProfile}
-              onSelect={(deck) => {
-                setConceptCards(deck.questions || []);
+              onSelect={async (deck) => {
+                const { data } = await supabase
+                  .from('saved_concept_cards')
+                  .select('questions')
+                  .eq('id', deck.id)
+                  .single();
+                setConceptCards(data?.questions || []);
                 setConceptSubject(deck.subject_name || '');
                 setConceptDifficulty((deck.difficulty as any) || 'medium');
                 setActiveTopicText(deck.topics || '');
@@ -464,8 +469,13 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             <CheatCardsListTab
               categoryId={id || ''}
               userProfile={userProfile}
-              onSelect={(deck) => {
-                setCheatCards(deck.cards || []);
+              onSelect={async (deck) => {
+                const { data } = await supabase
+                  .from('saved_cheat_cards')
+                  .select('cards')
+                  .eq('id', deck.id)
+                  .single();
+                setCheatCards(data?.cards || []);
                 setCheatSubject(deck.subject_name || '');
                 setCheatDifficulty((deck.difficulty as any) || 'medium');
                 setCheatTopicText(deck.topics || '');

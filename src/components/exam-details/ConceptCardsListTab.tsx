@@ -10,7 +10,7 @@ interface ConceptCardDeck {
   subject_name: string | null;
   topics: string | null;
   difficulty: string | null;
-  questions: any[];
+  questions?: any[];
   created_at: string;
 }
 
@@ -154,7 +154,7 @@ export default function ConceptCardsListTab({ categoryId, userProfile, onSelect 
                     </span>
                   </td>
                   <td className="px-4 py-4 text-zinc-500 dark:text-gray-400">
-                    {Array.isArray(deck.questions) ? deck.questions.length : 0}
+                    10
                   </td>
                   <td className="px-4 py-4 text-right text-zinc-500 dark:text-gray-400">
                     {formatSimpleDate(deck.created_at)}

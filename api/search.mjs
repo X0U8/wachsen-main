@@ -194,7 +194,7 @@ export default async function handler(req, res) {
     } else if (type === 'conceptCards') {
       let query = supabase
         .from('saved_concept_cards')
-        .select('id, name, subject_name, topics, difficulty, questions, created_at')
+        .select('id, name, subject_name, topics, difficulty, created_at')
         .eq('user_id', userId);
 
       if (isValidUuid(categoryId)) {
@@ -215,7 +215,7 @@ export default async function handler(req, res) {
     } else if (type === 'cheatCards') {
       let query = supabase
         .from('saved_cheat_cards')
-        .select('id, name, subject_name, topics, difficulty, cards, created_at')
+        .select('id, name, subject_name, topics, difficulty, created_at')
         .eq('user_id', userId);
 
       if (isValidUuid(categoryId)) {

@@ -10,7 +10,7 @@ interface CheatCardDeck {
   subject_name: string | null;
   topics: string | null;
   difficulty: string | null;
-  cards: any[];
+  cards?: any[];
   created_at: string;
 }
 
@@ -154,7 +154,7 @@ export default function CheatCardsListTab({ categoryId, userProfile, onSelect }:
                     </span>
                   </td>
                   <td className="px-4 py-4 text-zinc-500 dark:text-gray-400">
-                    {Array.isArray(deck.cards) ? deck.cards.length : 0}
+                    20
                   </td>
                   <td className="px-4 py-4 text-right text-zinc-500 dark:text-gray-400">
                     {formatSimpleDate(deck.created_at)}

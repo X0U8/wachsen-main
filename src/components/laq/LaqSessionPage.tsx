@@ -13,7 +13,7 @@ export default function LaqSessionPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('laq_exam')
-        .select('id, name, subject_name, topics, difficulty, question_count, time_limit_minutes, status, questions, ai_analysis, created_at')
+        .select('id, name, subject_name, topics, difficulty, question_count, time_limit_minutes, status, questions, answers, ai_analysis, ai_feedback, accuracy, depth, clarity, created_at')
         .eq('id', laqId!)
         .single();
       if (error) throw error;

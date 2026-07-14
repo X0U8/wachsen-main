@@ -4,23 +4,22 @@ export interface LaqAnswerRecord {
   questionIndex: number;
   question: string;
   userAnswer: string;
-  correctness: 'correct' | 'partial' | 'incorrect';
-  feedback: string;
   timeSpentSeconds: number;
 }
 
-export interface LaqAnalysis {
+export interface LaqAnalysisResult {
   overall_rating: number;
   accuracy: number;
   depth: number;
   clarity: number;
-  feedback: string;
+  ai_feedback: string;
   totalTimeSpentSeconds: number;
   perQuestion: Array<{
     questionIndex: number;
+    question: string;
     correctness: 'correct' | 'partial' | 'incorrect';
+    rating: number; // 0-10 per question
     feedback: string;
-    overall: string;
     userAnswer: string;
     timeSpentSeconds: number;
   }>;
@@ -31,38 +30,34 @@ export async function analyzeLaqSession(
   totalTimeSpentSeconds: number,
   userId: string,
   authToken: string
-): Promise<LaqAnalysis> {
-  const prompt = `You are an expert examiner. Review the following long-form written answers and produce a final analysis.
+): Promise<LaqAnalysisResult> {
+  const prompt = `You are an expert examiner. Grade these long-form written answers.
 
-Total time taken: ${Math.round(totalTimeSpentSeconds / 60)} min ${totalTimeSpentSeconds % 60} sec
+Total time: ${Math.round(totalTimeSpentSeconds / 60)}m ${totalTimeSpentSeconds % 60}s
 
-Student responses:
-${answers.map((a, i) => `${i + 1}. Q: ${a.question}
-   Answer: ${a.userAnswer || '(no answer)'}
-   Time spent: ${Math.round(a.timeSpentSeconds / 60)} min ${a.timeSpentSeconds % 60} sec
-   Correctness: ${a.correctness}
-   Feedback: ${a.feedback}`).join('\n\n')}
+${answers.map((a, i) => `Q${i + 1}: ${a.question}
+Answer: ${a.userAnswer || '(no answer provided)'}
+Time: ${a.timeSpentSeconds}s`).join('\n\n')}
 
-Return ONLY a valid JSON object in this exact format:
+Return ONLY valid JSON in this exact format (no extra fields):
 {
   "overall_rating": 0-10,
   "accuracy": 0-10,
   "depth": 0-10,
   "clarity": 0-10,
-  "feedback": "2-3 encouraging sentences summarizing strengths and one concrete improvement area.",
-  "totalTimeSpentSeconds": ${totalTimeSpentSeconds},
+  "ai_feedback": "2-3 sentences summarizing overall strengths and one improvement area.",
   "perQuestion": [
     {
       "questionIndex": 0,
+      "question": "exact question text",
       "correctness": "correct" | "partial" | "incorrect",
-      "feedback": "Concise feedback for this specific answer.",
-      "overall": "One-line verdict on this answer.",
-      "userAnswer": "${answers[0]?.userAnswer || ''}",
-      "timeSpentSeconds": ${answers[0]?.timeSpentSeconds || 0}
+      "rating": 0-10,
+      "feedback": "One concise sentence of feedback for this answer.",
+      "userAnswer": "exact user answer text",
+      "timeSpentSeconds": 0
     }
   ]
-}
-`;
+}`;
 
   const response = await fetch('/api/ask-question', {
     method: 'POST',
@@ -86,14 +81,14 @@ Return ONLY a valid JSON object in this exact format:
   }
 
   const cleaned = (data.reply || '').replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
-  const parsed: LaqAnalysis = safeParseJSON(cleaned);
+  const parsed: LaqAnalysisResult = safeParseJSON(cleaned);
 
   if (
     typeof parsed.overall_rating !== 'number' ||
     typeof parsed.accuracy !== 'number' ||
     typeof parsed.depth !== 'number' ||
     typeof parsed.clarity !== 'number' ||
-    !parsed.feedback ||
+    !parsed.ai_feedback ||
     !Array.isArray(parsed.perQuestion)
   ) {
     throw new Error('Invalid analysis response from AI');

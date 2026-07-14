@@ -7,8 +7,6 @@ import { safeParseJSON } from '../RevisionLog';
 
 export interface LaqQuestion {
   question: string;
-  expectedAnswer: string;
-  keywords: string[];
 }
 
 interface MakeLaqProps {
@@ -92,16 +90,9 @@ For "medium", ask standard conceptual explanation questions requiring clear unde
 For "hard", ask deeper analytical or application questions requiring detailed written responses.
 For "advance", generate the absolute hardest written-response questions possible for this topic and level — questions that test deep mastery, edge cases, complex reasoning, and the toughest analytical skills.
 
-Each answer should be concise but complete (2-5 sentences max). No LaTeX, no symbols.
-Return ONLY a valid JSON array in this exact format:
-[
-  {
-    "question": "...",
-    "expectedAnswer": "Concise ideal written answer (2-5 sentences).",
-    "keywords": ["keyword1", "keyword2"]
-  }
-]
-`;
+No LaTeX, no symbols.
+Return ONLY a valid JSON array of question strings in this exact format:
+["Question 1 text here.", "Question 2 text here."]`;
 
       const replyText = await streamConceptCards(
         {
@@ -120,9 +111,17 @@ Return ONLY a valid JSON array in this exact format:
       );
 
       const cleaned = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
-      const questions: LaqQuestion[] = safeParseJSON(cleaned);
+      const rawParsed = safeParseJSON(cleaned);
 
-      if (!Array.isArray(questions) || questions.length === 0) {
+      // Accept both ["q1", "q2"] and [{question: "q1"}, ...] formats
+      let questions: LaqQuestion[];
+      if (Array.isArray(rawParsed) && rawParsed.length > 0) {
+        if (typeof rawParsed[0] === 'string') {
+          questions = rawParsed.map((q: string) => ({ question: q }));
+        } else {
+          questions = rawParsed.map((q: any) => ({ question: q.question || String(q) }));
+        }
+      } else {
         throw new Error('Failed to generate valid questions.');
       }
 

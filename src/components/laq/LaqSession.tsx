@@ -3,7 +3,6 @@ import { ChevronRight, ChevronLeft, ChevronDown, Clock, AlertCircle, Loader2, X 
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
-import { evaluateLaqAnswer } from './evaluateAnswer';
 import { analyzeLaqSession, LaqAnswerRecord } from './analyzeLaqSession';
 import Notification from '../../ui/Notification';
 import type { LaqQuestion } from './MakeLaq';
@@ -27,8 +26,6 @@ interface LaqSessionProps {
 
 interface AnswerState {
   text: string;
-  evaluation: any | null;
-  submitted: boolean;
   timeSpentSeconds: number;
 }
 
@@ -46,7 +43,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerState[]>(() =>
-    laq.questions.map(() => ({ text: '', evaluation: null, submitted: false, timeSpentSeconds: 0 }))
+    laq.questions.map(() => ({ text: '', timeSpentSeconds: 0 }))
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -204,57 +201,40 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
         timeSpentSeconds: finalAnswers[currentIndex].timeSpentSeconds + currentElapsedRef.current,
       };
 
-      // Evaluate all answers on finish
-      for (let i = 0; i < finalAnswers.length; i++) {
-        try {
-          const evalResult = await evaluateLaqAnswer(
-            laq.questions[i].question,
-            laq.questions[i].expectedAnswer,
-            laq.questions[i].keywords || [],
-            finalAnswers[i].text,
-            userProfile.id,
-            authToken
-          );
-          finalAnswers[i] = { ...finalAnswers[i], evaluation: evalResult, submitted: true };
-        } catch (err) {
-          console.error(`Error evaluating question ${i + 1}:`, err);
-          finalAnswers[i] = {
-            ...finalAnswers[i],
-            evaluation: { correctness: 'incorrect' as const, feedback: finalAnswers[i].text.trim() ? 'Failed to evaluate answer.' : 'No answer provided.' },
-            submitted: true,
-          };
-        }
-      }
-
-      setAnswers(finalAnswers);
-
       const totalTimeSpentSeconds = totalTimeSeconds - timeLeft;
 
+      // Build records directly from user text — no intermediate per-question AI calls
       const records: LaqAnswerRecord[] = finalAnswers.map((a, idx) => ({
         questionIndex: idx,
         question: laq.questions[idx].question,
         userAnswer: a.text,
-        correctness: a.evaluation?.correctness || 'incorrect',
-        feedback: a.evaluation?.feedback || 'No feedback available.',
         timeSpentSeconds: a.timeSpentSeconds || 0,
       }));
 
+      // Single batch AI grading
       const analysis = await analyzeLaqSession(records, totalTimeSpentSeconds, userProfile.id, authToken);
 
-      const perQuestionWithAnswers = analysis.perQuestion.map((item) => ({
-        ...item,
-        userAnswer: records[item.questionIndex]?.userAnswer || '',
-        timeSpentSeconds: records[item.questionIndex]?.timeSpentSeconds || 0,
+      // Save answers separately, ai_analysis only has per-question breakdown
+      const answersPayload = records.map((r) => ({
+        questionIndex: r.questionIndex,
+        question: r.question,
+        userAnswer: r.userAnswer,
+        timeSpentSeconds: r.timeSpentSeconds,
       }));
 
       const { error: updateError } = await supabase
         .from('laq_exam')
         .update({
           status: 'completed',
+          answers: answersPayload,
+          ai_feedback: analysis.ai_feedback,
+          accuracy: analysis.accuracy,
+          depth: analysis.depth,
+          clarity: analysis.clarity,
           ai_analysis: {
-            ...analysis,
-            perQuestion: perQuestionWithAnswers,
+            overall_rating: analysis.overall_rating,
             totalTimeSpentSeconds,
+            perQuestion: analysis.perQuestion,
           },
         })
         .eq('id', laq.id);

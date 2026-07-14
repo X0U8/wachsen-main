@@ -227,7 +227,7 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
                 {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                 {uploading ? 'Uploading...' : 'Upload image'}
               </button>
-              <p className="text-zinc-400 dark:text-gray-600 text-xs">Max 1 MB · auto-compressed</p>
+              <p className="text-zinc-400 dark:text-gray-600 text-xs">Max 1 MB </p>
             </div>
           </div>
 

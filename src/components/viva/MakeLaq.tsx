@@ -34,6 +34,7 @@ export default function MakeLaq({
 }: MakeLaqProps) {
   const { refreshCredits } = useUserProfile();
   const [subject, setSubject] = useState('');
+  const [examName, setExamName] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
   const [questionCount, setQuestionCount] = useState(5);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
@@ -120,12 +121,14 @@ Return ONLY a valid JSON array in this exact format:
         throw new Error('Failed to generate valid questions.');
       }
 
+      const finalName = examName.trim() || `${trimmedSubject} Long Answer`;
+
       const { data: inserted, error: insertError } = await supabase
         .from('laq_exam')
         .insert({
           user_id: userProfile.id,
           category_id: categoryId,
-          name: `${trimmedSubject} Long Answer`,
+          name: finalName,
           subject_name: trimmedSubject,
           topics: trimmedTopics,
           difficulty,
@@ -193,6 +196,18 @@ Return ONLY a valid JSON array in this exact format:
                 className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
               />
             )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Name (optional)</label>
+            <input
+              type="text"
+              maxLength={100}
+              placeholder="e.g. Genetics Long Answer"
+              value={examName}
+              onChange={(e) => setExamName(e.target.value)}
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+            />
           </div>
 
           <div className="space-y-1">

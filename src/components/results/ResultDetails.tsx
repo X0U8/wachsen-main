@@ -5,10 +5,11 @@ import { useUserProfile } from '../../lib/UserContext';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Loader2, CheckCircle2, XCircle, Clock, Award, ChevronLeft, ChevronUp,
-  BarChart3, Brain, Target, Zap, AlertTriangle, Info, PieChart, Activity, Sparkle, X, Printer
+  BarChart3, Brain, Target, Zap, AlertTriangle, Info, PieChart, Activity, Sparkle, X, Printer, RefreshCw
 } from 'lucide-react';
 import AITutorModal from './AITutorModal';
 import PrintQuestion from './PrintQuestion';
+import RevisionRetryModal from '../revision/RevisionRetryModal';
 import { motion } from 'framer-motion';
 import MathText from '../../ui/MathText';
 import Notification from '../../ui/Notification';
@@ -154,6 +155,7 @@ export default function ResultDetails() {
 
   const [tutorQuestion, setTutorQuestion] = useState<any>(null);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [showRetry, setShowRetry] = useState(false);
   const [examMeta, setExamMeta] = useState<{
     totalTime: number;
     totalMarks: number;
@@ -681,6 +683,12 @@ export default function ResultDetails() {
             <Printer className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
             <span className="hidden sm:inline">Print Exam</span>
           </button>
+          <button
+            onClick={() => setShowRetry(true)}
+            className="px-2.5 sm:px-3.5 py-1.5 bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 hover:bg-zinc-100 dark:hover:bg-gray-800 text-zinc-900 dark:text-white rounded-xl font-medium shadow-sm hover:shadow-md transition-all flex items-center gap-1 cursor-pointer text-xs">
+            <RefreshCw className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+            <span className="hidden sm:inline">Retry Exam</span>
+          </button>
         </div>
       </header>
       <main className="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full space-y-12">
@@ -1122,6 +1130,13 @@ export default function ResultDetails() {
           examName={result.examName}
           questions={questions}
           examMeta={examMeta}
+        />
+      )}
+      {showRetry && (
+        <RevisionRetryModal
+          isOpen={showRetry}
+          onClose={() => setShowRetry(false)}
+          retryData={questions}
         />
       )}
     </div>

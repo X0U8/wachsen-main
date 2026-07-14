@@ -164,10 +164,6 @@ export default function RevisionLog() {
   const [generatingCards, setGeneratingCards] = useState(false);
   const [showRetry, setShowRetry] = useState(false);
   const [retryData, setRetryData] = useState<any[]>([]);
-  const [retryAnswers, setRetryAnswers] = useState<Record<string, string>>({});
-  const [retryResults, setRetryResults] = useState<Record<string, { isCorrect: boolean; explanation?: string; marks?: string }>>({});
-  const [checkingAI, setCheckingAI] = useState<Record<string, boolean>>({});
-  const [currentRetryIndex, setCurrentRetryIndex] = useState(0);
   useEffect(() => {
     if (!generatingCards) return;
 
@@ -207,63 +203,7 @@ export default function RevisionLog() {
       };
     });
     setRetryData(retryQuestions);
-    setRetryAnswers({});
-    setRetryResults({});
-    setCurrentRetryIndex(0);
     setShowRetry(true);
-  };
-
-  const handleRetryAnswer = (questionId: string, answer: string) => {
-    setRetryAnswers(prev => ({ ...prev, [questionId]: answer }));
-
-    const question = retryData.find((q: any) => q.id === questionId);
-    if (!question) return;
-
-
-    const qType = normalizeQuestionType(question.type || question.questionType);
-    if (qType === 'mcq' || qType === 'integer' || qType === 'true_false') {
-      const correctAns = question.correctAnswer ?? question.correct_answer;
-      const isCorrect = String(correctAns).trim() === String(answer ?? '').trim();
-      setRetryResults(prev => ({
-        ...prev,
-        [questionId]: { isCorrect }
-      }));
-    }
-  };
-
-  const handleAISelfCheck = async (questionId: string, answer: string) => {
-    setCheckingAI(prev => ({ ...prev, [questionId]: true }));
-    try {
-      const question = retryData.find((q: any) => q.id === questionId);
-      if (!question) return;
-
-      const response = await fetch('/api/ask-question', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: question.text,
-          correctAnswer: question.correctAnswer,
-          userAnswer: answer,
-          options: question.options,
-          useOwnKey: localStorage.getItem('use_own_key') === 'true',
-          apiKey: localStorage.getItem('use_own_key') === 'true' ? localStorage.getItem('mesh_api_key') : undefined
-        })
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to check answer');
-
-      const isCorrect = data.reply.toLowerCase().includes('correct') && !data.reply.toLowerCase().includes('incorrect');
-      setRetryResults(prev => ({
-        ...prev,
-        [questionId]: { isCorrect, explanation: data.reply }
-      }));
-    } catch (err: any) {
-      console.error(err);
-      showNotification('error', err.message || 'AI evaluation failed');
-    } finally {
-      setCheckingAI(prev => ({ ...prev, [questionId]: false }));
-    }
   };
 
   const generateConceptCards = async ({
@@ -719,14 +659,6 @@ Return ONLY a valid JSON array matching this format:
         isOpen={showRetry}
         onClose={() => setShowRetry(false)}
         retryData={retryData}
-        currentRetryIndex={currentRetryIndex}
-        setCurrentRetryIndex={setCurrentRetryIndex}
-        retryAnswers={retryAnswers}
-        setRetryAnswers={setRetryAnswers}
-        retryResults={retryResults}
-        handleRetryAnswer={handleRetryAnswer}
-        handleAISelfCheck={handleAISelfCheck}
-        checkingAI={checkingAI}
       />
       {showSegmentSelector && (
         <SegmentSelectorModal

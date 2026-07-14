@@ -65,6 +65,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
 
       if (error) throw error;
       setSaveStatus('saved');
+      setShowNameInputModal(false);
     } catch (err) {
       console.error('Error saving concept deck:', err);
       setSaveStatus('error');

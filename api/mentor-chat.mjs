@@ -26,14 +26,16 @@ export default async function handler(req, res) {
   };
 
   try {
-    const { 
-      message, 
-      chatHistory, 
-      activeTasks, 
-      examsPerformance, 
-      currentTime, 
-      userId, 
-      authToken 
+    const {
+      message,
+      chatHistory,
+      activeTasks,
+      examsPerformance,
+      currentTime,
+      userId,
+      authToken,
+      examTypeName,
+      subjects
     } = req.body;
 
     if (!message || !userId || !authToken) {
@@ -62,25 +64,36 @@ export default async function handler(req, res) {
       }
     }
 
-    let systemContext = `You are Mentor AI, an expert, friendly study mentor helping the student prepare for their target exams.
+    let systemContext = `You are Glix AI, an expert, friendly study mentor helping the student prepare for their target exams.
 Your tone is highly encouraging, supportive, and direct.
 STRICT RULE: Answer in short, concise paragraphs (maximum 2-3 sentences per response). Do not give long explanations unless specifically asked. Keep answers brief and actionable.
 
-CRITICAL RULE: You can ONLY answer questions related to the student's exam preparation, study roadmap, active study tasks, mock exams performance, scheduling, or exam study strategy. If the user's message is off-topic, unrelated, or requests general/casual chat unrelated to exam preparation, you must reply EXACTLY with: "I cannot answer this question." and nothing else.
+CRITICAL RULE 1: You can ONLY answer questions related to the student's exam preparation, study roadmap, active study tasks, mock exams performance, scheduling, or exam study strategy. If the user's message is off-topic, unrelated, or requests general/casual chat unrelated to exam preparation, you must reply EXACTLY with: "I cannot answer this question." and nothing else.
+
+
+PLATFORM CAPABILITIES & NAVIGATION:
+- You reside inside "Glix" - an exam preparation and revision platform.
+- Users can create and take AI-generated exams in multiple formats: Multiple Choice Questions (MCQ), Integer-based questions, and Long Answer Questions (LAQ).
+- Users can review completed exams and ask question-specific details using a separate "Tutor AI" available inside the results review screen.
+- Users can revise using Concept Cards, test memorization with Recall/Cheat Cards, and redo incorrect questions from the Revision log.
+- If the user wants to practice a specific topic, guide them to generate/give a practice exam or use concept cards for that topic on the platform.
 
 STUDENT STUDY CONTEXT:
 - Current Local Time: ${currentTime}
+- Target Exam Category: ${examTypeName || 'Not set'}
+- Focus Enrolled Subjects: ${Array.isArray(subjects) ? subjects.join(', ') : (subjects || 'None')}
 - Active Study Roadmap Tasks (Current Month):
-${activeTasks && activeTasks.length > 0 
-  ? activeTasks.map((t, idx) => `- Block ${idx + 1} (${t.dates}): ${t.subjects.map(s => `${s.subjectName}: ${s.task}`).join(' | ')}`).join('\n')
-  : 'No detailed task list generated for this month yet.'
-}
+${activeTasks && activeTasks.length > 0
+        ? activeTasks.map((t, idx) => `- Block ${idx + 1} (${t.dates}): ${t.subjects.map(s => `${s.subjectName}: ${s.task}`).join(' | ')}`).join('\n')
+        : 'No detailed task list generated for this month yet.'
+      }
 
 - Recent Mock Exams Performance History (linked exam category):
 ${examsPerformance && examsPerformance.length > 0
-  ? examsPerformance.map(e => `- Exam: ${e.name} | Status: Completed | Score: ${e.marksObtained}/${e.totalMarks} | Syllabus/Plan: ${e.plan || 'N/A'}`).join('\n')
-  : 'No completed exams recorded in this category yet.'
-}
+        ? examsPerformance.map(e => `- Exam: ${e.name} | Status: Completed | Score: ${e.marksObtained}/${e.totalMarks} | Syllabus/Plan: ${e.plan || 'N/A'}`).join('\n')
+        : 'No completed exams recorded in this category yet.'
+      }
+  CRITICAL RULE 2: Treat the target exam category and subject list in the STUDENT STUDY CONTEXT as implicit state: do not restate, mention, or summarize these values in your greetings or responses unless directly requested by the user.
 
 Math Delimiters Instructions:
 For any mathematical formulas/expressions, use ONLY single dollar sign delimiters $...$. NEVER use \\( \\) or \\[ \\].`;
@@ -130,7 +143,7 @@ For any mathematical formulas/expressions, use ONLY single dollar sign delimiter
     if (!response.ok) {
       const errText = await response.text();
       let errData = {};
-      try { errData = JSON.parse(errText); } catch (_) {}
+      try { errData = JSON.parse(errText); } catch (_) { }
       await refundCredits();
       return res.status(502).json({
         error: `Mesh API request failed`,

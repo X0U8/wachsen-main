@@ -21,6 +21,7 @@ interface Message {
 interface ExamType {
   id: string;
   name: string;
+  subjects?: any;
 }
 
 export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProps) {
@@ -80,7 +81,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
             return true;
           });
 
-          setCategories(filtered.map(f => ({ id: f.id, name: f.name })));
+          setCategories(filtered.map(f => ({ id: f.id, name: f.name, subjects: f.subjects })));
 
 
           const savedCatId = localStorage.getItem(`mentor_linked_category_${planId}`);
@@ -212,6 +213,9 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
       }
 
 
+      const linkedCategory = categories.find(c => c.id === selectedCatId);
+      const categorySubjects = Array.isArray(linkedCategory?.subjects) ? linkedCategory.subjects : [];
+
       const response = await fetch('/api/mentor-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -222,7 +226,9 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
           examsPerformance,
           currentTime: new Date().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }),
           userId: userProfile?.id,
-          authToken
+          authToken,
+          examTypeName: selectedCatName,
+          subjects: categorySubjects
         })
       });
 

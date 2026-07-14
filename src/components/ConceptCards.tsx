@@ -74,6 +74,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
       setSelectedOptions([]);
       setIsFlipped(false);
       setCurrentIndex(currentIndex + 1);
+      setStartTime(Date.now());
     } else {
       setIsFinished(true);
     }

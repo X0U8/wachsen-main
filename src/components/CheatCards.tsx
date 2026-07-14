@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { X, AlertCircle, ChevronRight, RotateCcw } from 'lucide-react';
 import MathText from '../ui/MathText';
 import { supabase } from '../services/supabase';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
@@ -37,6 +37,7 @@ export default function CheatCards({
   const [isFinished, setIsFinished] = useState(false);
   const [cardTimes, setCardTimes] = useState<Record<number, number>>({});
   const [startTime, setStartTime] = useState<number>(Date.now());
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     setStartTime(Date.now());
@@ -97,24 +98,18 @@ export default function CheatCards({
 
   const currentCard = cards[currentIndex];
   const progressPercent = ((currentIndex + 1) / cards.length) * 100;
-  const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < cards.length - 1;
-
-  const handlePrev = () => {
-    const duration = Math.max(1, Math.round((Date.now() - startTime) / 1000));
-    setCardTimes(prev => ({ ...prev, [currentIndex]: (prev[currentIndex] || 0) + duration }));
-    if (hasPrev) {
-      setIsFlipped(false);
-      setCurrentIndex(prev => prev - 1);
-    }
-  };
 
   const handleNext = () => {
     const duration = Math.max(1, Math.round((Date.now() - startTime) / 1000));
     setCardTimes(prev => ({ ...prev, [currentIndex]: (prev[currentIndex] || 0) + duration }));
     if (hasNext) {
+      setIsTransitioning(true);
       setIsFlipped(false);
       setCurrentIndex(prev => prev + 1);
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 50);
     } else {
       setIsFinished(true);
     }
@@ -176,7 +171,7 @@ export default function CheatCards({
                 onClick={() => setIsFlipped(f => !f)}
               >
                 <div
-                  className="absolute inset-0 transition-transform duration-500"
+                  className={`absolute inset-0 ${isTransitioning ? 'transition-none' : 'transition-transform duration-500'}`}
                   style={{
                     transformStyle: 'preserve-3d',
                     transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
@@ -210,16 +205,7 @@ export default function CheatCards({
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 flex-shrink-0">
-              <button
-                onClick={handlePrev}
-                disabled={!hasPrev}
-                className="flex items-center gap-1 px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Prev
-              </button>
-
+            <div className="flex items-center justify-end gap-3 flex-shrink-0">
               <button
                 onClick={handleNext}
                 className="flex items-center gap-1 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition-colors cursor-pointer"

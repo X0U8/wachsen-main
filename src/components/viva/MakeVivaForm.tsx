@@ -153,9 +153,7 @@ Return ONLY a valid JSON array in this exact format:
       <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative text-zinc-900 dark:text-white flex flex-col gap-4">
         <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-500/10 text-blue-500 rounded-lg">
-              <Mic className="w-4 h-4" />
-            </div>
+
             <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Create Viva</h3>
           </div>
           <button

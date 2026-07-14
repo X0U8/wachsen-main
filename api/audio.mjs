@@ -29,9 +29,12 @@ export default async function handler(req, res) {
         const errText = await response.text();
         let errData = {};
         try { errData = JSON.parse(errText); } catch (_) {}
+        console.error('[AUDIO TTS] Provider error:', response.status, errText);
         return res.status(502).json({
           error: 'TTS provider request failed',
-          details: errData.error?.message || errText,
+          providerStatus: response.status,
+          providerStatusText: response.statusText,
+          details: errData.error || errData.error?.message || errText || 'Unknown provider error',
         });
       }
 
@@ -63,9 +66,12 @@ export default async function handler(req, res) {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        console.error('[AUDIO STT] Provider error:', response.status, JSON.stringify(data));
         return res.status(502).json({
           error: 'STT provider request failed',
-          details: data.error?.message || 'Unknown transcription error',
+          providerStatus: response.status,
+          providerStatusText: response.statusText,
+          details: data.error || data.error?.message || 'Unknown transcription error',
         });
       }
 

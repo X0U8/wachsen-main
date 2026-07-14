@@ -168,7 +168,7 @@ Return ONLY a valid JSON array matching this format:
       showNotification('error', 'Please select a difficulty.');
       return;
     }
-    const creditsNeeded = 20;
+    const creditsNeeded = 10;
     if ((userProfile?.credits || 0) < creditsNeeded) {
       showNotification('error', `Insufficient credits. You need ${creditsNeeded} credits.`);
       return;
@@ -217,7 +217,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           useOwnKey,
           provider: activeProvider,
           model: activeModel,
-          deductAmount: 20
+          deductAmount: 10
         },
         (count) => setCheatCardProgress(count),
         20
@@ -864,7 +864,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                     Generating...
                   </>
                 ) : (
-                  'Generate (20 credits)'
+                  'Generate (10 credits)'
                 )}
               </button>
             </div>

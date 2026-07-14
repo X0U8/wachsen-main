@@ -34,6 +34,10 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
   const [questionTimes, setQuestionTimes] = useState<Record<number, number>>({});
   const [startTime, setStartTime] = useState<number>(Date.now());
 
+  useEffect(() => {
+    setStartTime(Date.now());
+  }, [currentIndex, isFinished]);
+
   const [savingDeck, setSavingDeck] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [showNameInputModal, setShowNameInputModal] = useState(false);
@@ -74,7 +78,6 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
       setSelectedOptions([]);
       setIsFlipped(false);
       setCurrentIndex(currentIndex + 1);
-      setStartTime(Date.now());
     } else {
       setIsFinished(true);
     }

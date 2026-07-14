@@ -177,7 +177,7 @@ export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
                                 {idx + 1}
                               </span>
                               <div className="flex flex-col gap-1">
-                                <span className="text-zinc-850 dark:text-zinc-200 text-xs font-semibold leading-relaxed line-clamp-1 max-w-[200px] sm:max-w-md">
+                                <span className="text-zinc-850 dark:text-zinc-200 text-xs font-normal leading-relaxed line-clamp-1 max-w-[200px] sm:max-w-md">
                                   {item.question || `Question ${item.questionIndex + 1}`}
                                 </span>
                                 <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
                             >
                               <div className="space-y-1">
                                 <span className="font-semibold text-zinc-450 dark:text-zinc-500  tracking-wider text-[9px]">Question:</span>
-                                <p className="text-zinc-800 dark:text-zinc-150 leading-relaxed font-medium">
+                                <p className="text-zinc-800 dark:text-zinc-150 leading-relaxed font-normal">
                                   {item.question || `Question ${item.questionIndex + 1}`}
                                 </p>
                               </div>

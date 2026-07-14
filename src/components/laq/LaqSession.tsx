@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { ChevronRight, ChevronLeft, ChevronDown, Clock, AlertCircle, CheckCircle2, Loader2, X, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronRight, ChevronLeft, ChevronDown, Clock, AlertCircle, Loader2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
-import { evaluateLaqAnswer, LaqAnswerEvaluation } from './evaluateAnswer';
+import { evaluateLaqAnswer } from './evaluateAnswer';
 import { analyzeLaqSession, LaqAnswerRecord } from './analyzeLaqSession';
 import Notification from '../../ui/Notification';
 import type { LaqQuestion } from './MakeLaq';
@@ -27,7 +27,7 @@ interface LaqSessionProps {
 
 interface AnswerState {
   text: string;
-  evaluation: LaqAnswerEvaluation | null;
+  evaluation: any | null;
   submitted: boolean;
   timeSpentSeconds: number;
 }
@@ -37,8 +37,6 @@ function formatTime(seconds: number): string {
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
-
-const MAX_CHARS = 500;
 
 export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   const { userProfile } = useUserProfile();
@@ -50,8 +48,6 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   const [answers, setAnswers] = useState<AnswerState[]>(() =>
     laq.questions.map(() => ({ text: '', evaluation: null, submitted: false, timeSpentSeconds: 0 }))
   );
-  const [reviewList, setReviewList] = useState<Set<number>>(new Set());
-  const [evaluating, setEvaluating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [finished, setFinished] = useState(false);
@@ -60,7 +56,81 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
+  const [isExamStarted, setIsExamStarted] = useState(false);
+  const [showStartModal, setShowStartModal] = useState(true);
+  const [countdown, setCountdown] = useState<number | null>(null);
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const elapsedRef = useRef<NodeJS.Timeout | null>(null);
+
+  const totalQuestions = laq.questions.length;
+  const currentQuestion = laq.questions[currentIndex];
+  const currentAnswer = answers[currentIndex];
+
+  const isLastQuestion = currentIndex === totalQuestions - 1;
+
+  // Handle countdown logic
   useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      const t = setTimeout(() => {
+        setIsExamStarted(true);
+        setShowStartModal(false);
+        setCountdown(null);
+        localStorage.setItem(`laq_start_${laq.id}`, Date.now().toString());
+      }, 400);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, laq.id]);
+
+  // Sync remaining time with localStorage start timestamp
+  useEffect(() => {
+    if (!isExamStarted || finished) return;
+
+    let startVal = localStorage.getItem(`laq_start_${laq.id}`);
+    if (!startVal) {
+      startVal = Date.now().toString();
+      localStorage.setItem(`laq_start_${laq.id}`, startVal);
+    }
+    const startTime = Number(startVal);
+
+    const updateTimer = () => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const remaining = Math.max(0, totalTimeSeconds - elapsed);
+      setTimeLeft(remaining);
+
+      if (remaining <= 0) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        handleSubmitAll();
+      }
+    };
+
+    updateTimer();
+    timerRef.current = setInterval(updateTimer, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isExamStarted, finished, totalTimeSeconds, laq.id]);
+
+  // Per-question elapsed timer
+  useEffect(() => {
+    if (!isExamStarted || finished) return;
+    setCurrentElapsedSeconds(0);
+    elapsedRef.current = setInterval(() => {
+      setCurrentElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => {
+      if (elapsedRef.current) clearInterval(elapsedRef.current);
+    };
+  }, [currentIndex, finished, isExamStarted]);
+
+  // Navigation lock (beforeunload/popstate) - active only when exam has started
+  useEffect(() => {
+    if (!isExamStarted || finished) return;
+
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       e.returnValue = 'Are you sure you want to leave? Your exam progress will be lost.';
@@ -81,63 +151,18 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [isExamStarted, finished]);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const elapsedRef = useRef<NodeJS.Timeout | null>(null);
-
-  const totalQuestions = laq.questions.length;
-  const currentQuestion = laq.questions[currentIndex];
-  const currentAnswer = answers[currentIndex];
-
-  const isLastQuestion = currentIndex === totalQuestions - 1;
-
-  // Countdown timer
-  useEffect(() => {
-    if (finished) return;
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [finished]);
-
-  // Per-question elapsed timer
-  useEffect(() => {
-    if (finished) return;
-    setCurrentElapsedSeconds(0);
-    elapsedRef.current = setInterval(() => {
-      setCurrentElapsedSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => {
-      if (elapsedRef.current) clearInterval(elapsedRef.current);
-    };
-  }, [currentIndex, finished]);
-
-  // Auto-submit when time runs out
-  useEffect(() => {
-    if (timeLeft <= 0 && !finished && !submitting) {
-      handleSubmitAll();
-    }
-  }, [timeLeft, finished, submitting]);
-
-  const recordTimeForCurrent = useCallback(() => {
+  const recordTimeForIndex = (idx: number, elapsed: number) => {
     setAnswers((prev) => {
       const next = [...prev];
-      next[currentIndex] = { ...next[currentIndex], timeSpentSeconds: next[currentIndex].timeSpentSeconds + currentElapsedSeconds };
+      next[idx] = { ...next[idx], timeSpentSeconds: next[idx].timeSpentSeconds + elapsed };
       return next;
     });
-  }, [currentIndex, currentElapsedSeconds]);
+  };
 
   const handleAnswerChange = (value: string) => {
-    if (value.length > MAX_CHARS) return;
+    if (value.length > 500) return;
     setAnswers((prev) => {
       const next = [...prev];
       next[currentIndex] = { ...next[currentIndex], text: value };
@@ -145,62 +170,23 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
     });
   };
 
-  const toggleReview = (idx: number) => {
-    setReviewList((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) {
-        next.delete(idx);
-      } else {
-        next.add(idx);
-      }
-      return next;
-    });
-  };
-
-  const handleEvaluate = async () => {
-    if (!userProfile?.id || !currentAnswer.text.trim()) return;
-    setEvaluating(true);
-    setError('');
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const authToken = session?.access_token || '';
-
-      const evaluation = await evaluateLaqAnswer(
-        currentQuestion.question,
-        currentQuestion.expectedAnswer,
-        currentQuestion.keywords || [],
-        currentAnswer.text,
-        userProfile.id,
-        authToken
-      );
-
-      recordTimeForCurrent();
-
-      setAnswers((prev) => {
-        const next = [...prev];
-        next[currentIndex] = { ...next[currentIndex], evaluation, submitted: true };
-        return next;
-      });
-    } catch (err: any) {
-      console.error('Evaluation error:', err);
-      setError(err.message || 'Failed to evaluate answer.');
-    } finally {
-      setEvaluating(false);
-    }
-  };
-
   const handleNext = () => {
+    recordTimeForIndex(currentIndex, currentElapsedSeconds);
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex((i) => i + 1);
     }
   };
 
-  const handleFinish = async () => {
-    if (!currentAnswer.submitted && currentAnswer.text.trim()) {
-      await handleEvaluate();
+  const handlePrev = () => {
+    recordTimeForIndex(currentIndex, currentElapsedSeconds);
+    if (currentIndex > 0) {
+      setCurrentIndex((i) => i - 1);
     }
-    await handleSubmitAll();
+  };
+
+  const handleSelectQuestion = (idx: number) => {
+    recordTimeForIndex(currentIndex, currentElapsedSeconds);
+    setCurrentIndex(idx);
   };
 
   const handleSubmitAll = async () => {
@@ -209,32 +195,32 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
     setError('');
     setFinished(true);
 
+    recordTimeForIndex(currentIndex, currentElapsedSeconds);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
 
       const finalAnswers = [...answers];
+      // Evaluate all answers on finish
       for (let i = 0; i < finalAnswers.length; i++) {
-        if (!finalAnswers[i].submitted) {
-          if (!finalAnswers[i].text.trim() && i === currentIndex) {
-            try {
-              const evalResult = await evaluateLaqAnswer(
-                laq.questions[i].question,
-                laq.questions[i].expectedAnswer,
-                laq.questions[i].keywords || [],
-                finalAnswers[i].text,
-                userProfile.id,
-                authToken
-              );
-              finalAnswers[i] = { ...finalAnswers[i], evaluation: evalResult, submitted: true };
-            } catch {
-              finalAnswers[i] = {
-                ...finalAnswers[i],
-                evaluation: { correctness: 'incorrect' as const, feedback: 'No answer provided.' },
-                submitted: true,
-              };
-            }
-          }
+        try {
+          const evalResult = await evaluateLaqAnswer(
+            laq.questions[i].question,
+            laq.questions[i].expectedAnswer,
+            laq.questions[i].keywords || [],
+            finalAnswers[i].text,
+            userProfile.id,
+            authToken
+          );
+          finalAnswers[i] = { ...finalAnswers[i], evaluation: evalResult, submitted: true };
+        } catch (err) {
+          console.error(`Error evaluating question ${i + 1}:`, err);
+          finalAnswers[i] = {
+            ...finalAnswers[i],
+            evaluation: { correctness: 'incorrect' as const, feedback: finalAnswers[i].text.trim() ? 'Failed to evaluate answer.' : 'No answer provided.' },
+            submitted: true,
+          };
         }
       }
 
@@ -273,6 +259,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
       if (updateError) throw updateError;
 
+      localStorage.removeItem(`laq_start_${laq.id}`);
       onComplete();
     } catch (err: any) {
       console.error('Submit error:', err);
@@ -283,14 +270,60 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
     }
   };
 
-  const charCount = currentAnswer?.text.length || 0;
-  const timePercent = (timeLeft / totalTimeSeconds) * 100;
   const timerUrgent = timeLeft < 60;
-
   const unansweredCount = answers.filter((a) => !a.text.trim()).length;
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100">
+      <AnimatePresence>
+        {showStartModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[150] flex items-center justify-center bg-white/95 dark:bg-black/95 backdrop-blur-xl p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-zinc-100 dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-3xl p-6 w-full max-w-sm space-y-6 shadow-2xl text-center"
+            >
+              <div className="space-y-3 py-4">
+                {countdown !== null ? (
+                  <motion.div key={countdown} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center py-10">
+                    <motion.span className="text-8xl font-bold text-blue-500 dark:text-blue-400">{countdown === 0 ? 'Start!' : countdown}</motion.span>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-4">
+                    <h3 className="text-zinc-900 dark:text-white text-2xl font-semibold">Ready to Start?</h3>
+                    <p className="text-zinc-500 dark:text-gray-400 leading-relaxed text-sm">
+                      You are about to start <span className="text-zinc-900 dark:text-white font-medium">{laq.name}</span>.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {countdown === null && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => window.history.back()}
+                    className="flex-1 py-2.5 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-355 dark:hover:bg-gray-700 text-zinc-900 dark:text-white rounded-xl transition-all font-medium text-xs cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => setCountdown(3)}
+                    className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-500/20 font-medium text-xs cursor-pointer"
+                  >
+                    Start Now
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {submitting && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex flex-col items-center justify-center gap-4">
           <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
@@ -307,7 +340,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
         </div>
 
         <div className="flex items-center justify-center flex-1">
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full border bg-zinc-200/30 dark:bg-gray-800/30 ${timerUrgent ? 'border-red-500/50 text-red-500' : 'border-zinc-350 dark:border-zinc-700 text-zinc-650 dark:text-zinc-350'}`}>
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full border bg-zinc-200/30 dark:bg-gray-800/30 ${timerUrgent ? 'border-red-500/50 text-red-500' : 'border-zinc-350 dark:border-zinc-700 text-zinc-655 dark:text-zinc-350'}`}>
             <Clock className="w-3.5 h-3.5" />
             <span className="text-zinc-900 dark:text-white font-mono text-xs font-semibold">{formatTime(timeLeft)}</span>
           </div>
@@ -340,32 +373,20 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                       <span className="px-2 py-0.5 bg-zinc-250 dark:bg-gray-800 text-zinc-900 dark:text-white rounded-md text-[10px] uppercase tracking-wider font-semibold">
                         Q{currentIndex + 1}
                       </span>
-                      <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 dark:text-blue-400 rounded-md text-[10px] uppercase tracking-wider font-semibold">
-                        Max 500 chars
-                      </span>
                       <div className="flex items-center gap-1.5 px-2 py-0.5 bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-400 dark:text-gray-500 rounded-md text-[10px] uppercase tracking-wider border border-zinc-200 dark:border-gray-800">
                         <Clock className="w-2.5 h-2.5" />
                         {formatTime(currentElapsedSeconds)}
                       </div>
                       <button
                         onClick={() => setShowQuestionModal(true)}
-                        className="md:hidden flex items-center gap-1 text-[10px] text-zinc-400 dark:text-gray-500 hover:text-zinc-650 dark:hover:text-gray-300 transition-colors"
+                        className="md:hidden flex items-center gap-1 text-[10px] text-zinc-400 dark:text-gray-500 hover:text-zinc-655 dark:hover:text-gray-300 transition-colors"
                       >
                         <ChevronDown className="w-3 h-3" />
                         <span>Questions</span>
                       </button>
                     </div>
-                    <button
-                      onClick={() => toggleReview(currentIndex)}
-                      className={`flex items-center gap-2 px-3 py-1 rounded-lg text-[10px] font-semibold tracking-wider transition-all ${reviewList.has(currentIndex)
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-zinc-200 dark:bg-gray-800 text-zinc-500 dark:text-gray-400 hover:bg-zinc-300 dark:hover:bg-gray-700'
-                        }`}
-                    >
-                      {reviewList.has(currentIndex) ? 'In Review' : 'Mark for review'}
-                    </button>
                   </div>
-                  <h2 className="font-semibold leading-relaxed text-sm sm:text-base text-zinc-800 dark:text-zinc-150">
+                  <h2 className="font-normal leading-relaxed text-sm sm:text-base text-zinc-800 dark:text-zinc-150">
                     {currentQuestion.question}
                   </h2>
                 </div>
@@ -381,53 +402,12 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                   <textarea
                     value={currentAnswer?.text || ''}
                     onChange={(e) => handleAnswerChange(e.target.value)}
-                    disabled={currentAnswer?.submitted || finished}
+                    disabled={finished}
                     placeholder="Type your answer here..."
                     rows={8}
-                    maxLength={MAX_CHARS}
-                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-850 dark:text-white text-sm resize-none leading-relaxed disabled:opacity-50"
+                    maxLength={500}
+                    className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-805 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-850 dark:text-white text-sm resize-none leading-relaxed disabled:opacity-50 animate-none"
                   />
-
-                  <div className="flex justify-between items-center text-xs text-zinc-400 dark:text-zinc-550">
-                    <span>{MAX_CHARS - charCount} characters remaining</span>
-                    {currentAnswer?.submitted && (
-                      <span className="text-green-500 font-semibold">✓ Checked by AI</span>
-                    )}
-                  </div>
-
-                  {currentAnswer?.evaluation && (
-                    <div
-                      className={`p-4 rounded-2xl border text-xs sm:text-sm ${
-                        currentAnswer.evaluation.correctness === 'correct'
-                          ? 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400'
-                          : currentAnswer.evaluation.correctness === 'partial'
-                          ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-600 dark:text-yellow-400'
-                          : 'bg-red-500/10 border-red-500/20 text-red-500'
-                      }`}
-                    >
-                      <span className="font-bold uppercase text-xs">
-                        {currentAnswer.evaluation.correctness} Evaluation
-                      </span>
-                      <p className="mt-1 leading-relaxed">{currentAnswer.evaluation.feedback}</p>
-                    </div>
-                  )}
-
-                  {!currentAnswer?.submitted && !finished && (
-                    <button
-                      onClick={handleEvaluate}
-                      disabled={!currentAnswer?.text.trim() || evaluating}
-                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-blue-500/20"
-                    >
-                      {evaluating ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          Checking...
-                        </>
-                      ) : (
-                        'Check Answer'
-                      )}
-                    </button>
-                  )}
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -443,15 +423,13 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                 {Array.from({ length: totalQuestions }).map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentIndex(idx)}
+                    onClick={() => handleSelectQuestion(idx)}
                     className={`w-10 h-10 rounded-lg transition-all font-semibold ${
                       idx === currentIndex
                         ? 'bg-blue-600 text-white border border-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.4)] ring-2 ring-blue-500/30'
-                        : reviewList.has(idx)
-                        ? 'bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30'
                         : answers[idx]?.text.trim()
                         ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30'
-                        : 'bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 border border-zinc-300 dark:border-gray-700 hover:border-zinc-450 dark:hover:border-gray-650'
+                        : 'bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 border border-zinc-300 dark:border-gray-700 hover:border-zinc-450 dark:hover:border-gray-655'
                     } text-xs`}
                   >
                     {idx + 1}
@@ -468,10 +446,6 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                   <span>Answered</span>
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-zinc-400 dark:text-gray-500">
-                  <div className="w-3 h-3 rounded bg-amber-500/20 border border-amber-500/30"></div>
-                  <span>Marked for Review</span>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] text-zinc-400 dark:text-gray-500">
                   <div className="w-3 h-3 rounded bg-zinc-200 dark:bg-gray-850 border border-zinc-300 dark:border-gray-750"></div>
                   <span>Skipped</span>
                 </div>
@@ -485,8 +459,8 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <button
             disabled={currentIndex === 0}
-            onClick={() => setCurrentIndex((prev) => prev - 1)}
-            className="flex-1 py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-750 disabled:opacity-30 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-semibold"
+            onClick={handlePrev}
+            className="flex-1 py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-755 disabled:opacity-30 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-semibold"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -495,12 +469,10 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
             {Array.from({ length: totalQuestions }).map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setCurrentIndex(idx)}
+                onClick={() => handleSelectQuestion(idx)}
                 className={`w-2 h-2 rounded-full shrink-0 transition-all ${
                   idx === currentIndex
                     ? 'bg-blue-600 scale-125'
-                    : reviewList.has(idx)
-                    ? 'bg-amber-500'
                     : answers[idx]?.text.trim()
                     ? 'bg-green-500'
                     : 'bg-zinc-300 dark:bg-gray-700'
@@ -520,7 +492,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
           ) : (
             <button
               onClick={handleNext}
-              className="flex-1 py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-750 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-semibold"
+              className="flex-1 py-3 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-755 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-semibold"
             >
               Next
               <ChevronRight className="w-4 h-4" />
@@ -565,14 +537,12 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                   <button
                     key={idx}
                     onClick={() => {
-                      setCurrentIndex(idx);
+                      handleSelectQuestion(idx);
                       setShowQuestionModal(false);
                     }}
                     className={`h-12 rounded-2xl transition-all font-semibold flex items-center justify-center ${
                       idx === currentIndex
                         ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                        : reviewList.has(idx)
-                        ? 'bg-amber-500/20 text-amber-500'
                         : answers[idx]?.text.trim()
                         ? 'bg-green-500/20 text-green-600'
                         : 'bg-zinc-100 dark:bg-gray-900 text-zinc-555 dark:text-gray-400'
@@ -621,7 +591,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                 <button
                   onClick={async () => {
                     setShowExitConfirm(false);
-                    await handleFinish();
+                    await handleSubmitAll();
                   }}
                   className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-all cursor-pointer shadow-md shadow-blue-500/20"
                 >

@@ -238,9 +238,7 @@ export default function CheatCards({
                 </div>
               </div>
 
-              <p className="text-zinc-650 dark:text-zinc-300 text-xs px-2 leading-relaxed">
-                Great job working through the active recall cards! Retrying helps solidify these formulas and facts.
-              </p>
+
 
               {/* Time spent chart */}
               <div className="space-y-1.5 pt-2">
@@ -275,21 +273,20 @@ export default function CheatCards({
                     setCustomName(defaultName.length > 50 ? `${defaultName.slice(0, 50)}...` : defaultName);
                     setShowNameInputModal(true);
                   }}
-                  className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs ${
-                    saveStatus === 'saved'
+                  className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs ${saveStatus === 'saved'
                       ? 'bg-green-600 hover:bg-green-700 text-white cursor-default font-semibold'
                       : saveStatus === 'error'
-                      ? 'bg-red-650 hover:bg-red-700 text-white'
-                      : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/35'
-                  }`}
+                        ? 'bg-red-650 hover:bg-red-700 text-white'
+                        : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/35'
+                    }`}
                 >
                   {saveStatus === 'saving'
                     ? 'Saving...'
                     : saveStatus === 'saved'
-                    ? 'Saved!'
-                    : saveStatus === 'error'
-                    ? 'Retry Save'
-                    : 'Save Cheat Cards'}
+                      ? 'Saved!'
+                      : saveStatus === 'error'
+                        ? 'Retry Save'
+                        : 'Save Cheat Cards'}
                 </button>
               )}
               <div className="flex gap-2">

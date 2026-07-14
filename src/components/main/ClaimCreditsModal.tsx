@@ -16,8 +16,8 @@ const getDailyCredits = (plan: string) => planCredits[plan] || 20;
 
 const getTimePassed = () => {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const elapsed = now.getTime() - start.getTime();
+  const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const elapsed = now.getTime() - start;
   const h = Math.floor(elapsed / 3600000);
   const m = Math.floor((elapsed % 3600000) / 60000);
   return `${h}h ${m}m passed`;
@@ -25,8 +25,8 @@ const getTimePassed = () => {
 
 const getTimeLeft = () => {
   const now = new Date();
-  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 1, 0);
-  const remaining = next.getTime() - now.getTime();
+  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  const remaining = next - now.getTime();
   if (remaining <= 0) return 'Available now';
   const h = Math.floor(remaining / 3600000);
   const m = Math.floor((remaining % 3600000) / 60000);
@@ -35,19 +35,21 @@ const getTimeLeft = () => {
 
 const getProgress = () => {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 1, 0);
-  const total = next.getTime() - start.getTime();
-  const elapsed = now.getTime() - start.getTime();
+  const start = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  const total = next - start;
+  const elapsed = now.getTime() - start;
   return Math.min(100, (elapsed / total) * 100);
 };
 
-const todayStr = new Date().toDateString();
+const getUTCTodayStr = () => {
+  return new Date().toISOString().split('T')[0];
+};
 
 export default function ClaimCreditsModal({ show, onClose, userProfile, refreshCredits }: ClaimCreditsModalProps) {
   const [claiming, setClaiming] = useState(false);
   const [msg, setMsg] = useState<{ type: string; text: string } | null>(null);
-  const [claimed, setClaimed] = useState(() => localStorage.getItem('last_claimed_date') === todayStr);
+  const [claimed, setClaimed] = useState(() => localStorage.getItem('last_claimed_date') === getUTCTodayStr());
 
   const handleClaim = async () => {
     if (claimed) return;
@@ -64,7 +66,7 @@ export default function ClaimCreditsModal({ show, onClose, userProfile, refreshC
       const d = await r.json();
       if (d.success) {
         setMsg({ type: 'success', text: `Credits set to ${d.creditsAdded}` });
-        localStorage.setItem('last_claimed_date', new Date().toDateString());
+        localStorage.setItem('last_claimed_date', getUTCTodayStr());
         await refreshCredits();
         setClaimed(true);
       } else {

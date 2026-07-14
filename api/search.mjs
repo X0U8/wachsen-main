@@ -159,6 +159,63 @@ export default async function handler(req, res) {
       } else {
         return res.status(200).json({ success: true, revisionList: [] });
       }
+    } else if (type === 'viva') {
+      let query = supabase
+        .from('viva_exams')
+        .select('id, name, subject_name, topics, difficulty, question_count, status, created_at')
+        .eq('user_id', userId)
+        .eq('category_id', categoryId);
+
+      if (statusFilter && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+      if (searchQuery && searchQuery.trim() !== '') {
+        query = query.or(`name.ilike.%${searchQuery.trim()}%,topics.ilike.%${searchQuery.trim()}%`);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: sortOrder === 'asc' })
+        .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+
+      if (error) throw error;
+      return res.status(200).json({ success: true, vivaExams: data || [] });
+
+    } else if (type === 'conceptCards') {
+      let query = supabase
+        .from('saved_concept_cards')
+        .select('id, name, subject_name, topics, difficulty, questions, created_at')
+        .eq('user_id', userId)
+        .eq('category_id', categoryId);
+
+      if (searchQuery && searchQuery.trim() !== '') {
+        query = query.or(`name.ilike.%${searchQuery.trim()}%,topics.ilike.%${searchQuery.trim()}%`);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: sortOrder === 'asc' })
+        .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+
+      if (error) throw error;
+      return res.status(200).json({ success: true, conceptCards: data || [] });
+
+    } else if (type === 'cheatCards') {
+      let query = supabase
+        .from('saved_cheat_cards')
+        .select('id, name, subject_name, topics, difficulty, cards, created_at')
+        .eq('user_id', userId)
+        .eq('category_id', categoryId);
+
+      if (searchQuery && searchQuery.trim() !== '') {
+        query = query.or(`name.ilike.%${searchQuery.trim()}%,topics.ilike.%${searchQuery.trim()}%`);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: sortOrder === 'asc' })
+        .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+
+      if (error) throw error;
+      return res.status(200).json({ success: true, cheatCards: data || [] });
+
     } else {
       return res.status(400).json({ error: `Unsupported search type: ${type}` });
     }

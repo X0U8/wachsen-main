@@ -1,39 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench, ClipboardX, Mic, Binary, GraduationCap, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MakeAIForm from '../make-exam/MakeQuestions';
 import Notification from '../../ui/Notification';
-import { fontSize } from '../../lib/utils';
 import localStorageCache from '../../lib/localStorage';
-import ExamInfoModal from './ExamInfoModal';
-import TemplateModal from './TemplateModal';
 import EditCategoryModal from './EditCategoryModal';
-import { useTemplateSaving } from '../../hooks/useTemplateSaving';
 import ConceptCards from '../ConceptCards';
 import CheatCards from '../CheatCards';
+import ExamListTab from './ExamListTab';
+import VivaListTab from './VivaListTab';
+import ConceptCardsListTab from './ConceptCardsListTab';
+import CheatCardsListTab from './CheatCardsListTab';
 import { safeParseJSON } from '../RevisionLog';
 import { streamConceptCards } from '../../lib/streamConceptCards';
 import { NON_INT_SUBJECTS } from '../../data/nonIntSubjects';
-
-interface Exam {
-  id: string;
-  name: string;
-  startDateTime: string;
-  endDateTime: string;
-  status: 'Completed' | 'Pending' | 'Ongoing' | 'Expired' | 'active';
-  difficulty: 'easy' | 'medium' | 'hard' | 'advance';
-  examType: string;
-  totalQuestions: number;
-  totalMarks: number;
-  subjects: any[];
-  createdAt: string;
-  isTemplate?: boolean;
-  templateName?: string;
-}
 
 export default function ExamDetails() {
   const { id } = useParams<{ id: string }>();
@@ -204,12 +188,6 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
     }
   };
 
-  const {
-    showTemplateModal, templateNameInput, isSavingTemplate, templateMessage, isEditingTemplate,
-    templateCount, maxTemplates, setTemplateNameInput,
-    openTemplateModal, saveTemplate, closeTemplateModal,
-  } = useTemplateSaving(userProfile?.id, userProfile?.PremiumType);
-
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
   const [examType, setExamType] = useState<any>(null);
   const [editCategoryForm, setEditCategoryForm] = useState({
@@ -231,36 +209,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
   const [availableSubjects, setAvailableSubjects] = useState<any[]>([]);
 
 
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-  const [searchInput, setSearchInput] = useState('');
-  const [activeSearchQuery, setActiveSearchQuery] = useState('');
-
-  const cacheKey = `cached_exams_${id}_${userProfile?.id}_${statusFilter}_${sortOrder}_${activeSearchQuery}`;
-  const [exams, setExams] = useState<Exam[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(cacheKey) || '[]');
-    } catch {
-      return [];
-    }
-  });
-  const [selectedExamForInfo, setSelectedExamForInfo] = useState<Exam | null>(null);
-  const [loadingExams, setLoadingExams] = useState(false);
-  const [hasMoreExams, setHasMoreExams] = useState(false);
-  const EXAMS_PER_PAGE = 10;
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  const formatSimpleDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const day = date.getDate();
-    const month = date.toLocaleString('en-US', { month: 'short' });
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${day} ${month} (${hours}:${minutes})`;
-  };
-
   const queryClient = useQueryClient();
-
+  const [activeTab, setActiveTab] = useState<'exams' | 'viva' | 'concept' | 'cheat'>('exams');
 
   const { data: fetchedExamType } = useQuery({
     queryKey: ['examType', id],
@@ -292,148 +242,6 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       setAvailableSubjects([]);
     }
   }, [fetchedExamType]);
-
-
-  const { data: initialExams, isLoading: loadingExamsInitial } = useQuery({
-    queryKey: ['examInstances', id, userProfile?.id, statusFilter, sortOrder, activeSearchQuery],
-    queryFn: async () => {
-      if (!userProfile?.id) return [];
-      const sessionData = await supabase.auth.getSession();
-      const authToken = sessionData.data.session?.access_token || '';
-
-      const response = await fetch(`/api/search?type=exams&userId=${userProfile.id}&authToken=${authToken}&categoryId=${id}&statusFilter=${statusFilter}&sortOrder=${sortOrder}&query=${encodeURIComponent(activeSearchQuery)}&limit=${EXAMS_PER_PAGE}&offset=0`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to search exams');
-
-      const documents = data.exams || [];
-      const fetchedExams: Exam[] = documents.map((doc: any) => ({
-        id: doc.id,
-        name: doc.examName || 'Untitled Exam',
-        startDateTime: doc.startDateTime || new Date().toISOString(),
-        endDateTime: doc.endDateTime || '',
-        status: doc.status || 'Pending',
-        difficulty: doc.difficulty || 'medium',
-        examType: doc.examType || '',
-        totalQuestions: doc.totalQuestions || 0,
-        totalMarks: doc.totalMarks || 0,
-        subjects: doc.subjects ? (typeof doc.subjects === 'string' ? JSON.parse(doc.subjects) : doc.subjects) : [],
-        createdAt: doc.created_at || new Date().toISOString(),
-        isTemplate: doc.isTemplate || false,
-        templateName: doc.templateName || ''
-      }));
-      if (id && userProfile?.id) {
-        localStorage.setItem(`cached_exams_${id}_${userProfile.id}_${statusFilter}_${sortOrder}_${activeSearchQuery}`, JSON.stringify(fetchedExams));
-      }
-      return fetchedExams;
-    },
-    enabled: !!id && !!userProfile?.id,
-    staleTime: 0,
-  });
-
-  useEffect(() => {
-    if (id && userProfile?.id) {
-      try {
-        const cached = JSON.parse(localStorage.getItem(`cached_exams_${id}_${userProfile.id}_${statusFilter}_${sortOrder}_${activeSearchQuery}`) || '[]');
-        setExams(cached);
-      } catch {
-        setExams([]);
-      }
-    } else {
-      setExams([]);
-    }
-  }, [id, userProfile?.id, statusFilter, sortOrder, activeSearchQuery]);
-
-  useEffect(() => {
-    if (initialExams !== undefined) {
-      setExams(initialExams);
-      setHasMoreExams(initialExams.length === EXAMS_PER_PAGE);
-    }
-    setLoadingExams(loadingExamsInitial);
-  }, [initialExams, loadingExamsInitial]);
-
-
-  const fetchExams = async (reset: boolean = false) => {
-    if (!id || !userProfile) return;
-
-    if (reset) {
-      queryClient.invalidateQueries({ queryKey: ['examInstances', id, userProfile.id, statusFilter, sortOrder, activeSearchQuery] });
-      return;
-    }
-
-    setLoadingExams(true);
-    try {
-      const offset = exams.length;
-      const sessionData = await supabase.auth.getSession();
-      const authToken = sessionData.data.session?.access_token || '';
-
-      const response = await fetch(`/api/search?type=exams&userId=${userProfile.id}&authToken=${authToken}&categoryId=${id}&statusFilter=${statusFilter}&sortOrder=${sortOrder}&query=${encodeURIComponent(activeSearchQuery)}&limit=${EXAMS_PER_PAGE}&offset=${offset}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to fetch more exams');
-
-      const documents = data.exams || [];
-
-      const fetchedExams: Exam[] = documents.map((doc: any) => ({
-        id: doc.id,
-        name: doc.examName || 'Untitled Exam',
-        startDateTime: doc.startDateTime || new Date().toISOString(),
-        endDateTime: doc.endDateTime || '',
-        status: doc.status || 'Pending',
-        difficulty: doc.difficulty || 'medium',
-        examType: doc.examType || '',
-        totalQuestions: doc.totalQuestions || 0,
-        totalMarks: doc.totalMarks || 0,
-        subjects: doc.subjects ? (typeof doc.subjects === 'string' ? JSON.parse(doc.subjects) : doc.subjects) : [],
-        createdAt: doc.created_at || new Date().toISOString(),
-        isTemplate: doc.isTemplate || false,
-        templateName: doc.templateName || ''
-      }));
-      if (fetchedExams.length < EXAMS_PER_PAGE) {
-        setHasMoreExams(false);
-      } else {
-        setHasMoreExams(true);
-      }
-      setExams(prev => [...prev, ...fetchedExams]);
-    } catch (err) {
-      console.error('Error fetching exams:', err);
-    } finally {
-      setLoadingExams(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!hasMoreExams || loadingExams) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        fetchExams(false);
-      }
-    }, { rootMargin: '200px' });
-
-    const currentSentinel = sentinelRef.current;
-    if (currentSentinel) {
-      observer.observe(currentSentinel);
-    }
-
-    return () => {
-      if (currentSentinel) {
-        observer.unobserve(currentSentinel);
-      }
-    };
-  }, [hasMoreExams, loadingExams, exams.length]);
-
-  const handleLoadMore = () => {
-    fetchExams(false);
-  };
-
-  const handleSelectExam = async (exam: Exam) => {
-    setSelectedExamForInfo(exam);
-  };
-
-
-
-
-
-
 
   const handleOpenEditCategoryModal = () => {
     if (!examType) return;
@@ -526,133 +334,40 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       </header>
       <main className="flex-1 p-4 pb-32">
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-black/15 dark:border-white/20 overflow-hidden dark:shadow-[0_0_35px_rgba(255,255,255,0.06)]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-950/30">
-            <div className="flex items-center gap-2">
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-zinc-100 dark:bg-gray-950 border border-black/15 dark:border-white/20 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all">
-                <option value="all">All Status</option>
-                <option value="Pending">Pending</option>
-                <option value="active">Active</option>
-                <option value="Completed">Completed</option>
-                <option value="Expired">Expired</option>
-              </select>
-              <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value as 'desc' | 'asc')}
-                className="bg-zinc-100 dark:bg-gray-950 border border-black/15 dark:border-white/20 rounded-lg px-2.5 py-1.5 text-zinc-700 dark:text-gray-300 font-medium text-xs focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all">
-                <option value="desc">Newest</option>
-                <option value="asc">Oldest</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1.5 max-w-xs w-full">
-              <input
-                type="text"
-                placeholder="Search exams..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setActiveSearchQuery(searchInput);
-                  }
-                }}
-                className="flex-1 bg-zinc-100 dark:bg-gray-950 border border-black/15 dark:border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-zinc-800 dark:text-gray-200 placeholder-zinc-400 focus:border-blue-500 dark:focus:border-white/50 focus:outline-none transition-all"
-              />
+          <div className="flex items-center gap-1 px-4 py-2 border-b border-zinc-200 dark:border-gray-800 bg-zinc-50/50 dark:bg-gray-950/30 overflow-x-auto">
+            {[
+              { key: 'exams', label: 'Exams' },
+              { key: 'viva', label: 'Viva' },
+              { key: 'concept', label: 'Concept Cards' },
+              { key: 'cheat', label: 'Cheat Cards' },
+            ].map((tab) => (
               <button
-                onClick={() => setActiveSearchQuery(searchInput)}
-                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium cursor-pointer transition-colors"
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === tab.key
+                    ? 'bg-blue-600 text-white'
+                    : 'text-zinc-600 dark:text-gray-400 hover:bg-zinc-200 dark:hover:bg-gray-800'
+                }`}
               >
-                Search
+                {tab.label}
               </button>
-              {activeSearchQuery && (
-                <button
-                  onClick={() => {
-                    setSearchInput('');
-                    setActiveSearchQuery('');
-                  }}
-                  className="px-2 py-1.5 border border-zinc-300 dark:border-gray-700 hover:bg-zinc-100 dark:hover:bg-gray-900 rounded-lg text-xs text-zinc-500 dark:text-gray-400 cursor-pointer transition-colors"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
+            ))}
           </div>
-          {loadingExamsInitial && exams.length === 0 ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            </div>
-          ) : exams.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead
-                  className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 font-semibold tracking-wider text-sm">
-                  <tr>
-                    <th className="px-4 py-3">Name</th>
-                    <th className="px-4 py-3">Start</th>
-                    <th className="px-4 py-3">End</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Difficulty</th>
-                    <th className="px-4 py-3 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200 dark:divide-gray-800">
-                  {exams.map((exam) => (
-                    <tr
-                      key={exam.id}
-                      onClick={() => handleSelectExam(exam)}
-                      className="hover:bg-zinc-100 dark:hover:bg-gray-800/30 transition-colors cursor-pointer group"
-                    >
-                      <td className="px-4 py-4 font-normal text-zinc-800 dark:text-gray-100 group-hover:text-blue-400 transition-colors">
-                        {exam.name}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-500 dark:text-gray-400">
-                        {exam.startDateTime?.toLowerCase() === 'anytime' ? 'Anytime' : formatSimpleDate(exam.startDateTime)}
-                      </td>
-                      <td className="px-4 py-4 text-zinc-500 dark:text-gray-400">
-                        {exam.endDateTime?.toLowerCase() === 'anytime' || !exam.endDateTime ? 'Anytime' : formatSimpleDate(exam.endDateTime)}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`px-2 py-0.5 rounded-full font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
-                            exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
-                              exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
-                                'bg-yellow-500/10 text-yellow-500'
-                            } text-xs`}>
-                          {exam.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-right">
-                        <span
-                          className={`px-2 py-0.5 rounded-full font-medium uppercase ${exam.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
-                            exam.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
-                              exam.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
-                                'bg-red-500/10 text-red-500'
-                            } text-xs`}>
-                          {exam.difficulty}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
 
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="text-zinc-500 dark:text-gray-400 text-sm">No exams found for this type.</p>
-              {examType?.name !== 'challenges' && examType?.name !== 'others' && (
-                <p className="mt-1 text-zinc-400 dark:text-gray-500 text-xs">Click the plus icon to create your first exam.</p>
-              )}
-            </div>
+          {activeTab === 'exams' && (
+            <ExamListTab categoryId={id || ''} userProfile={userProfile} canCreate={examType?.name !== 'challenges' && examType?.name !== 'others'} />
+          )}
+          {activeTab === 'viva' && (
+            <VivaListTab categoryId={id || ''} userProfile={userProfile} />
+          )}
+          {activeTab === 'concept' && (
+            <ConceptCardsListTab categoryId={id || ''} userProfile={userProfile} />
+          )}
+          {activeTab === 'cheat' && (
+            <CheatCardsListTab categoryId={id || ''} userProfile={userProfile} />
           )}
         </div>
-
-        {exams.length > 0 && hasMoreExams && (
-          <div ref={sentinelRef} className="flex justify-center items-center gap-2 mt-6 py-4 text-zinc-400 dark:text-zinc-550">
-            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-            <span className="text-xs font-semibold uppercase tracking-wider">Loading more exams...</span>
-          </div>
-        )}
       </main>
       {examType?.name !== 'challenges' && examType?.name !== 'others' && (
         <div className="fixed bottom-10 left-0 right-0 flex justify-center z-20 pointer-events-none">
@@ -666,23 +381,6 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           </motion.button>
         </div>
       )}
-      <ExamInfoModal
-        exam={selectedExamForInfo}
-        onClose={() => setSelectedExamForInfo(null)}
-        formatSimpleDate={formatSimpleDate}
-      />
-      <TemplateModal
-        show={showTemplateModal}
-        isEditing={isEditingTemplate}
-        templateName={templateNameInput}
-        message={templateMessage}
-        isSaving={isSavingTemplate}
-        onNameChange={setTemplateNameInput}
-        onSave={() => selectedExamForInfo && saveTemplate(selectedExamForInfo.id, () => { setSelectedExamForInfo(null); })}
-        onClose={closeTemplateModal}
-        templateCount={templateCount}
-        maxTemplates={maxTemplates}
-      />
       {showMakeAI && (
         <MakeAIForm
           show={showMakeAI}
@@ -719,7 +417,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                 <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
                   <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                 </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">AI Question</h4>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Exam</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
                   Generate customized exams with questions parsed from topics or document attachments.
                 </p>
@@ -745,7 +443,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
 
               <button
                 onClick={() => {
-                  setNotification({ message: 'Oral Viva mock interview mode coming soon!', type: 'info' });
+                  setNotification({ message: 'Viva mock interview mode coming soon!', type: 'info' });
                 }}
                 className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >
@@ -754,9 +452,9 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                     <Mic className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
                 </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Oral Viva</h4>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Viva</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                  Practice oral tests with interactive AI questions to master verbal explanation.
+                  Practice tests with interactive AI questions to master verbal explanation.
                 </p>
               </button>
 
@@ -973,10 +671,10 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                   onChange={(e) => setCheatDifficulty(e.target.value as typeof cheatDifficulty)}
                   className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                 >
-                  <option value="easy">Easy — simple recall</option>
+                  <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
                   <option value="hard">Hard</option>
-                  <option value="advance">Advance — hardest for this level</option>
+                  <option value="advance">Advance</option>
                 </select>
               </div>
 

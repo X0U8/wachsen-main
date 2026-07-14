@@ -88,6 +88,7 @@ export default function LaqListTab({ categoryId, userProfile }: LaqListTabProps)
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
+            <option value="ongoing">Ongoing</option>
             <option value="completed">Completed</option>
           </select>
           <select
@@ -171,6 +172,7 @@ export default function LaqListTab({ categoryId, userProfile }: LaqListTabProps)
                     <span
                       className={`px-2 py-0.5 rounded-full font-medium ${
                         laq.status === 'completed' ? 'bg-green-500/10 text-green-500' :
+                        laq.status === 'ongoing' ? 'bg-blue-500/10 text-blue-500' :
                         'bg-yellow-500/10 text-yellow-500'
                       } text-xs`}
                     >

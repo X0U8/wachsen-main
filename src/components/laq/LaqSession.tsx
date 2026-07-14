@@ -57,6 +57,18 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Resume if the exam was already started but not submitted
+  useEffect(() => {
+    if (laq.status !== 'ongoing') return;
+    const savedStart = localStorage.getItem(`laq_start_${laq.id}`);
+    if (savedStart) {
+      const elapsed = Math.floor((Date.now() - Number(savedStart)) / 1000);
+      setTimeLeft(Math.max(0, totalTimeSeconds - elapsed));
+    }
+    setIsExamStarted(true);
+    setShowStartModal(false);
+  }, [laq.status, laq.id, totalTimeSeconds]);
+
   const totalQuestions = laq.questions.length;
   const currentQuestion = laq.questions[currentIndex];
   const currentAnswer = answers[currentIndex];
@@ -67,11 +79,13 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   useEffect(() => {
     if (countdown === null) return;
     if (countdown === 0) {
-      const t = setTimeout(() => {
+      const t = setTimeout(async () => {
+        const now = Date.now();
+        localStorage.setItem(`laq_start_${laq.id}`, now.toString());
+        await supabase.from('laq_exam').update({ status: 'ongoing' }).eq('id', laq.id);
         setIsExamStarted(true);
         setShowStartModal(false);
         setCountdown(null);
-        localStorage.setItem(`laq_start_${laq.id}`, Date.now().toString());
       }, 400);
       return () => clearTimeout(t);
     }
@@ -83,10 +97,12 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   useEffect(() => {
     if (!isExamStarted || finished) return;
 
-    // Always write a fresh start time when the exam begins — never reuse a stale key
-    const freshStart = Date.now().toString();
-    localStorage.setItem(`laq_start_${laq.id}`, freshStart);
-    const startTime = Number(freshStart);
+    let startTimeStr = localStorage.getItem(`laq_start_${laq.id}`);
+    if (!startTimeStr) {
+      startTimeStr = Date.now().toString();
+      localStorage.setItem(`laq_start_${laq.id}`, startTimeStr);
+    }
+    const startTime = Number(startTimeStr);
 
     const updateTimer = () => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);

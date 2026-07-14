@@ -159,7 +159,7 @@ export default async function handler(req, res) {
       } else {
         return res.status(200).json({ success: true, revisionList: [] });
       }
-    } else if (type === 'viva') {
+    } else if (type === 'laq') {
       let query = supabase
         .from('laq_exam')
         .select('id, name, subject_name, topics, difficulty, question_count, status, created_at')
@@ -178,7 +178,7 @@ export default async function handler(req, res) {
         .range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
 
       if (error) throw error;
-      return res.status(200).json({ success: true, vivaExams: data || [] });
+      return res.status(200).json({ success: true, laqExams: data || [] });
 
     } else if (type === 'conceptCards') {
       let query = supabase

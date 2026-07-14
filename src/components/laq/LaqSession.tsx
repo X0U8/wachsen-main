@@ -2,11 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronRight, Loader2, Clock, AlertCircle } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
-import { evaluateVivaAnswer, VivaAnswerEvaluation } from './evaluateAnswer';
-import { analyzeVivaSession, VivaAnswerRecord } from './analyzeVivaSession';
+import { evaluateLaqAnswer, LaqAnswerEvaluation } from './evaluateAnswer';
+import { analyzeLaqSession, LaqAnswerRecord } from './analyzeLaqSession';
 import type { LaqQuestion } from './MakeLaq';
 
-export interface VivaExam {
+export interface LaqExam {
   id: string;
   name: string;
   subject_name: string | null;
@@ -18,14 +18,14 @@ export interface VivaExam {
   status: string;
 }
 
-interface LongAnswerSessionProps {
-  viva: VivaExam;
+interface LaqSessionProps {
+  laq: LaqExam;
   onComplete: () => void;
 }
 
 interface AnswerState {
   text: string;
-  evaluation: VivaAnswerEvaluation | null;
+  evaluation: LaqAnswerEvaluation | null;
   submitted: boolean;
   timeSpentSeconds: number;
 }
@@ -38,15 +38,15 @@ function formatTime(seconds: number): string {
 
 const MAX_CHARS = 500;
 
-export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessionProps) {
+export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   const { userProfile } = useUserProfile();
 
-  const totalTimeSeconds = (viva.time_limit_minutes || 15) * 60;
+  const totalTimeSeconds = (laq.time_limit_minutes || 15) * 60;
   const [timeLeft, setTimeLeft] = useState(totalTimeSeconds);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerState[]>(() =>
-    viva.questions.map(() => ({ text: '', evaluation: null, submitted: false, timeSpentSeconds: 0 }))
+    laq.questions.map(() => ({ text: '', evaluation: null, submitted: false, timeSpentSeconds: 0 }))
   );
   const [evaluating, setEvaluating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -57,8 +57,8 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const elapsedRef = useRef<NodeJS.Timeout | null>(null);
 
-  const totalQuestions = viva.questions.length;
-  const currentQuestion = viva.questions[currentIndex];
+  const totalQuestions = laq.questions.length;
+  const currentQuestion = laq.questions[currentIndex];
   const currentAnswer = answers[currentIndex];
 
   const isLastQuestion = currentIndex === totalQuestions - 1;
@@ -125,7 +125,7 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
 
-      const evaluation = await evaluateVivaAnswer(
+      const evaluation = await evaluateLaqAnswer(
         currentQuestion.question,
         currentQuestion.expectedAnswer,
         currentQuestion.keywords || [],
@@ -179,10 +179,10 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
           if (!finalAnswers[i].text.trim() && i === currentIndex) {
             // Current unanswered question - evaluate as empty
             try {
-              const evalResult = await evaluateVivaAnswer(
-                viva.questions[i].question,
-                viva.questions[i].expectedAnswer,
-                viva.questions[i].keywords || [],
+              const evalResult = await evaluateLaqAnswer(
+                laq.questions[i].question,
+                laq.questions[i].expectedAnswer,
+                laq.questions[i].keywords || [],
                 finalAnswers[i].text,
                 userProfile.id,
                 authToken
@@ -201,19 +201,18 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
 
       setAnswers(finalAnswers);
 
-      const totalTimeSpent = totalTimeSeconds - timeLeft;
       const totalTimeSpentSeconds = totalTimeSeconds - timeLeft;
 
-      const records: VivaAnswerRecord[] = finalAnswers.map((a, idx) => ({
+      const records: LaqAnswerRecord[] = finalAnswers.map((a, idx) => ({
         questionIndex: idx,
-        question: viva.questions[idx].question,
+        question: laq.questions[idx].question,
         userAnswer: a.text,
         correctness: a.evaluation?.correctness || 'incorrect',
         feedback: a.evaluation?.feedback || 'No feedback available.',
         timeSpentSeconds: a.timeSpentSeconds || 0,
       }));
 
-      const analysis = await analyzeVivaSession(records, totalTimeSpentSeconds, userProfile.id, authToken);
+      const analysis = await analyzeLaqSession(records, totalTimeSpentSeconds, userProfile.id, authToken);
 
       const perQuestionWithAnswers = analysis.perQuestion.map((item) => ({
         ...item,
@@ -231,7 +230,7 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
             totalTimeSpentSeconds,
           },
         })
-        .eq('id', viva.id);
+        .eq('id', laq.id);
 
       if (updateError) throw updateError;
 
@@ -255,7 +254,7 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <h1 className="font-semibold text-sm sm:text-base truncate">{viva.name}</h1>
+              <h1 className="font-semibold text-sm sm:text-base truncate">{laq.name}</h1>
               <span className="text-xs text-zinc-500 dark:text-gray-400">
                 {currentIndex + 1} / {totalQuestions}
               </span>

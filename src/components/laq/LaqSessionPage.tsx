@@ -2,24 +2,24 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../services/supabase';
-import LongAnswerSession from './LongAnswerSession';
-import VivaAnalysis from './VivaAnalysis';
+import LaqSession from './LaqSession';
+import LaqAnalysis from './LaqAnalysis';
 
-export default function VivaSessionPage() {
-  const { vivaId } = useParams<{ vivaId: string }>();
+export default function LaqSessionPage() {
+  const { laqId } = useParams<{ laqId: string }>();
 
-  const { data: viva, isLoading, error, refetch } = useQuery({
-    queryKey: ['vivaExam', vivaId],
+  const { data: laq, isLoading, error, refetch } = useQuery({
+    queryKey: ['laqExam', laqId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('laq_exam')
         .select('id, name, subject_name, topics, difficulty, question_count, time_limit_minutes, status, questions, ai_analysis, created_at')
-        .eq('id', vivaId!)
+        .eq('id', laqId!)
         .single();
       if (error) throw error;
       return data;
     },
-    enabled: !!vivaId,
+    enabled: !!laqId,
     staleTime: 0,
     refetchOnMount: 'always',
   });
@@ -32,7 +32,7 @@ export default function VivaSessionPage() {
     );
   }
 
-  if (error || !viva) {
+  if (error || !laq) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-50 dark:bg-black text-zinc-600 dark:text-gray-400 gap-2">
         <AlertCircle className="w-8 h-8 text-red-500" />
@@ -41,9 +41,9 @@ export default function VivaSessionPage() {
     );
   }
 
-  if (viva.status === 'completed') {
-    return <VivaAnalysis viva={viva} />;
+  if (laq.status === 'completed') {
+    return <LaqAnalysis laq={laq} />;
   }
 
-  return <LongAnswerSession viva={viva} onComplete={() => refetch()} />;
+  return <LaqSession laq={laq} onComplete={() => refetch()} />;
 }

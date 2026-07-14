@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import PaginationControls from './PaginationControls';
 
-interface VivaExam {
+interface LaqExam {
   id: string;
   name: string;
   subject_name: string | null;
@@ -16,7 +16,7 @@ interface VivaExam {
   created_at: string;
 }
 
-interface VivaListTabProps {
+interface LaqListTabProps {
   categoryId: string;
   userProfile: any;
 }
@@ -31,7 +31,7 @@ function formatSimpleDate(dateStr: string) {
   return `${day} ${month} ${year}`;
 }
 
-export default function VivaListTab({ categoryId, userProfile }: VivaListTabProps) {
+export default function LaqListTab({ categoryId, userProfile }: LaqListTabProps) {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -41,8 +41,8 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
 
   const userId = userProfile?.id;
 
-  const { data: resultsPage, isLoading: loading } = useQuery<{ items: VivaExam[]; hasNext: boolean }>({
-    queryKey: ['vivaExams', categoryId, userId, statusFilter, sortOrder, activeSearchQuery, page],
+  const { data: resultsPage, isLoading: loading } = useQuery<{ items: LaqExam[]; hasNext: boolean }>({
+    queryKey: ['laqExams', categoryId, userId, statusFilter, sortOrder, activeSearchQuery, page],
     queryFn: async () => {
       if (!userId) return { items: [], hasNext: false };
       const sessionData = await supabase.auth.getSession();
@@ -50,20 +50,20 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
       const offset = (page - 1) * PAGE_SIZE;
 
       const response = await fetch(
-        `/api/search?type=viva&userId=${userId}&authToken=${authToken}&categoryId=${categoryId}&statusFilter=${statusFilter}&sortOrder=${sortOrder}&query=${encodeURIComponent(activeSearchQuery)}&limit=${PAGE_SIZE + 1}&offset=${offset}`
+        `/api/search?type=laq&userId=${userId}&authToken=${authToken}&categoryId=${categoryId}&statusFilter=${statusFilter}&sortOrder=${sortOrder}&query=${encodeURIComponent(activeSearchQuery)}&limit=${PAGE_SIZE + 1}&offset=${offset}`
       );
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to search viva exams');
+      if (!response.ok) throw new Error(data.error || 'Failed to search LAQ exams');
 
-      const items = (data.vivaExams || []).slice(0, PAGE_SIZE);
-      return { items, hasNext: (data.vivaExams || []).length > PAGE_SIZE };
+      const items = (data.laqExams || []).slice(0, PAGE_SIZE);
+      return { items, hasNext: (data.laqExams || []).length > PAGE_SIZE };
     },
     enabled: !!categoryId && !!userId,
     staleTime: 0,
     refetchOnMount: 'always',
   });
 
-  const vivaExams = resultsPage?.items || [];
+  const laqExams = resultsPage?.items || [];
   const hasNext = resultsPage?.hasNext || false;
 
   const handleSearch = () => {
@@ -126,11 +126,11 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
         </div>
       </div>
 
-      {loading && vivaExams.length === 0 ? (
+      {loading && laqExams.length === 0 ? (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
         </div>
-      ) : vivaExams.length > 0 ? (
+      ) : laqExams.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-100 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 font-semibold tracking-wider text-sm">
@@ -143,42 +143,42 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200 dark:divide-gray-800">
-              {vivaExams.map((viva) => (
+              {laqExams.map((laq) => (
                 <tr
-                  key={viva.id}
-                  onClick={() => navigate(`/viva/${viva.id}`)}
+                  key={laq.id}
+                  onClick={() => navigate(`/laq/${laq.id}`)}
                   className="hover:bg-zinc-100 dark:hover:bg-gray-800/30 transition-colors cursor-pointer group"
                 >
                   <td className="px-4 py-4 font-normal text-zinc-800 dark:text-gray-100 group-hover:text-blue-400 transition-colors">
-                    {viva.name}
+                    {laq.name}
                   </td>
                   <td className="px-4 py-4 text-zinc-500 dark:text-gray-400">
-                    {viva.subject_name || '—'}
+                    {laq.subject_name || '—'}
                   </td>
                   <td className="px-4 py-4">
                     <span
                       className={`px-2 py-0.5 rounded-full font-medium uppercase ${
-                        viva.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
-                        viva.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
-                        viva.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
+                        laq.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
+                        laq.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
+                        laq.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
                         'bg-red-500/10 text-red-500'
                       } text-xs`}
                     >
-                      {viva.difficulty}
+                      {laq.difficulty}
                     </span>
                   </td>
                   <td className="px-4 py-4">
                     <span
                       className={`px-2 py-0.5 rounded-full font-medium ${
-                        viva.status === 'completed' ? 'bg-green-500/10 text-green-500' :
+                        laq.status === 'completed' ? 'bg-green-500/10 text-green-500' :
                         'bg-yellow-500/10 text-yellow-500'
                       } text-xs`}
                     >
-                      {viva.status}
+                      {laq.status}
                     </span>
                   </td>
-                    <td className="px-4 py-4 text-right text-zinc-500 dark:text-gray-400">
-                    {formatSimpleDate(viva.created_at)}
+                  <td className="px-4 py-4 text-right text-zinc-500 dark:text-gray-400">
+                    {formatSimpleDate(laq.created_at)}
                   </td>
                 </tr>
               ))}
@@ -192,7 +192,7 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
         </div>
       )}
 
-      {vivaExams.length > 0 && (
+      {laqExams.length > 0 && (
         <PaginationControls
           page={page}
           hasNext={hasNext}

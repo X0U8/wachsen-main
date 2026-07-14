@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, BarChart3, MessageSquare, CheckCircle2, AlertCircle, XCircle, Clock } from 'lucide-react';
 
-interface VivaAnalysisProps {
-  viva: any;
+interface LaqAnalysisProps {
+  laq: any;
 }
 
 function RatingBar({ label, value }: { label: string; value: number }) {
@@ -37,9 +37,9 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function VivaAnalysis({ viva }: VivaAnalysisProps) {
+export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
   const navigate = useNavigate();
-  const analysis = viva?.ai_analysis;
+  const analysis = laq?.ai_analysis;
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-gray-100">
@@ -51,9 +51,9 @@ export default function VivaAnalysis({ viva }: VivaAnalysisProps) {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="font-semibold text-sm sm:text-base">{viva?.name || 'Long Answer Analysis'}</h1>
+          <h1 className="font-semibold text-sm sm:text-base">{laq?.name || 'LAQ Exam Analysis'}</h1>
           <p className="text-xs text-zinc-500 dark:text-gray-400">
-            {viva?.subject_name} • {viva?.difficulty}
+            {laq?.subject_name} • {laq?.difficulty}
           </p>
         </div>
       </header>

@@ -1,6 +1,6 @@
 import { safeParseJSON } from '../RevisionLog';
 
-export interface VivaAnswerRecord {
+export interface LaqAnswerRecord {
   questionIndex: number;
   question: string;
   userAnswer: string;
@@ -9,7 +9,7 @@ export interface VivaAnswerRecord {
   timeSpentSeconds: number;
 }
 
-export interface VivaAnalysis {
+export interface LaqAnalysis {
   overall_rating: number;
   accuracy: number;
   depth: number;
@@ -26,12 +26,12 @@ export interface VivaAnalysis {
   }>;
 }
 
-export async function analyzeVivaSession(
-  answers: VivaAnswerRecord[],
+export async function analyzeLaqSession(
+  answers: LaqAnswerRecord[],
   totalTimeSpentSeconds: number,
   userId: string,
   authToken: string
-): Promise<VivaAnalysis> {
+): Promise<LaqAnalysis> {
   const prompt = `You are an expert examiner. Review the following long-form written answers and produce a final analysis.
 
 Total time taken: ${Math.round(totalTimeSpentSeconds / 60)} min ${totalTimeSpentSeconds % 60} sec
@@ -86,7 +86,7 @@ Return ONLY a valid JSON object in this exact format:
   }
 
   const cleaned = (data.reply || '').replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
-  const parsed: VivaAnalysis = safeParseJSON(cleaned);
+  const parsed: LaqAnalysis = safeParseJSON(cleaned);
 
   if (
     typeof parsed.overall_rating !== 'number' ||

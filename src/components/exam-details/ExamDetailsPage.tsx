@@ -12,10 +12,10 @@ import EditCategoryModal from './EditCategoryModal';
 import ConceptCards from '../ConceptCards';
 import CheatCards from '../CheatCards';
 import ExamListTab from './ExamListTab';
-import VivaListTab from './VivaListTab';
+import LaqListTab from './LaqListTab';
 import ConceptCardsListTab from './ConceptCardsListTab';
 import CheatCardsListTab from './CheatCardsListTab';
-import MakeLaq from '../viva/MakeLaq';
+import MakeLaq from '../laq/MakeLaq';
 import { safeParseJSON } from '../RevisionLog';
 import { streamConceptCards } from '../../lib/streamConceptCards';
 import { NON_INT_SUBJECTS } from '../../data/nonIntSubjects';
@@ -53,7 +53,7 @@ export default function ExamDetails() {
   const [showCheatCards, setShowCheatCards] = useState(false);
   const [cheatCards, setCheatCards] = useState<any[]>([]);
 
-  const [showMakeViva, setShowMakeViva] = useState(false);
+  const [showMakeLaq, setShowMakeLaq] = useState(false);
 
   const handleGenerateConceptCards = async () => {
     const trimmedTopic = topicText.trim();
@@ -213,7 +213,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
 
 
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'exams' | 'viva' | 'concept' | 'cheat'>('exams');
+  const [activeTab, setActiveTab] = useState<'exams' | 'laq' | 'concept' | 'cheat'>('exams');
 
   const { data: fetchedExamType } = useQuery({
     queryKey: ['examType', id],
@@ -340,7 +340,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
             {([
               { key: 'exams', label: 'Exams' },
-              { key: 'viva', label: 'Long Answer' },
+              { key: 'laq', label: 'LAQ Exams' },
               { key: 'concept', label: 'Concept Cards' },
               { key: 'cheat', label: 'Cheat Cards' },
             ] as const).map((tab) => (
@@ -362,8 +362,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           {activeTab === 'exams' && (
             <ExamListTab categoryId={id || ''} userProfile={userProfile} canCreate={examType?.name !== 'challenges' && examType?.name !== 'others'} />
           )}
-          {activeTab === 'viva' && (
-            <VivaListTab categoryId={id || ''} userProfile={userProfile} />
+          {activeTab === 'laq' && (
+            <LaqListTab categoryId={id || ''} userProfile={userProfile} />
           )}
           {activeTab === 'concept' && (
             <ConceptCardsListTab categoryId={id || ''} userProfile={userProfile} />
@@ -395,16 +395,16 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           availableSubjects={availableSubjects}
         />
       )}
-      {showMakeViva && (
+      {showMakeLaq && (
         <MakeLaq
-          show={showMakeViva}
-          onClose={() => setShowMakeViva(false)}
+          show={showMakeLaq}
+          onClose={() => setShowMakeLaq(false)}
           userProfile={userProfile}
           categoryId={id || ''}
           availableSubjects={availableSubjects}
           examType={examType}
           onCreated={() => {
-            setShowMakeViva(false);
+            setShowMakeLaq(false);
           }}
         />
       )}
@@ -461,7 +461,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               <button
                 onClick={() => {
                   setShowTypeSelector(false);
-                  setShowMakeViva(true);
+                  setShowMakeLaq(true);
                 }}
                 className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
               >
@@ -470,7 +470,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                     <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
                 </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Long Answer</h4>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">LAQ Exam</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
                   Timed written-response questions with AI evaluation on accuracy, depth, and clarity.
                 </p>

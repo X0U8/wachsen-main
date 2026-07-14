@@ -1,18 +1,18 @@
 import { safeParseJSON } from '../RevisionLog';
 
-export interface VivaAnswerEvaluation {
+export interface LaqAnswerEvaluation {
   correctness: 'correct' | 'partial' | 'incorrect';
   feedback: string;
 }
 
-export async function evaluateVivaAnswer(
+export async function evaluateLaqAnswer(
   question: string,
   expectedAnswer: string,
   keywords: string[],
   userAnswer: string,
   userId: string,
   authToken: string
-): Promise<VivaAnswerEvaluation> {
+): Promise<LaqAnswerEvaluation> {
   const prompt = `You are grading a long-form written answer.
 
 Question: """${question}"""
@@ -49,7 +49,7 @@ Evaluate the student's answer on accuracy, depth, and clarity. Be fair: partial 
   }
 
   const cleaned = (data.reply || '').replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
-  const parsed: VivaAnswerEvaluation = safeParseJSON(cleaned);
+  const parsed: LaqAnswerEvaluation = safeParseJSON(cleaned);
 
   if (!parsed.correctness || !parsed.feedback) {
     return {

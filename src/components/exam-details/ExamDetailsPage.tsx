@@ -60,7 +60,28 @@ export default function ExamDetails() {
   const handleGenerateConceptCards = async () => {
     const trimmedTopic = topicText.trim();
     const trimmedSubject = conceptSubject.trim();
-    if (!trimmedTopic || trimmedTopic.length < 5) return;
+    if (!trimmedSubject) {
+      showNotification('error', 'Please select or enter a subject.');
+      return;
+    }
+    if (!trimmedTopic) {
+      showNotification('error', 'Please enter a topic.');
+      return;
+    }
+    if (trimmedTopic.length < 5) {
+      showNotification('error', 'Topic must be at least 5 characters.');
+      return;
+    }
+    if (!conceptDifficulty) {
+      showNotification('error', 'Please select a difficulty.');
+      return;
+    }
+    const creditsNeeded = 10;
+    if ((userProfile?.credits || 0) < creditsNeeded) {
+      showNotification('error', `Insufficient credits. You need ${creditsNeeded} credits.`);
+      return;
+    }
+
     setGeneratingCards(true);
     setCardGenProgress(0);
     try {
@@ -127,7 +148,27 @@ Return ONLY a valid JSON array matching this format:
   const handleGenerateCheatCards = async () => {
     const trimmedTopic = cheatTopicText.trim();
     const trimmedSubject = cheatSubject.trim();
-    if (!trimmedTopic || trimmedTopic.length < 5 || !trimmedSubject) return;
+    if (!trimmedSubject) {
+      showNotification('error', 'Please select or enter a subject.');
+      return;
+    }
+    if (!trimmedTopic) {
+      showNotification('error', 'Please enter a topic.');
+      return;
+    }
+    if (trimmedTopic.length < 5) {
+      showNotification('error', 'Topic must be at least 5 characters.');
+      return;
+    }
+    if (!cheatDifficulty) {
+      showNotification('error', 'Please select a difficulty.');
+      return;
+    }
+    const creditsNeeded = 20;
+    if ((userProfile?.credits || 0) < creditsNeeded) {
+      showNotification('error', `Insufficient credits. You need ${creditsNeeded} credits.`);
+      return;
+    }
 
     setGeneratingCheatCards(true);
     setCheatCardProgress(0);

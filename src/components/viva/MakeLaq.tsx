@@ -48,8 +48,13 @@ export default function MakeLaq({
   const handleCreate = async () => {
     const trimmedSubject = subject.trim();
     const trimmedTopics = topics.trim();
+    const trimmedName = examName.trim();
     if (!trimmedSubject) {
       setError('Please select or enter a subject.');
+      return;
+    }
+    if (!trimmedName) {
+      setError('Please enter an exam name.');
       return;
     }
     if (!trimmedTopics || trimmedTopics.length < 5) {
@@ -121,7 +126,7 @@ Return ONLY a valid JSON array in this exact format:
         throw new Error('Failed to generate valid questions.');
       }
 
-      const finalName = examName.trim() || `${trimmedSubject} Long Answer`;
+      const finalName = trimmedName;
 
       const { data: inserted, error: insertError } = await supabase
         .from('laq_exam')
@@ -199,7 +204,7 @@ Return ONLY a valid JSON array in this exact format:
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Name (optional)</label>
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Name</label>
             <input
               type="text"
               maxLength={100}

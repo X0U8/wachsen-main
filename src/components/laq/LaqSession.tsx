@@ -357,8 +357,14 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
+        {error && (
+          <div className="max-w-6xl mx-auto mb-4 flex items-center gap-2 p-3 bg-red-500/10 text-red-500 rounded-xl text-xs">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {error}
+          </div>
+        )}
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 w-full">
-          <div className="flex-1">
+          <div className="flex-1 border-t-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}
@@ -392,13 +398,6 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                 </div>
 
                 <div className="space-y-4">
-                  {error && (
-                    <div className="flex items-center gap-2 p-3 bg-red-500/10 text-red-500 rounded-xl text-xs">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      {error}
-                    </div>
-                  )}
-
                   <textarea
                     value={currentAnswer?.text || ''}
                     onChange={(e) => handleAnswerChange(e.target.value)}

@@ -1,7 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, ChevronLeft, AlertCircle } from 'lucide-react';
+import { X, ChevronLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { fontSize } from '../../lib/utils';
+import { supabase } from '../../services/supabase';
 
 interface Exam {
   id: string;
@@ -25,6 +26,34 @@ interface ExamInfoModalProps {
 
 export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamInfoModalProps) {
   const navigate = useNavigate();
+  const [resultId, setResultId] = useState<string | null>(null);
+  const [fetchingResult, setFetchingResult] = useState(false);
+
+  useEffect(() => {
+    if (exam && exam.status === 'Completed') {
+      const fetchResult = async () => {
+        setFetchingResult(true);
+        try {
+          const { data, error } = await supabase
+            .from('results')
+            .select('id')
+            .eq('examId', exam.id)
+            .limit(1);
+          if (!error && data && data.length > 0) {
+            setResultId(data[0].id);
+          }
+        } catch (err) {
+          console.error('Error fetching result ID:', err);
+        } finally {
+          setFetchingResult(false);
+        }
+      };
+      fetchResult();
+    } else {
+      setResultId(null);
+    }
+  }, [exam]);
+
   if (!exam) return null;
 
   return (
@@ -80,7 +109,7 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
               </div>
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
                 <p
-                  className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1 text-xs">Total Marks</p>
+                  className="text-zinc-500 dark:text-gray-555 uppercase tracking-wider mb-1 text-xs">Total Marks</p>
                 <p className="font-medium text-zinc-900 dark:text-white text-sm">{exam.totalMarks}</p>
               </div>
             </div>
@@ -122,9 +151,34 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
                   else if (exam.status === 'Completed') message = "This exam is already completed.";
 
                   return (
-                    <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-center gap-3 text-red-500">
-                      <AlertCircle className="w-5 h-5 shrink-0" />
-                      <p className="font-medium text-xs">{message}</p>
+                    <div className="space-y-3">
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-center gap-3 text-red-500">
+                        <AlertCircle className="w-5 h-5 shrink-0" />
+                        <p className="font-medium text-xs">{message}</p>
+                      </div>
+                      {exam.status === 'Completed' && (
+                        <button
+                          onClick={() => {
+                            onClose();
+                            if (resultId) {
+                              navigate(`/result/${resultId}`);
+                            } else {
+                              navigate(`/results`);
+                            }
+                          }}
+                          disabled={fetchingResult}
+                          className="w-full py-4 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-2xl transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 group text-base cursor-pointer font-semibold"
+                        >
+                          {fetchingResult ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <>
+                              See Result
+                              <ChevronLeft className="w-5 h-5 rotate-180 group-hover:translate-x-1 transition-transform" />
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   );
                 }
@@ -132,8 +186,8 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
                 return (
                   <button
                     onClick={() => navigate(`/exam/${exam.id}`)}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group text-base">Start Exam Now
-                                        <ChevronLeft className="w-5 h-5 rotate-180 group-hover:translate-x-1 transition-transform" />
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 group text-base font-semibold cursor-pointer">Start Exam Now
+                    <ChevronLeft className="w-5 h-5 rotate-180 group-hover:translate-x-1 transition-transform" />
                   </button>
                 );
               })()}

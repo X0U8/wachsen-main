@@ -17,6 +17,7 @@ export interface LaqAnalysis {
   perQuestion: Array<{
     questionIndex: number;
     correctness: 'correct' | 'partial' | 'incorrect';
+    rating: number;
     feedback: string;
     overall: string;
     userAnswer: string;
@@ -47,6 +48,7 @@ Return ONLY a valid JSON object in this exact format:
     {
       "questionIndex": 0,
       "correctness": "correct" | "partial" | "incorrect",
+      "rating": 0-10,
       "feedback": "Concise feedback for this specific answer.",
       "overall": "One-line verdict on this answer.",
       "userAnswer": "${answers[0]?.userAnswer || ''}"

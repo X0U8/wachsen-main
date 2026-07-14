@@ -18,6 +18,7 @@ interface CheatCardsProps {
   userId?: string;
   categoryId?: string;
   academicLevel?: string;
+  isAlreadySaved?: boolean;
 }
 
 export default function CheatCards({
@@ -28,7 +29,8 @@ export default function CheatCards({
   difficulty,
   userId,
   categoryId,
-  academicLevel
+  academicLevel,
+  isAlreadySaved
 }: CheatCardsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -135,7 +137,7 @@ export default function CheatCards({
       <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-lg h-[620px] flex flex-col shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white">
         <div className="flex items-center justify-between flex-shrink-0">
           <div>
-            <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-sm">Cheat Cards</h3>
+            <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-sm">Recall Cards</h3>
             <p className="text-zinc-500 dark:text-zinc-400 text-xs">Click card to flip</p>
           </div>
           <button
@@ -263,13 +265,12 @@ export default function CheatCards({
                 </div>
               </div>
             </div>
-
             <div className="space-y-2 mt-4 flex-shrink-0">
-              {userId && (
+              {userId && !isAlreadySaved && (
                 <button
                   disabled={savingDeck || saveStatus === 'saved'}
                   onClick={() => {
-                    const defaultName = topics || 'Cheat Cards';
+                    const defaultName = topics || 'Recall Cards';
                     setCustomName(defaultName.length > 50 ? `${defaultName.slice(0, 50)}...` : defaultName);
                     setShowNameInputModal(true);
                   }}
@@ -286,7 +287,7 @@ export default function CheatCards({
                       ? 'Saved!'
                       : saveStatus === 'error'
                         ? 'Retry Save'
-                        : 'Save Cheat Cards'}
+                        : 'Save Recall Cards'}
                 </button>
               )}
               <div className="flex gap-2">
@@ -312,7 +313,7 @@ export default function CheatCards({
         <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/70 dark:bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-5 w-full max-w-sm shadow-2xl relative text-zinc-900 dark:text-white flex flex-col gap-4 text-left">
             <div>
-              <h3 className="font-semibold text-zinc-850 dark:text-white text-sm">Save Cheat Card Deck</h3>
+              <h3 className="font-semibold text-zinc-850 dark:text-white text-sm">Save Recall Card Deck</h3>
               <p className="text-zinc-500 dark:text-zinc-400 text-[10px] mt-0.5">Name this deck so you can review it later</p>
             </div>
 

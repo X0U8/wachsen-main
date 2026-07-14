@@ -22,9 +22,10 @@ interface ConceptCardsProps {
   userId?: string;
   categoryId?: string;
   academicLevel?: string;
+  isAlreadySaved?: boolean;
 }
 
-export default function ConceptCards({ onClose, cards = [], topics, deckName, subjectName, difficulty, userId, categoryId, academicLevel }: ConceptCardsProps) {
+export default function ConceptCards({ onClose, cards = [], topics, deckName, subjectName, difficulty, userId, categoryId, academicLevel, isAlreadySaved }: ConceptCardsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -32,10 +33,6 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
   const [isFinished, setIsFinished] = useState(false);
   const [questionTimes, setQuestionTimes] = useState<Record<number, number>>({});
   const [startTime, setStartTime] = useState<number>(Date.now());
-
-  useEffect(() => {
-    setStartTime(Date.now());
-  }, [currentIndex]);
 
   const [savingDeck, setSavingDeck] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -58,204 +55,175 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
           subject_name: subjectName || null,
           difficulty: difficulty || null,
           name: finalName,
-          topics: topics || finalName,
-          questions: cards
+          topics: topics || null,
+          questions: cards,
         });
 
       if (error) throw error;
       setSaveStatus('saved');
-      setShowNameInputModal(false);
     } catch (err) {
-      console.error('Error saving concept card deck:', err);
+      console.error('Error saving concept deck:', err);
       setSaveStatus('error');
     } finally {
       setSavingDeck(false);
     }
   };
 
-  if (cards.length === 0) {
-    return (
-      <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-        <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 w-full max-w-md text-center space-y-4 shadow-2xl">
-          <AlertCircle className="w-12 h-12 text-zinc-400 dark:text-zinc-500 mx-auto" />
-          <h3 className="font-semibold text-zinc-850 dark:text-white text-sm">No concept cards generated</h3>
-          <p className="text-zinc-500 dark:text-zinc-400 text-xs">Try generating concept cards from the revision logs dashboard.</p>
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all cursor-pointer text-xs">
-            Close Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const currentCard = cards[currentIndex];
-  const progressPercent = ((currentIndex + 1) / cards.length) * 100;
-
-  const handleToggleOption = (idx: number) => {
-    if (isFlipped) return;
-    setSelectedOptions(prev =>
-      prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
-    );
-  };
-
-  const handleCheckAnswer = () => {
-    const correctAnswers = currentCard.correctAnswers || [];
-
-    const isCorrect =
-      selectedOptions.length === correctAnswers.length &&
-      selectedOptions.every(val => correctAnswers.includes(val));
-
-    setResults(prev => ({ ...prev, [currentIndex]: isCorrect }));
-    setIsFlipped(true);
-  };
-
   const handleNext = () => {
-    const duration = Math.max(1, Math.round((Date.now() - startTime) / 1000));
-    setQuestionTimes(prev => ({ ...prev, [currentIndex]: duration }));
-
     if (currentIndex < cards.length - 1) {
-      setIsFlipped(false);
       setSelectedOptions([]);
-      setCurrentIndex(prev => prev + 1);
+      setIsFlipped(false);
+      setCurrentIndex(currentIndex + 1);
     } else {
       setIsFinished(true);
     }
   };
 
+  const handleOptionSelect = (optionIdx: number) => {
+    if (isFlipped) return;
+    setSelectedOptions((prev) => {
+      const isSelected = prev.includes(optionIdx);
+      if (isSelected) {
+        return prev.filter((i) => i !== optionIdx);
+      } else {
+        return [...prev, optionIdx];
+      }
+    });
+  };
+
+  const handleFlip = () => {
+    if (selectedOptions.length === 0) return;
+    setIsFlipped(true);
+    const correctAnswers = cards[currentIndex].correctAnswers || [];
+    const isCorrect =
+      selectedOptions.length === correctAnswers.length &&
+      selectedOptions.every((idx) => correctAnswers.includes(idx));
+    setResults((prev) => ({ ...prev, [currentIndex]: isCorrect }));
+    const endTime = Date.now();
+    const elapsedSeconds = Math.round((endTime - startTime) / 1000);
+    setQuestionTimes((prev) => ({ ...prev, [currentIndex]: elapsedSeconds }));
+  };
+
+  const handleReset = () => {
+    setCurrentIndex(0);
+    setSelectedOptions([]);
+    setIsFlipped(false);
+    setResults({});
+    setIsFinished(false);
+    setQuestionTimes({});
+    setStartTime(Date.now());
+    setSaveStatus('idle');
+  };
+
   const correctCount = Object.values(results).filter(Boolean).length;
-  const percentage = Math.round((correctCount / cards.length) * 100);
 
   const chartData = cards.map((_, idx) => ({
     name: `Q${idx + 1}`,
-    seconds: questionTimes[idx] || 0
+    seconds: questionTimes[idx] || 0,
   }));
 
+  if (cards.length === 0) return null;
+
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-lg h-[520px] flex flex-col justify-between shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div>
-              <h3
-                className="font-semibold text-zinc-805 dark:text-white tracking-wider text-sm">Concept Cards</h3>
-              <p className="text-zinc-500 dark:text-zinc-400 text-xs">Multiple select practice</p>
-            </div>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-lg h-[620px] flex flex-col shadow-2xl relative text-zinc-900 dark:text-white justify-between overflow-hidden">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-150 dark:border-zinc-900 flex-shrink-0">
+          <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-xs">Concept Cards</h3>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
+            className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {!isFinished ? (
-          <div className="flex-grow flex flex-col justify-between overflow-hidden mt-4 space-y-4">
-            <div className="space-y-1.5 flex-shrink-0">
-              <div
-                className="flex items-center justify-between text-zinc-500 font-semibold tracking-wider text-xs">
-                <span>Card {currentIndex + 1} of {cards.length}</span>
-                <span>{correctCount} correct</span>
-              </div>
-              <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-            </div>
+          <>
+            <div className="flex-grow flex flex-col justify-between my-2 overflow-y-auto no-scrollbar">
+              <div className="space-y-4">
+                <div className="text-zinc-450 dark:text-zinc-500 font-semibold tracking-wider text-[10px] uppercase">
+                  Card {currentIndex + 1} of {cards.length}
+                </div>
+                <h4 className="font-medium text-zinc-850 dark:text-zinc-150 leading-relaxed text-sm sm:text-base px-2">
+                  <MathText text={cards[currentIndex].question} />
+                </h4>
 
-            <div className="flex-grow overflow-y-auto pr-1 space-y-4">
-              <div className="bg-zinc-50 dark:bg-zinc-900/20 border border-zinc-200 dark:border-zinc-800/80 rounded-2xl p-4 space-y-2">
-                <div
-                  className="text-zinc-800 dark:text-zinc-200 leading-relaxed font-normal max-h-28 overflow-y-auto pr-1 text-sm">
-                  <MathText text={currentCard.question} />
+                <div className="space-y-2 pt-2 px-1">
+                  {cards[currentIndex].options.map((option, idx) => {
+                    const isSelected = selectedOptions.includes(idx);
+                    const isCorrect = cards[currentIndex].correctAnswers.includes(idx);
+                    let optionStyle = 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-850 text-zinc-800 dark:text-zinc-300';
+                    if (isSelected) {
+                      optionStyle = 'bg-blue-600/10 border-blue-600 text-zinc-900 dark:text-white';
+                    }
+                    if (isFlipped) {
+                      if (isCorrect) {
+                        optionStyle = 'bg-green-600/15 border-green-600 text-green-700 dark:text-green-400 font-semibold';
+                      } else if (isSelected && !isCorrect) {
+                        optionStyle = 'bg-red-600/15 border-red-650 text-red-600 dark:text-red-400';
+                      } else {
+                        optionStyle = 'opacity-50 bg-zinc-50 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-850 text-zinc-800 dark:text-zinc-300';
+                      }
+                    }
+
+                    return (
+                      <button
+                        key={idx}
+                        disabled={isFlipped}
+                        onClick={() => handleOptionSelect(idx)}
+                        className={`w-full p-3 border rounded-2xl text-left text-xs transition-all flex items-center gap-2.5 cursor-pointer ${optionStyle}`}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                            isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-zinc-350 dark:border-zinc-800'
+                          } text-[10px]`}
+                        >
+                          {String.fromCharCode(65 + idx)}
+                        </div>
+                        <span className="leading-relaxed">
+                          <MathText text={option} />
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-
-              <div className="space-y-2">
-                {currentCard.options && currentCard.options.map((option, optIdx) => {
-                  const isSelected = selectedOptions.includes(optIdx);
-                  const isCorrectAnswer = (currentCard.correctAnswers || []).includes(optIdx);
-
-                  let buttonClass = 'bg-white dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 text-zinc-700 dark:text-zinc-300';
-
-                  if (isFlipped) {
-                    if (isCorrectAnswer) {
-                      buttonClass = 'bg-green-500/10 border-green-500/40 text-green-600 dark:text-green-400 font-medium';
-                    } else if (isSelected && !isCorrectAnswer) {
-                      buttonClass = 'bg-red-500/10 border-red-500/40 text-red-600 dark:text-red-400 font-medium';
-                    } else {
-                      buttonClass = 'bg-zinc-50 dark:bg-zinc-900/10 border-zinc-200/60 dark:border-zinc-800/40 opacity-40 text-zinc-400 dark:text-zinc-500';
-                    }
-                  } else if (isSelected) {
-                    buttonClass = 'bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-semibold';
-                  }
-
-                  return (
-                    <button
-                      key={optIdx}
-                      disabled={isFlipped}
-                      onClick={() => handleToggleOption(optIdx)}
-                      className={`w-full p-3 rounded-xl border text-left transition-all cursor-pointer ${buttonClass} text-xs`}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-500 dark:text-zinc-400 text-xs">
-                          {String.fromCharCode(65 + optIdx)}
-                        </span>
-                        <span><MathText text={option} /></span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              
             </div>
 
-            <div className="pt-2 flex-shrink-0">
+
+
+            <div className="flex gap-2 justify-end pt-2 flex-shrink-0 border-t border-zinc-150 dark:border-zinc-900">
               {!isFlipped ? (
                 <button
                   disabled={selectedOptions.length === 0}
-                  onClick={handleCheckAnswer}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-semibold text-white transition-all cursor-pointer text-xs">
-                  Check Answers
+                  onClick={handleFlip}
+                  className="flex items-center gap-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-xs font-semibold text-white transition-all cursor-pointer"
+                >
+                  Check Answer
                 </button>
               ) : (
                 <button
                   onClick={handleNext}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 rounded-xl font-semibold text-white transition-all cursor-pointer text-xs">
-                  {currentIndex === cards.length - 1 ? 'See Results Summary' : 'Next Question'}
+                  className="flex items-center gap-1 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white transition-all cursor-pointer"
+                >
+                  {currentIndex === cards.length - 1 ? 'Finish' : 'Next'}
                 </button>
               )}
             </div>
-          </div>
+          </>
         ) : (
-          /* Results Summary Screen */
           <div className="flex-grow flex flex-col justify-between bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 my-3 overflow-y-auto">
             <div className="text-center space-y-3 flex-grow flex flex-col justify-center">
               <div>
-                <h4 className="font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider text-[10px]">Training Summary</h4>
-                <div className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">
-                  {correctCount} / {cards.length}
+                <h4 className="font-semibold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider text-[10px]">Practice Completed</h4>
+                <div className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
+                  {correctCount} / {cards.length} Correct
                 </div>
-                <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mt-0.5">Correct Answers</p>
               </div>
 
-              <p className="text-zinc-650 dark:text-zinc-300 text-xs px-2 leading-relaxed">
-                {percentage >= 80
-                  ? 'Excellent job! You have fully mastered these concepts.'
-                  : percentage >= 50
-                    ? 'Good effort! A bit more practice will make it perfect.'
-                    : 'Keep revising. Practice makes permanent!'}
-              </p>
-
-              {/* Time spent chart */}
               <div className="space-y-1.5 pt-2">
-                <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider text-left pl-2">Time Spent per Question (seconds)</p>
-                <div className="h-[130px] w-full bg-white dark:bg-zinc-950/20 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-2">
+                <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider text-left pl-2">Time Spent per Card (seconds)</p>
+                <div className="h-[140px] w-full bg-white dark:bg-zinc-950/20 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} tickLine={false} axisLine={false} />
@@ -277,7 +245,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
             </div>
 
             <div className="space-y-2 mt-4">
-              {userId && topics && (
+              {userId && topics && !isAlreadySaved && (
                 <button
                   disabled={savingDeck || saveStatus === 'saved'}
                   onClick={() => {

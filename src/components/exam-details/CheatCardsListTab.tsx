@@ -17,6 +17,7 @@ interface CheatCardDeck {
 interface CheatCardsListTabProps {
   categoryId: string;
   userProfile: any;
+  onSelect: (deck: CheatCardDeck) => void;
 }
 
 const PAGE_SIZE = 10;
@@ -29,7 +30,7 @@ function formatSimpleDate(dateStr: string) {
   return `${day} ${month} ${year}`;
 }
 
-export default function CheatCardsListTab({ categoryId, userProfile }: CheatCardsListTabProps) {
+export default function CheatCardsListTab({ categoryId, userProfile, onSelect }: CheatCardsListTabProps) {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [searchInput, setSearchInput] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
@@ -131,6 +132,7 @@ export default function CheatCardsListTab({ categoryId, userProfile }: CheatCard
               {decks.map((deck) => (
                 <tr
                   key={deck.id}
+                  onClick={() => onSelect(deck)}
                   className="hover:bg-zinc-100 dark:hover:bg-gray-800/30 transition-colors cursor-pointer group"
                 >
                   <td className="px-4 py-4 font-normal text-zinc-800 dark:text-gray-100 group-hover:text-blue-400 transition-colors">

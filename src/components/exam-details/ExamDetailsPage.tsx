@@ -52,6 +52,8 @@ export default function ExamDetails() {
   const [cheatCardProgress, setCheatCardProgress] = useState(0);
   const [showCheatCards, setShowCheatCards] = useState(false);
   const [cheatCards, setCheatCards] = useState<any[]>([]);
+  const [isConceptSaved, setIsConceptSaved] = useState(false);
+  const [isCheatSaved, setIsCheatSaved] = useState(false);
 
   const [showMakeLaq, setShowMakeLaq] = useState(false);
 
@@ -108,6 +110,7 @@ Return ONLY a valid JSON array matching this format:
       setActiveTopicText(trimmedTopic);
       setCardGenProgress(10);
       setConceptCards(cards);
+      setIsConceptSaved(false);
       setShowConceptCards(true);
       setShowTopicInputModal(false);
       setTopicText('');
@@ -179,6 +182,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       const cards = safeParseJSON(cleanedReply);
 
       setCheatCards(cards);
+      setIsCheatSaved(false);
       setShowCheatCards(true);
       setShowCheatCardModal(false);
       refreshCredits();
@@ -342,7 +346,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               { key: 'exams', label: 'Exams' },
               { key: 'laq', label: 'LAQ Exams' },
               { key: 'concept', label: 'Concept Cards' },
-              { key: 'cheat', label: 'Cheat Cards' },
+              { key: 'cheat', label: 'Recall Cards' },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
@@ -366,10 +370,32 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             <LaqListTab categoryId={id || ''} userProfile={userProfile} />
           )}
           {activeTab === 'concept' && (
-            <ConceptCardsListTab categoryId={id || ''} userProfile={userProfile} />
+            <ConceptCardsListTab
+              categoryId={id || ''}
+              userProfile={userProfile}
+              onSelect={(deck) => {
+                setConceptCards(deck.questions || []);
+                setConceptSubject(deck.subject_name || '');
+                setConceptDifficulty((deck.difficulty as any) || 'medium');
+                setActiveTopicText(deck.topics || '');
+                setIsConceptSaved(true);
+                setShowConceptCards(true);
+              }}
+            />
           )}
           {activeTab === 'cheat' && (
-            <CheatCardsListTab categoryId={id || ''} userProfile={userProfile} />
+            <CheatCardsListTab
+              categoryId={id || ''}
+              userProfile={userProfile}
+              onSelect={(deck) => {
+                setCheatCards(deck.cards || []);
+                setCheatSubject(deck.subject_name || '');
+                setCheatDifficulty((deck.difficulty as any) || 'medium');
+                setCheatTopicText(deck.topics || '');
+                setIsCheatSaved(true);
+                setShowCheatCards(true);
+              }}
+            />
           )}
         </div>
       </main>
@@ -486,7 +512,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                 <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
                   <Binary className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                 </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Cheat Cards</h4>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Recall Cards</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
                   Generate flip memorization cards for formulas, facts, and key points.
                 </p>
@@ -636,6 +662,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           userId={userProfile?.id}
           categoryId={id || ''}
           academicLevel={examType?.academicLevel || ''}
+          isAlreadySaved={isConceptSaved}
         />
       )}
 
@@ -643,7 +670,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative text-zinc-900 dark:text-white flex flex-col gap-4">
             <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
-              <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Generate Cheat Cards</h3>
+              <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Generate Recall Cards</h3>
               <button
                 onClick={() => { setShowCheatCardModal(false); setCheatTopicText(''); setCheatSubject(''); setCheatDifficulty('medium'); }}
                 className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
@@ -742,7 +769,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
         <div className="fixed inset-0 z-[350] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
             <div className="space-y-1">
-              <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Generating Cheat Cards</h3>
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Generating Recall Cards</h3>
               <p className="text-zinc-500 dark:text-zinc-400 text-xs">Do not close or navigate away</p>
             </div>
             <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto" />
@@ -770,6 +797,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           userId={userProfile?.id}
           categoryId={id || ''}
           academicLevel={examType?.academicLevel || ''}
+          isAlreadySaved={isCheatSaved}
         />
       )}
 

@@ -160,12 +160,10 @@ Return ONLY a valid JSON array in this exact format:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative text-zinc-900 dark:text-white flex flex-col gap-4">
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md h-[550px] shadow-2xl relative text-zinc-900 dark:text-white flex flex-col justify-between">
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-500/10 text-blue-500 rounded-lg">
-              <Edit3 className="w-4 h-4" />
-            </div>
+
             <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Create LAQ Exam</h3>
           </div>
           <button
@@ -177,7 +175,7 @@ Return ONLY a valid JSON array in this exact format:
           </button>
         </div>
 
-        <div className="space-y-3 text-left">
+        <div className="flex-1 overflow-y-auto pr-1 py-3 text-left space-y-3 no-scrollbar">
           <div className="space-y-1">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Subject</label>
             {availableSubjects.length > 0 ? (
@@ -248,7 +246,7 @@ Return ONLY a valid JSON array in this exact format:
               >
                 +
               </button>
-              <span className="text-zinc-400 dark:text-zinc-505 font-medium text-[11px]">Questions ({questionCount * 2} credits)</span>
+              <span className="text-zinc-400 dark:text-zinc-505 font-medium text-[11px]">({questionCount} Questions = {questionCount * 2} credits)</span>
             </div>
           </div>
 
@@ -292,7 +290,7 @@ Return ONLY a valid JSON array in this exact format:
           )}
         </div>
 
-        <div className="flex gap-3 justify-end pt-2">
+        <div className="flex gap-3 justify-end pt-2 shrink-0 border-t border-zinc-150 dark:border-zinc-900 mt-2">
           <button
             onClick={onClose}
             disabled={generating}

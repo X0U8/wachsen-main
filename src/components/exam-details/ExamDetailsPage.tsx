@@ -138,7 +138,11 @@ Return ONLY a valid JSON array matching this format:
       refreshCredits();
     } catch (err: any) {
       console.error('Error generating concept cards:', err);
-      showNotification('error', err.message || 'Failed to generate concept cards');
+      const errMsg = err?.message || '';
+      const displayMsg = errMsg.toLowerCase().includes('credits')
+        ? 'Insufficient credits. Please try again tomorrow or use your own API Key (BYOK).'
+        : (errMsg || 'Failed to generate concept cards');
+      showNotification('error', displayMsg);
     } finally {
       setGeneratingCards(false);
       setCardGenProgress(0);
@@ -229,7 +233,11 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       refreshCredits();
     } catch (err: any) {
       console.error('Error generating cheat cards:', err);
-      showNotification('error', err.message || 'Failed to generate cheat cards');
+      const errMsg = err?.message || '';
+      const displayMsg = errMsg.toLowerCase().includes('credits')
+        ? 'Insufficient credits. Please try again tomorrow or use your own API Key (BYOK).'
+        : (errMsg || 'Failed to generate cheat cards');
+      showNotification('error', displayMsg);
     } finally {
       setGeneratingCheatCards(false);
       setCheatCardProgress(0);

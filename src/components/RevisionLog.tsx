@@ -329,9 +329,13 @@ Return ONLY a valid JSON array matching this format:
       setCardGenProgress(10);
       setShowConceptCards(true);
       refreshProfile();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error generating concept cards:', err);
-      showNotification('error', 'Failed to generate concept cards');
+      const errMsg = err?.message || '';
+      const displayMsg = errMsg.toLowerCase().includes('credits')
+        ? 'Insufficient credits. Please try again tomorrow or use your own API Key (BYOK).'
+        : (errMsg || 'Failed to generate concept cards');
+      showNotification('error', displayMsg);
     } finally {
       setGeneratingCards(false);
       setCardGenProgress(0);

@@ -311,7 +311,11 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
 
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err.message || 'Mentor AI is currently offline. Please try again.');
+      const errMsg = err?.message || '';
+      const displayMsg = errMsg.toLowerCase().includes('credits')
+        ? 'Insufficient credits. Please try again tomorrow or use your own API Key (BYOK).'
+        : (errMsg || 'Mentor AI is currently offline. Please try again.');
+      setErrorMsg(displayMsg);
     } finally {
       setSending(false);
     }

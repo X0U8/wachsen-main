@@ -196,7 +196,11 @@ export default function AITutorModal({
       }
     } catch (err: any) {
       console.error(err);
-      showNotification('error', err.message || 'Failed to communicate with tutor');
+      const errMsg = err?.message || '';
+      const displayMsg = errMsg.toLowerCase().includes('credits')
+        ? 'Insufficient credits. Please try again tomorrow or use your own API Key (BYOK).'
+        : (errMsg || 'Failed to communicate with tutor');
+      showNotification('error', displayMsg);
       setChatHistory(prev => prev.filter((_, i) => i < updatedHistory.length));
       if (!customMessage) {
         setChatInput(messageText);

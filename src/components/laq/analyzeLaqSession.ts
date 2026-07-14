@@ -8,20 +8,15 @@ export interface LaqAnswerRecord {
 }
 
 export interface LaqAnalysisResult {
-  overall_rating: number;
   accuracy: number;
   depth: number;
   clarity: number;
   ai_feedback: string;
-  totalTimeSpentSeconds: number;
   perQuestion: Array<{
     questionIndex: number;
-    question: string;
     correctness: 'correct' | 'partial' | 'incorrect';
     rating: number; // 0-10 per question
     feedback: string;
-    userAnswer: string;
-    timeSpentSeconds: number;
   }>;
 }
 
@@ -39,22 +34,18 @@ ${answers.map((a, i) => `Q${i + 1}: ${a.question}
 Answer: ${a.userAnswer || '(no answer provided)'}
 Time: ${a.timeSpentSeconds}s`).join('\n\n')}
 
-Return ONLY valid JSON in this exact format (no extra fields):
+Return ONLY valid JSON in this exact format (do not include question text or user answer in the response):
 {
-  "overall_rating": 0-10,
   "accuracy": 0-10,
   "depth": 0-10,
   "clarity": 0-10,
-  "ai_feedback": "2-3 sentences summarizing overall strengths and one improvement area.",
+  "ai_feedback": "2-3 sentences summarizing overall strengths and one concrete improvement area.",
   "perQuestion": [
     {
       "questionIndex": 0,
-      "question": "exact question text",
       "correctness": "correct" | "partial" | "incorrect",
       "rating": 0-10,
-      "feedback": "One concise sentence of feedback for this answer.",
-      "userAnswer": "exact user answer text",
-      "timeSpentSeconds": 0
+      "feedback": "One concise sentence of feedback for this specific answer."
     }
   ]
 }`;
@@ -84,7 +75,6 @@ Return ONLY valid JSON in this exact format (no extra fields):
   const parsed: LaqAnalysisResult = safeParseJSON(cleaned);
 
   if (
-    typeof parsed.overall_rating !== 'number' ||
     typeof parsed.accuracy !== 'number' ||
     typeof parsed.depth !== 'number' ||
     typeof parsed.clarity !== 'number' ||

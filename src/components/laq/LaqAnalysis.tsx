@@ -50,7 +50,25 @@ export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
   const accuracy = laq?.accuracy ?? analysis?.accuracy ?? 0;
   const depth = laq?.depth ?? analysis?.depth ?? 0;
   const clarity = laq?.clarity ?? analysis?.clarity ?? 0;
-  const perQuestion: any[] = Array.isArray(analysis?.perQuestion) ? analysis.perQuestion : [];
+
+  const perQuestion: any[] = useMemo(() => {
+    const rawPerQ = Array.isArray(analysis?.perQuestion) ? analysis.perQuestion : [];
+    const answers = Array.isArray(laq?.answers) ? laq.answers : [];
+    const questions = Array.isArray(laq?.questions) ? laq.questions : [];
+
+    return rawPerQ.map((item: any) => {
+      const qIndex = item.questionIndex;
+      const ansRecord = answers.find((a: any) => a.questionIndex === qIndex);
+      const qRecord = questions[qIndex] || null;
+
+      return {
+        ...item,
+        question: qRecord?.question || ansRecord?.question || item.question || `Question ${qIndex + 1}`,
+        userAnswer: ansRecord?.userAnswer || item.userAnswer || '',
+        timeSpentSeconds: ansRecord?.timeSpentSeconds || item.timeSpentSeconds || 0,
+      };
+    });
+  }, [analysis, laq]);
 
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
   const [tutorItem, setTutorItem] = useState<{ question: any; userAnswer: string; index: number; status: 'correct' | 'wrong' | 'skipped' } | null>(null);

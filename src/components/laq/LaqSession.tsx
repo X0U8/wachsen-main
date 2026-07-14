@@ -220,6 +220,10 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
         timeSpentSeconds: r.timeSpentSeconds,
       }));
 
+      // Calculate overall rating as the average of the question ratings
+      const totalRatings = analysis.perQuestion.reduce((sum, q) => sum + (q.rating || 0), 0);
+      const overallRating = analysis.perQuestion.length > 0 ? parseFloat((totalRatings / analysis.perQuestion.length).toFixed(1)) : 0;
+
       const { error: updateError } = await supabase
         .from('laq_exam')
         .update({
@@ -230,7 +234,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
           depth: analysis.depth,
           clarity: analysis.clarity,
           ai_analysis: {
-            overall_rating: analysis.overall_rating,
+            overall_rating: overallRating,
             totalTimeSpentSeconds,
             perQuestion: analysis.perQuestion,
           },

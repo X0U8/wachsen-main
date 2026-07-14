@@ -5,7 +5,7 @@ import { useUserProfile } from '../../lib/UserContext';
 import { streamConceptCards } from '../../lib/streamConceptCards';
 import { safeParseJSON } from '../RevisionLog';
 
-export interface VivaQuestion {
+export interface LaqQuestion {
   question: string;
   expectedAnswer: string;
   keywords: string[];
@@ -208,43 +208,46 @@ Return ONLY a valid JSON array in this exact format:
             </select>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-              Questions: {questionCount}
+              Question Count
             </label>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              value={questionCount}
-              onChange={(e) => setQuestionCount(Number(e.target.value))}
-              className="w-full h-2 bg-zinc-200 dark:bg-gray-800 rounded-full appearance-none cursor-pointer accent-blue-500"
-            />
-            <div className="flex justify-between text-[10px] text-zinc-400 font-medium px-0.5">
-              <span>1</span>
-              <span>10</span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setQuestionCount(prev => Math.max(1, prev - 1))}
+                className="w-9 h-9 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-600 dark:text-zinc-400 font-semibold select-none cursor-pointer transition-all text-sm"
+              >
+                -
+              </button>
+              <span className="w-8 text-center font-bold text-blue-600 dark:text-blue-400 text-sm">{questionCount}</span>
+              <button
+                type="button"
+                onClick={() => setQuestionCount(prev => Math.min(10, prev + 1))}
+                className="w-9 h-9 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-600 dark:text-zinc-400 font-semibold select-none cursor-pointer transition-all text-sm"
+              >
+                +
+              </button>
+              <span className="text-zinc-400 dark:text-zinc-505 font-medium text-[11px]">Questions ({questionCount * 2} credits)</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                Time Limit (min)
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={120}
-                value={timeLimitMinutes}
-                onChange={(e) => setTimeLimitMinutes(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Cost</label>
-              <div className="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs text-zinc-700 dark:text-zinc-300 flex items-center h-full font-semibold">
-                {questionCount * 2} credits
-              </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+              Time Limit: {timeLimitMinutes} minutes
+            </label>
+            <input
+              type="range"
+              min={10}
+              max={180}
+              step={5}
+              value={timeLimitMinutes}
+              onChange={(e) => setTimeLimitMinutes(Number(e.target.value))}
+              className="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full appearance-none cursor-pointer accent-blue-500"
+            />
+            <div className="flex justify-between text-[10px] text-zinc-400 font-medium px-0.5">
+              <span>10 min</span>
+              <span>180 min</span>
             </div>
           </div>
 

@@ -52,9 +52,10 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [finished, setFinished] = useState(false);
+  const [currentElapsedSeconds, setCurrentElapsedSeconds] = useState(0);
 
-  const questionStartTime = useRef(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const elapsedRef = useRef<NodeJS.Timeout | null>(null);
 
   const totalQuestions = viva.questions.length;
   const currentQuestion = viva.questions[currentIndex];
@@ -79,6 +80,18 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
     };
   }, [finished]);
 
+  // Per-question elapsed timer
+  useEffect(() => {
+    if (finished) return;
+    setCurrentElapsedSeconds(0);
+    elapsedRef.current = setInterval(() => {
+      setCurrentElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => {
+      if (elapsedRef.current) clearInterval(elapsedRef.current);
+    };
+  }, [currentIndex, finished]);
+
   // Auto-submit when time runs out
   useEffect(() => {
     if (timeLeft <= 0 && !finished && !submitting) {
@@ -87,22 +100,12 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
   }, [timeLeft, finished, submitting]);
 
   const recordTimeForCurrent = useCallback(() => {
-    const elapsed = Math.floor((Date.now() - questionStartTime.current) / 1000);
     setAnswers((prev) => {
       const next = [...prev];
-      next[currentIndex] = { ...next[currentIndex], timeSpentSeconds: next[currentIndex].timeSpentSeconds + elapsed };
+      next[currentIndex] = { ...next[currentIndex], timeSpentSeconds: next[currentIndex].timeSpentSeconds + currentElapsedSeconds };
       return next;
     });
-    questionStartTime.current = Date.now();
-  }, [currentIndex]);
-
-  // Record time on question change
-  useEffect(() => {
-    if (finished) return;
-    return () => {
-      recordTimeForCurrent();
-    };
-  }, [currentIndex, finished, recordTimeForCurrent]);
+  }, [currentIndex, currentElapsedSeconds]);
 
   const handleAnswerChange = (value: string) => {
     if (value.length > MAX_CHARS) return;
@@ -320,7 +323,7 @@ export default function LongAnswerSession({ viva, onComplete }: LongAnswerSessio
 
           <div className="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-gray-800">
             <span className="text-xs text-zinc-500 dark:text-gray-400">
-              {formatTime(currentAnswer?.timeSpentSeconds || 0)} on this question
+              {formatTime(currentElapsedSeconds)} on this question
             </span>
             <div className="flex gap-2">
               {!currentAnswer?.submitted && !finished && (

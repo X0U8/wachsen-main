@@ -403,9 +403,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           categoryId={id || ''}
           availableSubjects={availableSubjects}
           examType={examType}
-          onCreated={(vivaId) => {
+          onCreated={() => {
             setShowMakeViva(false);
-            navigate(`/viva/${vivaId}`);
           }}
         />
       )}

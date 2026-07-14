@@ -241,9 +241,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         uploadedFilesRef.current = filesPayload;
       }
 
-      const endpoint = hasFiles ? `/api/generate-exam-plan-with-file` : `/api/generate-exam-plan`;
-
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/generate-exam-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -252,10 +250,10 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
           difficulty: examData.difficulty,
           userId,
           authToken,
-          apiKey: apiKey || undefined,
+          apiKey,
           provider,
-          model: model || undefined,
-          files: hasFiles ? filesPayload : undefined
+          model,
+          files: hasFiles ? filesPayload : undefined,
         }),
       });
 

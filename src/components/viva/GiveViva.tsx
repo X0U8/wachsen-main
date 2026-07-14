@@ -59,7 +59,7 @@ export default function GiveViva({ viva, onComplete }: GiveVivaProps) {
     setError('');
 
     try {
-      const response = await fetch('/api/stt', {
+      const response = await fetch('/api/audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audioBase64 }),

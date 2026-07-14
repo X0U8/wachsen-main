@@ -31,7 +31,7 @@ export function useTextToSpeech(): UseTextToSpeechReturn {
     abortRef.current = controller;
 
     try {
-      const response = await fetch('/api/tts', {
+      const response = await fetch('/api/audio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),

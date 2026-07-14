@@ -103,7 +103,7 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
         <div className="flex items-center gap-1.5 max-w-xs w-full">
           <input
             type="text"
-            placeholder="Search viva..."
+            placeholder="Search long answer..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
@@ -177,7 +177,7 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
                       {viva.status}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-right text-zinc-500 dark:text-gray-400">
+                    <td className="px-4 py-4 text-right text-zinc-500 dark:text-gray-400">
                     {formatSimpleDate(viva.created_at)}
                   </td>
                 </tr>
@@ -187,8 +187,8 @@ export default function VivaListTab({ categoryId, userProfile }: VivaListTabProp
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-zinc-500 dark:text-gray-400 text-sm">No viva exams found.</p>
-          <p className="mt-1 text-zinc-400 dark:text-gray-500 text-xs">Click the plus icon to create a viva.</p>
+          <p className="text-zinc-500 dark:text-gray-400 text-sm">No long answer sessions found.</p>
+          <p className="mt-1 text-zinc-400 dark:text-gray-500 text-xs">Click the plus icon to create one.</p>
         </div>
       )}
 

@@ -9,18 +9,18 @@ export async function evaluateVivaAnswer(
   question: string,
   expectedAnswer: string,
   keywords: string[],
-  userTranscription: string,
+  userAnswer: string,
   userId: string,
   authToken: string
 ): Promise<VivaAnswerEvaluation> {
-  const prompt = `You are evaluating a viva / oral exam answer.
+  const prompt = `You are grading a long-form written answer.
 
 Question: """${question}"""
 Expected answer: """${expectedAnswer}"""
 Important keywords/concepts to look for: ${keywords.join(', ') || 'none specified'}
-Student's spoken answer (transcribed): """${userTranscription || '(no answer provided)'}"""
+Student's written answer: """${userAnswer || '(no answer provided)'}"""
 
-Evaluate the student's answer. Be fair: partial credit if they mention key ideas but miss details. Return ONLY a valid JSON object in this exact format:
+Evaluate the student's answer on accuracy, depth, and clarity. Be fair: partial credit if they mention key ideas but miss details. Return ONLY a valid JSON object in this exact format:
 {
   "correctness": "correct" | "partial" | "incorrect",
   "feedback": "One concise sentence of encouragement or what to improve."
@@ -54,7 +54,7 @@ Evaluate the student's answer. Be fair: partial credit if they mention key ideas
   if (!parsed.correctness || !parsed.feedback) {
     return {
       correctness: 'incorrect',
-      feedback: 'Could not evaluate this answer. Try speaking more clearly.',
+      feedback: 'Could not evaluate this answer. Try writing more clearly.',
     };
   }
 

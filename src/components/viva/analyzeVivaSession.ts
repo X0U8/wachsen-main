@@ -3,46 +3,62 @@ import { safeParseJSON } from '../RevisionLog';
 export interface VivaAnswerRecord {
   questionIndex: number;
   question: string;
-  userTranscription: string;
+  userAnswer: string;
   correctness: 'correct' | 'partial' | 'incorrect';
   feedback: string;
+  timeSpentSeconds: number;
 }
 
 export interface VivaAnalysis {
   overall_rating: number;
-  fluency: number;
-  confidence: number;
+  accuracy: number;
+  depth: number;
+  clarity: number;
   feedback: string;
+  totalTimeSpentSeconds: number;
   perQuestion: Array<{
     questionIndex: number;
     correctness: 'correct' | 'partial' | 'incorrect';
     feedback: string;
     overall: string;
+    userAnswer: string;
+    timeSpentSeconds: number;
   }>;
 }
 
 export async function analyzeVivaSession(
   answers: VivaAnswerRecord[],
+  totalTimeSpentSeconds: number,
   userId: string,
   authToken: string
 ): Promise<VivaAnalysis> {
-  const prompt = `You are an expert viva examiner. Review the following oral-exam responses and produce a final analysis.
+  const prompt = `You are an expert examiner. Review the following long-form written answers and produce a final analysis.
+
+Total time taken: ${Math.round(totalTimeSpentSeconds / 60)} min ${totalTimeSpentSeconds % 60} sec
 
 Student responses:
-${answers.map((a, i) => `${i + 1}. Q: ${a.question}\n   Transcribed answer: ${a.userTranscription || '(no answer)'}\n   Correctness: ${a.correctness}\n   Feedback: ${a.feedback}`).join('\n\n')}
+${answers.map((a, i) => `${i + 1}. Q: ${a.question}
+   Answer: ${a.userAnswer || '(no answer)'}
+   Time spent: ${Math.round(a.timeSpentSeconds / 60)} min ${a.timeSpentSeconds % 60} sec
+   Correctness: ${a.correctness}
+   Feedback: ${a.feedback}`).join('\n\n')}
 
 Return ONLY a valid JSON object in this exact format:
 {
   "overall_rating": 0-10,
-  "fluency": 0-10,
-  "confidence": 0-10,
+  "accuracy": 0-10,
+  "depth": 0-10,
+  "clarity": 0-10,
   "feedback": "2-3 encouraging sentences summarizing strengths and one concrete improvement area.",
+  "totalTimeSpentSeconds": ${totalTimeSpentSeconds},
   "perQuestion": [
     {
       "questionIndex": 0,
       "correctness": "correct" | "partial" | "incorrect",
       "feedback": "Concise feedback for this specific answer.",
-      "overall": "One-line verdict on this answer."
+      "overall": "One-line verdict on this answer.",
+      "userAnswer": "${answers[0]?.userAnswer || ''}",
+      "timeSpentSeconds": ${answers[0]?.timeSpentSeconds || 0}
     }
   ]
 }
@@ -66,7 +82,7 @@ Return ONLY a valid JSON object in this exact format:
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || 'Failed to analyze viva session');
+    throw new Error(data.error || 'Failed to analyze session');
   }
 
   const cleaned = (data.reply || '').replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
@@ -74,8 +90,9 @@ Return ONLY a valid JSON object in this exact format:
 
   if (
     typeof parsed.overall_rating !== 'number' ||
-    typeof parsed.fluency !== 'number' ||
-    typeof parsed.confidence !== 'number' ||
+    typeof parsed.accuracy !== 'number' ||
+    typeof parsed.depth !== 'number' ||
+    typeof parsed.clarity !== 'number' ||
     !parsed.feedback ||
     !Array.isArray(parsed.perQuestion)
   ) {

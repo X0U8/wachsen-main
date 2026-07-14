@@ -340,7 +340,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
             {([
               { key: 'exams', label: 'Exams' },
-              { key: 'viva', label: 'Viva' },
+              { key: 'viva', label: 'Long Answer' },
               { key: 'concept', label: 'Concept Cards' },
               { key: 'cheat', label: 'Cheat Cards' },
             ] as const).map((tab) => (
@@ -472,9 +472,9 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                     <Mic className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
                   </div>
                 </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Viva</h4>
+                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Long Answer</h4>
                 <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                  Practice tests with interactive AI questions to master verbal explanation.
+                  Timed written-response questions with AI evaluation on accuracy, depth, and clarity.
                 </p>
               </button>
 

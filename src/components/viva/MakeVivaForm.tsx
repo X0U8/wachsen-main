@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Loader2, Mic } from 'lucide-react';
+import { X, Loader2, Edit3 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import { streamConceptCards } from '../../lib/streamConceptCards';
@@ -36,6 +36,7 @@ export default function MakeVivaForm({
   const [subject, setSubject] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
   const [questionCount, setQuestionCount] = useState(5);
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
   const [topics, setTopics] = useState('');
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -54,8 +55,8 @@ export default function MakeVivaForm({
       setError('Topic must be at least 5 characters.');
       return;
     }
-    if (questionCount < 1 || questionCount > 20) {
-      setError('Question count must be between 1 and 20.');
+    if (questionCount < 1 || questionCount > 10) {
+      setError('Question count must be between 1 and 10.');
       return;
     }
 
@@ -79,18 +80,18 @@ export default function MakeVivaForm({
       const level = examType?.academicLevel || 'Grade 10';
 
       const prompt = `Subject: ${trimmedSubject}. Topic: ${trimmedTopics}.
-Generate exactly ${questionCount} viva / oral interview questions for a student at academic level ${level}. The requested difficulty is: ${difficulty}.
-For "easy", ask simple, direct theory/recall questions that can be answered in 1-2 sentences.
+Generate exactly ${questionCount} long-answer / written-response questions for a student at academic level ${level}. The requested difficulty is: ${difficulty}.
+For "easy", ask simple, direct theory/recall questions that can be answered in 2-3 sentences.
 For "medium", ask standard conceptual explanation questions requiring clear understanding.
-For "hard", ask deeper analytical or application questions.
-For "advance", generate the absolute hardest oral-exam questions possible for this topic and level — questions that test deep mastery, edge cases, complex reasoning, and the toughest verbal explanation skills.
+For "hard", ask deeper analytical or application questions requiring detailed written responses.
+For "advance", generate the absolute hardest written-response questions possible for this topic and level — questions that test deep mastery, edge cases, complex reasoning, and the toughest analytical skills.
 
-Each item must be in plain, natural language (no LaTeX, no equations, no symbols).
+Each answer should be concise but complete (2-5 sentences max). No LaTeX, no symbols.
 Return ONLY a valid JSON array in this exact format:
 [
   {
     "question": "...",
-    "expectedAnswer": "Concise ideal spoken answer (2-4 sentences).",
+    "expectedAnswer": "Concise ideal written answer (2-5 sentences).",
     "keywords": ["keyword1", "keyword2"]
   }
 ]
@@ -116,7 +117,7 @@ Return ONLY a valid JSON array in this exact format:
       const questions: VivaQuestion[] = safeParseJSON(cleaned);
 
       if (!Array.isArray(questions) || questions.length === 0) {
-        throw new Error('Failed to generate valid viva questions.');
+        throw new Error('Failed to generate valid questions.');
       }
 
       const { data: inserted, error: insertError } = await supabase
@@ -124,11 +125,12 @@ Return ONLY a valid JSON array in this exact format:
         .insert({
           user_id: userProfile.id,
           category_id: categoryId,
-          name: `${trimmedSubject} Viva`,
+          name: `${trimmedSubject} Long Answer`,
           subject_name: trimmedSubject,
           topics: trimmedTopics,
           difficulty,
           question_count: questions.length,
+          time_limit_minutes: timeLimitMinutes,
           status: 'pending',
           questions,
         })
@@ -140,8 +142,8 @@ Return ONLY a valid JSON array in this exact format:
       refreshCredits();
       onCreated(inserted.id);
     } catch (err: any) {
-      console.error('Error creating viva:', err);
-      setError(err.message || 'Failed to create viva. Please try again.');
+      console.error('Error creating long answer:', err);
+      setError(err.message || 'Failed to create. Please try again.');
     } finally {
       setGenerating(false);
       setProgress(0);
@@ -153,8 +155,10 @@ Return ONLY a valid JSON array in this exact format:
       <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md shadow-2xl relative text-zinc-900 dark:text-white flex flex-col gap-4">
         <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
           <div className="flex items-center gap-2">
-
-            <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Create Viva</h3>
+            <div className="p-1.5 bg-blue-500/10 text-blue-500 rounded-lg">
+              <Edit3 className="w-4 h-4" />
+            </div>
+            <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Create Long Answer</h3>
           </div>
           <button
             onClick={onClose}
@@ -191,30 +195,56 @@ Return ONLY a valid JSON array in this exact format:
             )}
           </div>
 
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value as typeof difficulty)}
+              className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+            >
+              {DIFFICULTIES.map((d) => (
+                <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+              Questions: {questionCount}
+            </label>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={questionCount}
+              onChange={(e) => setQuestionCount(Number(e.target.value))}
+              className="w-full h-2 bg-zinc-200 dark:bg-gray-800 rounded-full appearance-none cursor-pointer accent-blue-500"
+            />
+            <div className="flex justify-between text-[10px] text-zinc-400 font-medium px-0.5">
+              <span>1</span>
+              <span>10</span>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as typeof difficulty)}
-                className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
-              >
-                {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Questions</label>
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                Time Limit (min)
+              </label>
               <input
                 type="number"
                 min={1}
-                max={20}
-                value={questionCount}
-                onChange={(e) => setQuestionCount(Math.max(1, Math.min(20, parseInt(e.target.value) || 0)))}
+                max={120}
+                value={timeLimitMinutes}
+                onChange={(e) => setTimeLimitMinutes(Math.max(1, parseInt(e.target.value) || 1))}
                 className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
               />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Cost</label>
+              <div className="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl text-xs text-zinc-700 dark:text-zinc-300 flex items-center h-full font-semibold">
+                {questionCount * 2} credits
+              </div>
             </div>
           </div>
 
@@ -232,11 +262,6 @@ Return ONLY a valid JSON array in this exact format:
               <span>{topics.trim().length > 0 && topics.trim().length < 5 ? 'Topic must be at least 5 characters' : ''}</span>
               <span>{topics.length} / 300</span>
             </div>
-          </div>
-
-          <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-950/40 px-3 py-2 rounded-xl">
-            <span>Cost</span>
-            <span className="font-semibold text-zinc-800 dark:text-zinc-200">{questionCount * 2} credits</span>
           </div>
 
           {error && (
@@ -263,7 +288,7 @@ Return ONLY a valid JSON array in this exact format:
                 Generating {progress}/{questionCount}
               </>
             ) : (
-              `Create Viva (${questionCount * 2} credits)`
+              `Create (${questionCount * 2} credits)`
             )}
           </button>
         </div>

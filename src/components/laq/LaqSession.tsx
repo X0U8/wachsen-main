@@ -26,7 +26,6 @@ interface LaqSessionProps {
 
 interface AnswerState {
   text: string;
-  timeSpentSeconds: number;
 }
 
 function formatTime(seconds: number): string {
@@ -43,12 +42,11 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerState[]>(() =>
-    laq.questions.map(() => ({ text: '', timeSpentSeconds: 0 }))
+    laq.questions.map(() => ({ text: '' }))
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [finished, setFinished] = useState(false);
-  const [currentElapsedSeconds, setCurrentElapsedSeconds] = useState(0);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
@@ -58,8 +56,6 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
   const [countdown, setCountdown] = useState<number | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const elapsedRef = useRef<NodeJS.Timeout | null>(null);
-  const currentElapsedRef = useRef(0);
 
   const totalQuestions = laq.questions.length;
   const currentQuestion = laq.questions[currentIndex];
@@ -110,26 +106,6 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isExamStarted, finished, totalTimeSeconds, laq.id]);
-
-  // Per-question elapsed timer + record time when switching questions
-  useEffect(() => {
-    if (!isExamStarted || finished) return;
-    setCurrentElapsedSeconds(0);
-    currentElapsedRef.current = 0;
-    elapsedRef.current = setInterval(() => {
-      currentElapsedRef.current += 1;
-      setCurrentElapsedSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => {
-      if (elapsedRef.current) clearInterval(elapsedRef.current);
-      // Save elapsed time for the question we're leaving
-      setAnswers((prev) => {
-        const next = [...prev];
-        next[currentIndex] = { ...next[currentIndex], timeSpentSeconds: next[currentIndex].timeSpentSeconds + currentElapsedRef.current };
-        return next;
-      });
-    };
-  }, [currentIndex, finished, isExamStarted]);
 
   // Navigation lock (beforeunload/popstate) - active only when exam has started
   useEffect(() => {
@@ -193,49 +169,37 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
       const authToken = session?.access_token || '';
 
       const finalAnswers = [...answers];
-      // Add current question's running time to its stored time
-      finalAnswers[currentIndex] = {
-        ...finalAnswers[currentIndex],
-        timeSpentSeconds: finalAnswers[currentIndex].timeSpentSeconds + currentElapsedRef.current,
-      };
-
-      const totalTimeSpentSeconds = totalTimeSeconds - timeLeft;
 
       // Build records directly from user text — no intermediate per-question AI calls
       const records: LaqAnswerRecord[] = finalAnswers.map((a, idx) => ({
         questionIndex: idx,
         question: laq.questions[idx].question,
         userAnswer: a.text,
-        timeSpentSeconds: a.timeSpentSeconds || 0,
+        correctness: 'incorrect',
+        feedback: '',
       }));
 
       // Single batch AI grading
-      const analysis = await analyzeLaqSession(records, totalTimeSpentSeconds, userProfile.id, authToken);
+      const analysis = await analyzeLaqSession(records, userProfile.id, authToken);
 
       // Save answers separately, ai_analysis only has per-question breakdown
       const answersPayload = records.map((r) => ({
         questionIndex: r.questionIndex,
         question: r.question,
         userAnswer: r.userAnswer,
-        timeSpentSeconds: r.timeSpentSeconds,
       }));
-
-      // Calculate overall rating as the average of the question ratings
-      const totalRatings = analysis.perQuestion.reduce((sum, q) => sum + (q.rating || 0), 0);
-      const overallRating = analysis.perQuestion.length > 0 ? parseFloat((totalRatings / analysis.perQuestion.length).toFixed(1)) : 0;
 
       const { error: updateError } = await supabase
         .from('laq_exam')
         .update({
           status: 'completed',
           answers: answersPayload,
-          ai_feedback: analysis.ai_feedback,
+          ai_feedback: analysis.feedback,
           accuracy: analysis.accuracy,
           depth: analysis.depth,
           clarity: analysis.clarity,
           ai_analysis: {
-            overall_rating: overallRating,
-            totalTimeSpentSeconds,
+            overall_rating: analysis.overall_rating,
             perQuestion: analysis.perQuestion,
           },
         })
@@ -363,10 +327,6 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                       <span className="px-2 py-0.5 bg-zinc-200 dark:bg-gray-800 text-zinc-900 dark:text-white rounded-md text-[10px] uppercase tracking-wider font-semibold">
                         Q{currentIndex + 1}
                       </span>
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-400 dark:text-gray-500 rounded-md text-[10px] uppercase tracking-wider border border-zinc-200 dark:border-gray-800">
-                        <Clock className="w-2.5 h-2.5" />
-                        {formatTime(currentElapsedSeconds)}
-                      </div>
                       <button
                         onClick={() => setShowQuestionModal(true)}
                         className="md:hidden flex items-center gap-1 text-[10px] text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300 transition-colors"

@@ -41,7 +41,7 @@ export default function GiveViva({ viva, onComplete }: GiveVivaProps) {
   const [error, setError] = useState('');
 
   const { isRecording, audioBase64, startRecording, stopRecording, resetRecording } = useAudioRecorder();
-  const { isSpeaking, speak, stop: stopSpeaking } = useTextToSpeech();
+  const { isSpeaking, speakingError, speak, stop: stopSpeaking } = useTextToSpeech();
 
   const totalQuestions = viva.questions.length;
   const currentQuestion = viva.questions[currentIndex];
@@ -221,6 +221,12 @@ export default function GiveViva({ viva, onComplete }: GiveVivaProps) {
             <div className="flex items-center gap-2 mb-4 p-3 bg-red-500/10 text-red-500 rounded-xl text-xs">
               <AlertCircle className="w-4 h-4 shrink-0" />
               {error}
+            </div>
+          )}
+          {speakingError && (
+            <div className="flex items-center gap-2 mb-4 p-3 bg-red-500/10 text-red-500 rounded-xl text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              TTS error: {speakingError}
             </div>
           )}
 

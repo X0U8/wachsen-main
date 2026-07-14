@@ -2,28 +2,14 @@ import { useRef, useState, useCallback } from 'react';
 
 interface UseTextToSpeechReturn {
   isSpeaking: boolean;
+  speakingError: string | null;
   speak: (text: string) => Promise<void>;
   stop: () => void;
 }
 
-function browserSpeak(text: string): Promise<void> {
-  return new Promise((resolve) => {
-    if (!window.speechSynthesis) {
-      resolve();
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 1;
-    utterance.onend = () => resolve();
-    utterance.onerror = () => resolve();
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  });
-}
-
 export function useTextToSpeech(): UseTextToSpeechReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingError, setSpeakingError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -37,12 +23,13 @@ export function useTextToSpeech(): UseTextToSpeechReturn {
       abortRef.current.abort();
       abortRef.current = null;
     }
-    window.speechSynthesis?.cancel();
     setIsSpeaking(false);
+    setSpeakingError(null);
   }, []);
 
   const speak = useCallback(async (text: string) => {
     stop();
+    setSpeakingError(null);
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -84,13 +71,11 @@ export function useTextToSpeech(): UseTextToSpeechReturn {
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('TTS playback error:', err);
-        // Fallback to browser-native speech synthesis if server TTS fails
-        setIsSpeaking(true);
-        await browserSpeak(text);
-        setIsSpeaking(false);
+        setSpeakingError(err.message);
       }
+      setIsSpeaking(false);
     }
   }, [stop]);
 
-  return { isSpeaking, speak, stop };
+  return { isSpeaking, speakingError, speak, stop };
 }

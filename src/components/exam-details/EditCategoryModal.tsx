@@ -89,7 +89,7 @@ export default function EditCategoryModal({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-zinc-900 dark:text-gray-100 text-base">Edit Category</h2>
+              <h2 className="text-zinc-900 dark:text-gray-100 text-base">Edit Exam Type</h2>
               <button onClick={onClose} className="text-zinc-400 dark:text-gray-500 hover:text-zinc-900 dark:hover:text-white">
                 <X className="w-4 h-4" />
               </button>
@@ -172,9 +172,8 @@ export default function EditCategoryModal({
                           updateForm({ academicLevel: level });
                           setShowLevelPicker(false);
                         }}
-                        className={`w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-gray-700 transition-colors ${
-                          form.academicLevel === level ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-gray-400'
-                        } text-sm`}>
+                        className={`w-full text-left px-3 py-2 hover:bg-zinc-100 dark:hover:bg-gray-700 transition-colors ${form.academicLevel === level ? 'text-zinc-900 dark:text-white' : 'text-zinc-500 dark:text-gray-400'
+                          } text-sm`}>
                         {level}
                       </button>
                     ))}

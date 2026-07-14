@@ -15,7 +15,7 @@ import ExamListTab from './ExamListTab';
 import VivaListTab from './VivaListTab';
 import ConceptCardsListTab from './ConceptCardsListTab';
 import CheatCardsListTab from './CheatCardsListTab';
-import MakeVivaForm from '../viva/MakeVivaForm';
+import MakeLaq from '../viva/MakeLaq';
 import { safeParseJSON } from '../RevisionLog';
 import { streamConceptCards } from '../../lib/streamConceptCards';
 import { NON_INT_SUBJECTS } from '../../data/nonIntSubjects';
@@ -396,7 +396,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
         />
       )}
       {showMakeViva && (
-        <MakeVivaForm
+        <MakeLaq
           show={showMakeViva}
           onClose={() => setShowMakeViva(false)}
           userProfile={userProfile}

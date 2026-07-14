@@ -11,19 +11,19 @@ export interface LaqQuestion {
   keywords: string[];
 }
 
-interface MakeVivaFormProps {
+interface MakeLaqProps {
   show: boolean;
   onClose: () => void;
   userProfile: any;
   categoryId: string;
   availableSubjects: any[];
   examType: any;
-  onCreated: (vivaId: string) => void;
+  onCreated: (laqId: string) => void;
 }
 
 const DIFFICULTIES: Array<'easy' | 'medium' | 'hard' | 'advance'> = ['easy', 'medium', 'hard', 'advance'];
 
-export default function MakeVivaForm({
+export default function MakeLaq({
   show,
   onClose,
   userProfile,
@@ -31,7 +31,7 @@ export default function MakeVivaForm({
   availableSubjects,
   examType,
   onCreated,
-}: MakeVivaFormProps) {
+}: MakeLaqProps) {
   const { refreshCredits } = useUserProfile();
   const [subject, setSubject] = useState('');
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
@@ -114,7 +114,7 @@ Return ONLY a valid JSON array in this exact format:
       );
 
       const cleaned = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
-      const questions: VivaQuestion[] = safeParseJSON(cleaned);
+      const questions: LaqQuestion[] = safeParseJSON(cleaned);
 
       if (!Array.isArray(questions) || questions.length === 0) {
         throw new Error('Failed to generate valid questions.');

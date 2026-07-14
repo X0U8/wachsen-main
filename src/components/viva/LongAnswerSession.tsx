@@ -4,7 +4,7 @@ import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import { evaluateVivaAnswer, VivaAnswerEvaluation } from './evaluateAnswer';
 import { analyzeVivaSession, VivaAnswerRecord } from './analyzeVivaSession';
-import type { VivaQuestion } from './MakeVivaForm';
+import type { LaqQuestion } from './MakeLaq';
 
 export interface VivaExam {
   id: string;
@@ -14,7 +14,7 @@ export interface VivaExam {
   difficulty: string | null;
   question_count: number;
   time_limit_minutes: number | null;
-  questions: VivaQuestion[];
+  questions: LaqQuestion[];
   status: string;
 }
 

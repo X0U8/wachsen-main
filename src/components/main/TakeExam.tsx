@@ -445,7 +445,8 @@ export default function TakeExam() {
     setIsSubmitting(true);
 
     try {
-      let obtainedMarks = 0;
+      const examCorrectMarks = Number(examData?.correct_marks ?? 4);
+      const examNegativeMarks = Number(examData?.negative_marks ?? 0);
       const correctAnswers: number[] = [];
       const wrongAnswers: number[] = [];
 
@@ -454,15 +455,14 @@ export default function TakeExam() {
         const normUser = String(userAnswer || '').trim();
         const normCorrect = String(q.correct_answer ?? '').trim();
         if (normUser === normCorrect) {
-          obtainedMarks += Number(q.marks || 0);
           correctAnswers.push(q.id);
         } else if (userAnswer !== undefined && userAnswer !== "") {
-          obtainedMarks -= Number(q.negative_marks || 0);
           wrongAnswers.push(q.id);
         }
       });
 
-      const totalMarks = questions.reduce((sum, q) => sum + Number(q.marks || 0), 0);
+      const obtainedMarks = (correctAnswers.length * examCorrectMarks) - (wrongAnswers.length * examNegativeMarks);
+      const totalMarks = Number(examData?.totalMarks ?? questions.length * examCorrectMarks);
       const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
       const percentageValue = isNaN(percentage) || !isFinite(percentage) ? 0 : Math.round(percentage);
 

@@ -141,14 +141,15 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
 
             <div className="pt-4 space-y-3">
               {(() => {
-                const isExpired = exam.status === 'Expired';
-                const canStart = exam.status === 'Pending' || exam.status === 'active';
+                const s = exam.status?.toLowerCase?.() || '';
+                const isExpired = s === 'expired';
+                const canStart = s === 'pending' || s === 'active';
 
                 if (!canStart) {
                   let message = "This exam cannot be started.";
                   if (isExpired) message = "This exam has expired.";
-                  else if (exam.status === 'Ongoing') message = "This exam is already ongoing.";
-                  else if (exam.status === 'Completed') message = "This exam is already completed.";
+                  else if (s === 'ongoing') message = "This exam is already ongoing.";
+                  else if (s === 'completed') message = "This exam is already completed.";
                   console.log('[ExamInfoModal] Start blocked:', message, '| status:', JSON.stringify(exam.status));
 
                   return (

@@ -21,7 +21,16 @@ interface PlanViewMonthlyProps {
 }
 
 export default function PlanViewMonthly({ createdAt, planJson }: PlanViewMonthlyProps) {
-  const [expandedMonths, setExpandedMonths] = useState<Record<number, boolean>>({ 1: true });
+  const createdMidnight = new Date(createdAt);
+  const todayMidnight = new Date();
+  const diffDays = Math.max(0, Math.floor(
+    (Date.UTC(todayMidnight.getFullYear(), todayMidnight.getMonth(), todayMidnight.getDate()) -
+     Date.UTC(createdMidnight.getFullYear(), createdMidnight.getMonth(), createdMidnight.getDate())) /
+    (1000 * 60 * 60 * 24)
+  ));
+  const activeMonth = Math.min(Math.floor(diffDays / 30) + 1, planJson?.months?.length || 1);
+
+  const [expandedMonths, setExpandedMonths] = useState<Record<number, boolean>>({ [activeMonth]: true });
 
   const toggleMonth = (monthNum: number) => {
     setExpandedMonths(prev => ({ ...prev, [monthNum]: !prev[monthNum] }));

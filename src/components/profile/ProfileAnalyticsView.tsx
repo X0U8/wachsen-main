@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../../lib/ThemeContext';
 import { supabase } from '../../services/supabase';
 import { fontSize } from '../../lib/utils';
-import { User, Library, ChevronLeft, ChevronRight, Flame } from 'lucide-react';
+import { User, Library, ChevronLeft, ChevronRight, Flame, Loader2 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, BarChart, Bar, Cell } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
 
 interface ProfileAnalyticsViewProps {
   userId: string;
@@ -13,17 +14,82 @@ interface ProfileAnalyticsViewProps {
 export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyticsViewProps) {
   const { theme } = useTheme();
 
-  const [examsMadeCount, setExamsMadeCount] = useState(0);
-  const [examsGaveCount, setExamsGaveCount] = useState(0);
-  const [memberDays, setMemberDays] = useState(0);
-
-  const [categories, setCategories] = useState<any[]>([]);
   const [selectedCatId, setSelectedCatId] = useState<string>('');
   const [chartOffset, setChartOffset] = useState(0);
   const [summaryType, setSummaryType] = useState<'column' | 'line'>('column');
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
 
-  const [presence, setPresence] = useState<any>(null);
+  const { data: analyticsData, isLoading } = useQuery({
+    queryKey: ['profileAnalytics', userId, isOwner],
+    queryFn: async () => {
+      const { data: presData } = await supabase
+        .from('user_presence')
+        .select('active_days, last_opened')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const { count: madeCount } = await supabase
+        .from('exams')
+        .select('*', { count: 'exact', head: true })
+        .contains('accessIds', [userId]);
+
+      const { count: gaveCount } = await supabase
+        .from('exams')
+        .select('*', { count: 'exact', head: true })
+        .contains('accessIds', [userId])
+        .eq('status', 'Completed');
+
+      const { data: profData } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .eq('id', userId)
+        .single();
+
+      let calcMemberDays = 1;
+      if (profData?.created_at) {
+        const createdDate = new Date(profData.created_at);
+        const currentDate = new Date();
+        const diffTime = currentDate.getTime() - createdDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        calcMemberDays = Math.max(1, diffDays + 1);
+      }
+
+      let fetchedCategories: any[] = [];
+      if (isOwner) {
+        const { data } = await supabase
+          .from('examtypes')
+          .select('id, name, Percentages')
+          .eq('userId', userId)
+          .order('created_at', { ascending: true });
+        if (data) {
+          fetchedCategories = data;
+        }
+      }
+
+      return {
+        presence: presData,
+        examsMadeCount: madeCount || 0,
+        examsGaveCount: gaveCount || 0,
+        memberDays: calcMemberDays,
+        categories: fetchedCategories
+      };
+    },
+    enabled: !!userId,
+    staleTime: 0,
+    gcTime: Infinity,
+  });
+
+  const categories = analyticsData?.categories || [];
+  const presence = analyticsData?.presence;
+  const examsMadeCount = analyticsData?.examsMadeCount || 0;
+  const examsGaveCount = analyticsData?.examsGaveCount || 0;
+  const memberDays = analyticsData?.memberDays || 0;
+
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCatId) {
+      setSelectedCatId(categories[0].id);
+    }
+  }, [categories, selectedCatId]);
 
   const activeDays = presence?.active_days || [];
   const totalDays = activeDays.reduce((sum: number, val: number) => sum + val, 0);
@@ -75,70 +141,6 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
     }
     return false;
   };
-
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchAnalyticsDetails = async () => {
-      try {
-        const { data: presData } = await supabase
-          .from('user_presence')
-          .select('active_days, last_opened')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        setPresence(presData);
-
-        const { count: madeCount } = await supabase
-          .from('exams')
-          .select('*', { count: 'exact', head: true })
-          .contains('accessIds', [userId]);
-
-        setExamsMadeCount(madeCount || 0);
-
-        const { count: gaveCount } = await supabase
-          .from('exams')
-          .select('*', { count: 'exact', head: true })
-          .contains('accessIds', [userId])
-          .eq('status', 'Completed');
-
-        setExamsGaveCount(gaveCount || 0);
-
-        const { data: profData } = await supabase
-          .from('profiles')
-          .select('created_at')
-          .eq('id', userId)
-          .single();
-
-        if (profData?.created_at) {
-          const createdDate = new Date(profData.created_at);
-          const currentDate = new Date();
-          const diffTime = currentDate.getTime() - createdDate.getTime();
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-          setMemberDays(Math.max(1, diffDays));
-        }
-
-        if (isOwner) {
-          const { data } = await supabase
-            .from('examtypes')
-            .select('id, name, Percentages')
-            .eq('userId', userId)
-            .order('created_at', { ascending: true });
-
-          if (data) {
-            setCategories(data);
-            if (data.length > 0) {
-              setSelectedCatId(data[0].id);
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching analytics details:', err);
-      }
-    };
-
-    fetchAnalyticsDetails();
-  }, [userId, isOwner]);
 
   const activeCategory = categories.find(c => c.id === selectedCatId);
   const rawPercentages = activeCategory?.Percentages || [];
@@ -282,6 +284,14 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
       </div>
     );
   };
+
+  if (isLoading && !analyticsData) {
+    return (
+      <div className="flex-grow flex items-center justify-center min-h-[300px]">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-grow flex flex-col min-h-0 space-y-6 pb-4">

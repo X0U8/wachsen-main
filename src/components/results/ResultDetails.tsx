@@ -1066,7 +1066,7 @@ export default function ResultDetails() {
                       <div
                         className="font-medium leading-relaxed text-zinc-900 dark:text-white text-base">
                         <MathText text={q.text} />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
                           <div
                             className={`p-3 rounded-2xl border flex items-center justify-between ${status === 'correct' ? 'bg-green-500/5 border-green-500/20 text-green-600 dark:text-green-400'
                               : status === 'wrong' ? 'bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400'

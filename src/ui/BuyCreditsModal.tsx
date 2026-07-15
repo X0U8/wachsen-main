@@ -664,14 +664,14 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                 <div className={`relative h-full flex flex-col bg-gray-200/40 dark:bg-gray-800/40 border ${isCurrentPlan(tier.name) || (!isPremium && tier.name === 'Free') ? 'border-green-500/60 ring-1 ring-green-500/20' : tier.popular ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'border-black/10 dark:border-white/10'} rounded-[2.5rem] p-6 backdrop-blur-sm transition-all`}>
 
                   {isYearly && !isCurrentPlan(tier.name) && (
-                    <div className="absolute top-2 right-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wide" style={{ fontSize: '0.55rem' }}>
+                    <div className="absolute top-2 right-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 py-0.5 rounded-full tracking-wide" style={{ fontSize: '0.55rem' }}>
                       2 Mo. Free
                     </div>
                   )}
 
                   <div className="mb-4">
                     <div
-                      className={`inline-block px-4 py-1 rounded-full uppercase bg-gradient-to-r ${tier.color || 'from-gray-600 to-gray-700'} text-white text-xs`}>
+                      className={`inline-block px-4 py-1 rounded-full bg-gradient-to-r ${tier.color || 'from-gray-600 to-gray-700'} text-white text-xs`}>
                       {tier.name}
                     </div>
                     {isYearly ? (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../services/supabase';
 import MathText from '../../../ui/MathText';
 import { useUserProfile } from '../../../lib/UserContext.tsx';
@@ -33,7 +33,7 @@ export default function PlanViewDaily({
   setSuccessMsg
 }: PlanViewDailyProps) {
   const { userProfile, refreshCredits } = useUserProfile();
-  const [selectedMonthNum, setSelectedMonthNum] = useState<number>(1);
+  const todayRef = useRef<HTMLDivElement | null>(null);
   const [loadedDetails, setLoadedDetails] = useState<Record<number, any[]>>({});
   const [loadingDetails, setLoadingDetails] = useState<Record<number, boolean>>({});
   const [generatingDetails, setGeneratingDetails] = useState<boolean>(false);
@@ -47,6 +47,11 @@ export default function PlanViewDaily({
 
   const diffDays = Math.max(0, Math.floor((currentMidnight - createdMidnight) / (1000 * 60 * 60 * 24)));
   const currentActiveMonth = Math.floor(diffDays / 30) + 1;
+  const currentDayInMonth = (diffDays % 30) + 1;
+
+  const [selectedMonthNum, setSelectedMonthNum] = useState<number>(
+    Math.min(currentActiveMonth, planJson?.months?.length || 1)
+  );
 
 
   const getMonthDateRange = (createdDateStr: string, monthNum: number) => {
@@ -102,6 +107,15 @@ export default function PlanViewDaily({
 
     fetchMonthDetails();
   }, [selectedMonthNum, currentActiveMonth]);
+
+  // Scroll today's block into view after details load
+  useEffect(() => {
+    if (selectedMonthNum === currentActiveMonth && loadedDetails[selectedMonthNum]) {
+      setTimeout(() => {
+        todayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    }
+  }, [loadedDetails[selectedMonthNum]]);
 
   const handleGenerateDetailedTasks = async () => {
     if (generatingDetails) return;
@@ -231,8 +245,13 @@ export default function PlanViewDaily({
         </div>
       ) : loadedDetails[selectedMonthNum] ? (
         <div className="space-y-6 relative border-l-2 border-zinc-200 dark:border-gray-800 ml-4 pl-6 md:pl-8 py-2">
-          {loadedDetails[selectedMonthNum].map((block, idx) => (
-            <div key={idx} className="relative group animate-fadeIn space-y-2">
+          {loadedDetails[selectedMonthNum].map((block, idx) => {
+            const blockStartDay = idx * Math.ceil(30 / loadedDetails[selectedMonthNum].length) + 1;
+            const blockEndDay = Math.min(blockStartDay + Math.ceil(30 / loadedDetails[selectedMonthNum].length) - 1, 30);
+            const isToday = selectedMonthNum === currentActiveMonth &&
+              currentDayInMonth >= blockStartDay && currentDayInMonth <= blockEndDay;
+            return (
+            <div key={idx} ref={isToday ? todayRef : null} className="relative group animate-fadeIn space-y-2">
               <div className="absolute -left-[31px] md:-left-[39px] top-1 w-4 h-4 rounded-full border-2 border-blue-500 bg-white dark:bg-zinc-950 flex items-center justify-center transition-colors group-hover:bg-blue-500" />
 
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -260,7 +279,8 @@ export default function PlanViewDaily({
                 ))}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
 

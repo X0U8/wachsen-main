@@ -124,7 +124,8 @@ export default function Friends() {
     },
     enabled: !!userId,
     staleTime: 0,
-    gcTime: Infinity,
+    gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: requestsData = [], isFetching: loadingRequests } = useQuery<FriendRequest[]>({
@@ -165,7 +166,8 @@ export default function Friends() {
     },
     enabled: !!userId,
     staleTime: 0,
-    gcTime: Infinity,
+    gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: receivedChallengesPage = [], isFetching: loadingReceived } = useQuery<any[]>({
@@ -207,7 +209,8 @@ export default function Friends() {
     },
     enabled: !!userId && activeTab === 'challenges' && challengeView === 'received',
     staleTime: 0,
-    gcTime: Infinity,
+    gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: sentChallengesPage = [], isFetching: loadingSent } = useQuery<any[]>({
@@ -249,7 +252,8 @@ export default function Friends() {
     },
     enabled: !!userId && activeTab === 'challenges' && challengeView === 'sent',
     staleTime: 0,
-    gcTime: Infinity,
+    gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Derived display lists: useQuery first page + any "load more" pages appended

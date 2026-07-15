@@ -857,10 +857,6 @@ export default function Friends() {
             friendsList={friendsList}
             onOpenChallenge={handleOpenChallengeSelector}
             onOpenDetails={handleOpenDetails}
-            incomingRequests={incomingRequests}
-            loadingRequests={loadingRequests}
-            onAcceptRequest={handleAcceptRequest}
-            onDeclineRequest={handleDeclineRequest}
             renderProfilePic={renderProfilePic}
           />
         )}
@@ -905,6 +901,10 @@ export default function Friends() {
             onOpenDetails={handleOpenDetails}
             requestError={requestError}
             renderProfilePic={renderProfilePic}
+            incomingRequests={incomingRequests}
+            loadingRequests={loadingRequests}
+            onAcceptRequest={handleAcceptRequest}
+            onDeclineRequest={handleDeclineRequest}
           />
         )}
       </main>

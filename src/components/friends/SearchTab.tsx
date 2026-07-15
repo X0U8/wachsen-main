@@ -9,6 +9,17 @@ interface ProfileData {
   profile_picture?: string;
 }
 
+interface FriendRequest {
+  id: string;
+  created_at: string;
+  sender: {
+    id: string;
+    name: string;
+    username: string;
+    profile_picture?: string;
+  };
+}
+
 interface SearchTabProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -22,6 +33,10 @@ interface SearchTabProps {
   onOpenDetails: (friend: ProfileData) => void;
   requestError: string;
   renderProfilePic: (profile: any, className: string) => React.ReactNode;
+  incomingRequests: FriendRequest[];
+  loadingRequests: boolean;
+  onAcceptRequest: (reqId: string) => void;
+  onDeclineRequest: (reqId: string) => void;
 }
 
 export const SearchTab: React.FC<SearchTabProps> = ({
@@ -37,6 +52,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({
   onOpenDetails,
   requestError,
   renderProfilePic,
+  incomingRequests,
+  loadingRequests,
+  onAcceptRequest,
+  onDeclineRequest,
 }) => {
   return (
     <div className="space-y-4">
@@ -66,6 +85,61 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           )}
         </button>
       </div>
+      
+      {/* Incoming Friend Requests section — scrollable, no container inside container */}
+      <div className="space-y-3 pt-2">
+        <h3 className="text-xs font-bold text-zinc-850 dark:text-zinc-100 px-1">
+          Incoming Requests
+        </h3>
+        {loadingRequests ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+          </div>
+        ) : incomingRequests.length > 0 ? (
+          <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+            {incomingRequests.map((req) => (
+              <div
+                key={req.id}
+                className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-2xl shadow-xs"
+              >
+                <div className="flex items-center gap-3">
+                  {renderProfilePic({
+                    id: req.sender.id,
+                    name: req.sender.name,
+                    username: req.sender.username,
+                    profile_picture: req.sender.profile_picture,
+                  }, 'w-10 h-10')}
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-800 dark:text-white">
+                      {req.sender.name}
+                    </h4>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">@{req.sender.username}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => onAcceptRequest(req.id)}
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold cursor-pointer transition-all shadow-xs"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => onDeclineRequest(req.id)}
+                    className="px-3.5 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-xl text-[10px] font-bold text-zinc-700 dark:text-zinc-350 cursor-pointer transition-all border border-zinc-200 dark:border-zinc-850"
+                  >
+                    Decline
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-6 bg-zinc-50 dark:bg-zinc-900/20 border border-dashed border-black/10 dark:border-white/10 rounded-2xl">
+            <p className="text-[10px] text-zinc-405 dark:text-zinc-500 font-medium">No incoming requests</p>
+          </div>
+        )}
+      </div>
+
       {requestError && (
         <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-2xl text-red-600 dark:text-red-400 text-xs font-medium">
           {requestError}

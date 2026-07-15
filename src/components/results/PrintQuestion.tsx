@@ -170,7 +170,7 @@ export default function PrintQuestion({
                     )}
 
                     {(!q.options || q.options.length === 0) && (
-                      <div className="mt-4 ml-7 border-b border-dashed border-zinc-300 w-48 h-6 text-zinc-400 text-[10px] italic">
+                      <div className="mt-4 ml-7 border-b border-dashed border-zinc-300 w-48 h-6 text-zinc-400 text-[10px] ">
                         Write answer here:
                       </div>
                     )}
@@ -194,8 +194,8 @@ export default function PrintQuestion({
                           <MathText text={q.correct_answer} />
                         </div>
                         {q.explanation && (
-                          <div className="text-xs text-zinc-600 dark:text-gray-400 leading-relaxed italic mt-1">
-                            <span className="font-bold not-italic text-zinc-700 dark:text-gray-300">Solution Path:</span>{' '}
+                          <div className="text-xs text-zinc-600 dark:text-gray-400 leading-relaxed  mt-1">
+                            <span className="font-bold not- text-zinc-700 dark:text-gray-300">Solution Path:</span>{' '}
                             <MathText text={q.explanation} />
                           </div>
                         )}
@@ -204,7 +204,7 @@ export default function PrintQuestion({
                   </div>
                 ))}
               </div>
-              <div className="mt-12 pt-4 border-t border-zinc-200 dark:border-gray-850 text-center text-[9px] text-zinc-450 italic">
+              <div className="mt-12 pt-4 border-t border-zinc-200 dark:border-gray-850 text-center text-[9px] text-zinc-450 ">
                 This Question & answers are generated in wachsen AI. AI can make mistakes.
               </div>
             </div>
@@ -269,7 +269,7 @@ export default function PrintQuestion({
               )}
 
               {(!q.options || q.options.length === 0) && (
-                <div className="mt-4 ml-7 border-b border-dashed border-zinc-300 w-48 h-6 text-zinc-400 text-[10px] italic">
+                <div className="mt-4 ml-7 border-b border-dashed border-zinc-300 w-48 h-6 text-zinc-400 text-[10px] ">
                   Write answer here:
                 </div>
               )}
@@ -293,8 +293,8 @@ export default function PrintQuestion({
                     <MathText text={q.correct_answer} />
                   </div>
                   {q.explanation && (
-                    <div className="text-xs text-zinc-600 leading-relaxed italic mt-1">
-                      <span className="font-bold not-italic text-zinc-700">Solution Path:</span>{' '}
+                    <div className="text-xs text-zinc-600 leading-relaxed  mt-1">
+                      <span className="font-bold not- text-zinc-700">Solution Path:</span>{' '}
                       <MathText text={q.explanation} />
                     </div>
                   )}
@@ -304,7 +304,7 @@ export default function PrintQuestion({
           ))}
         </div>
 
-        <div className="mt-12 pt-4 border-t border-zinc-200 text-center text-[9px] text-zinc-400 italic">
+        <div className="mt-12 pt-4 border-t border-zinc-200 text-center text-[9px] text-zinc-400 ">
           This Question & answers are generated in wachsen AI. AI can make mistakes.
         </div>
       </div>

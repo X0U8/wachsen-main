@@ -300,7 +300,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       return count || 0;
     },
     enabled: !!id && !!userProfile?.id,
-    staleTime: 30000,
+    staleTime: 0,
+    gcTime: Infinity,
   });
 
   // Count pending LAQ exams for this category
@@ -318,7 +319,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       return count || 0;
     },
     enabled: !!id && !!userProfile?.id,
-    staleTime: 30000,
+    staleTime: 0,
+    gcTime: Infinity,
   });
 
   useEffect(() => {
@@ -509,7 +511,11 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       {showMakeAI && (
         <MakeAIForm
           show={showMakeAI}
-          onClose={() => setShowMakeAI(false)}
+          onClose={() => {
+            setShowMakeAI(false);
+            queryClient.invalidateQueries({ queryKey: ['pendingExamCount', id, userProfile?.id] });
+            queryClient.invalidateQueries({ queryKey: ['examInstances', id] });
+          }}
           mode={'auto'}
           userProfile={userProfile}
           categoryId={id || ''}
@@ -527,6 +533,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           onCreated={() => {
             setShowMakeLaq(false);
             queryClient.invalidateQueries({ queryKey: ['laqExams'] });
+            queryClient.invalidateQueries({ queryKey: ['pendingLaqCount', id, userProfile?.id] });
           }}
         />
       )}

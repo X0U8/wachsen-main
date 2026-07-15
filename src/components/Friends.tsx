@@ -4,7 +4,7 @@ import { supabase } from '../services/supabase';
 import { useUserProfile } from '../lib/UserContext';
 import { ChevronLeft } from 'lucide-react';
 import Footer from './Footer';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import localStorageCache from '../lib/localStorage';
 import { fontSize } from '../lib/utils';
 
@@ -47,13 +47,9 @@ export default function Friends() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [activeTab, setActiveTab] = useState<'friends' | 'challenges' | 'search'>('friends');
-  const [friendsList, setFriendsList] = useState<ProfileData[]>([]);
-  const [loadingFriends, setLoadingFriends] = useState(false);
   const [sendingRequest, setSendingRequest] = useState(false);
   const [sentRequests, setSentRequests] = useState<string[]>([]);
   const [requestError, setRequestError] = useState('');
-  const [incomingRequests, setIncomingRequests] = useState<FriendRequest[]>([]);
-  const [loadingRequests, setLoadingRequests] = useState(false);
 
 
   const [challengesExamTypeId, setChallengesExamTypeId] = useState<string | null>(null);
@@ -61,13 +57,13 @@ export default function Friends() {
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [challengeView, setChallengeView] = useState<'received' | 'sent'>('received');
 
-  const [receivedChallenges, setReceivedChallenges] = useState<any[]>([]);
-  const [loadingReceived, setLoadingReceived] = useState(false);
+  const [moreReceivedChallenges, setMoreReceivedChallenges] = useState<any[]>([]);
+  const [loadingMoreReceived, setLoadingMoreReceived] = useState(false);
   const [hasMoreReceived, setHasMoreReceived] = useState(false);
   const [receivedOffset, setReceivedOffset] = useState(0);
 
-  const [sentChallenges, setSentChallenges] = useState<any[]>([]);
-  const [loadingSent, setLoadingSent] = useState(false);
+  const [moreSentChallenges, setMoreSentChallenges] = useState<any[]>([]);
+  const [loadingMoreSent, setLoadingMoreSent] = useState(false);
   const [hasMoreSent, setHasMoreSent] = useState(false);
   const [sentOffset, setSentOffset] = useState(0);
 
@@ -84,7 +80,6 @@ export default function Friends() {
   const [selectedProfileForDetails, setSelectedProfileForDetails] = useState<any | null>(null);
   const [showPublicProfileModal, setShowPublicProfileModal] = useState(false);
 
-  const [dailyChallengeCount, setDailyChallengeCount] = useState(0);
   const [challengeActionLoading, setChallengeActionLoading] = useState<string | null>(null);
   const [challengeError, setChallengeError] = useState('');
 
@@ -94,6 +89,177 @@ export default function Friends() {
   const [confirmAcceptChallenge, setConfirmAcceptChallenge] = useState<{ id: string; examId: string } | null>(null);
   const [confirmDeclineChallengeId, setConfirmDeclineChallengeId] = useState<string | null>(null);
 
+
+  const userId = userProfile?.id;
+
+  // ── React Query hooks ────────────────────────────────────────────
+  const getFriendLimitValue = () => {
+    const tier = userProfile?.PremiumType?.toLowerCase() || 'free';
+    if (tier.includes('peak')) return 50;
+    if (tier.includes('rise')) return 30;
+    if (tier.includes('lite')) return 15;
+    return 5;
+  };
+
+  const { data: friendsData = [], isFetching: loadingFriends } = useQuery<ProfileData[]>({
+    queryKey: ['friends', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('friends')
+        .select(`
+          sender_id,
+          receiver_id,
+          status,
+          sender:profiles!sender_id (id, name, username, profile_picture),
+          receiver:profiles!receiver_id (id, name, username, profile_picture)
+        `)
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+        .eq('status', 'accepted')
+        .order('updated_at', { ascending: false })
+        .limit(getFriendLimitValue());
+      if (error) throw error;
+      return (data || []).map((row: any) =>
+        row.sender_id === userId ? row.receiver : row.sender
+      );
+    },
+    enabled: !!userId,
+    staleTime: 0,
+    gcTime: Infinity,
+  });
+
+  const { data: requestsData = [], isFetching: loadingRequests } = useQuery<FriendRequest[]>({
+    queryKey: ['friendRequests', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('friends')
+        .select(`
+          id,
+          created_at,
+          sender:profiles!sender_id (id, name, username, profile_picture)
+        `)
+        .eq('receiver_id', userId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    enabled: !!userId,
+    staleTime: 0,
+    gcTime: Infinity,
+  });
+
+  const { data: dailyChallengeCountData = 0 } = useQuery<number>({
+    queryKey: ['dailyChallengeCount', userId],
+    queryFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count, error } = await supabase
+        .from('challenges')
+        .select('id', { count: 'exact' })
+        .eq('sender_id', userId)
+        .gte('created_at', today.toISOString());
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!userId,
+    staleTime: 0,
+    gcTime: Infinity,
+  });
+
+  const { data: receivedChallengesPage = [], isFetching: loadingReceived } = useQuery<any[]>({
+    queryKey: ['receivedChallenges', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('challenges')
+        .select(`
+          id, sender_id, receiver_id, status, created_at, updated_at, exam_id, receiver_exam_id,
+          sender:profiles!challenges_sender_id_fkey (id, name, username, profile_picture),
+          exams!challenges_exam_id_fkey (id, examName, totalQuestions, difficulty)
+        `)
+        .eq('receiver_id', userId)
+        .order('created_at', { ascending: false })
+        .range(0, 9);
+      if (error) throw error;
+      const examIds = [...new Set([
+        ...(data || []).map((r: any) => r.exam_id),
+        ...(data || []).map((r: any) => r.receiver_exam_id),
+      ].filter(Boolean))];
+      let resultsMap: Record<string, string> = {};
+      if (examIds.length > 0) {
+        const { data: rd } = await supabase.from('results').select('id, examId').in('examId', examIds);
+        (rd || []).forEach((r: any) => { resultsMap[r.examId] = r.id; });
+      }
+      return (data || []).map((row: any) => ({
+        id: row.id, sender_id: row.sender_id, receiver_id: row.receiver_id,
+        exam_id: row.exam_id, receiver_exam_id: row.receiver_exam_id,
+        status: row.status, created_at: row.created_at, updated_at: row.updated_at,
+        examName: row.exams?.examName || 'Deleted Exam',
+        totalQuestions: row.exams?.totalQuestions || 0,
+        difficulty: row.exams?.difficulty || 'medium',
+        friendName: row.sender?.name || 'Someone',
+        friendUsername: row.sender?.username || 'user',
+        friendProfilePic: row.sender?.profile_picture,
+        senderResultId: resultsMap[row.exam_id] || null,
+        receiverResultId: resultsMap[row.receiver_exam_id] || null,
+      }));
+    },
+    enabled: !!userId && activeTab === 'challenges' && challengeView === 'received',
+    staleTime: 0,
+    gcTime: Infinity,
+  });
+
+  const { data: sentChallengesPage = [], isFetching: loadingSent } = useQuery<any[]>({
+    queryKey: ['sentChallenges', userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('challenges')
+        .select(`
+          id, sender_id, receiver_id, status, created_at, updated_at, exam_id, receiver_exam_id,
+          receiver:profiles!challenges_receiver_id_fkey (id, name, username, profile_picture),
+          exams!challenges_exam_id_fkey (id, examName, totalQuestions, difficulty)
+        `)
+        .eq('sender_id', userId)
+        .order('created_at', { ascending: false })
+        .range(0, 9);
+      if (error) throw error;
+      const examIds = [...new Set([
+        ...(data || []).map((r: any) => r.exam_id),
+        ...(data || []).map((r: any) => r.receiver_exam_id),
+      ].filter(Boolean))];
+      let resultsMap: Record<string, string> = {};
+      if (examIds.length > 0) {
+        const { data: rd } = await supabase.from('results').select('id, examId').in('examId', examIds);
+        (rd || []).forEach((r: any) => { resultsMap[r.examId] = r.id; });
+      }
+      return (data || []).map((row: any) => ({
+        id: row.id, sender_id: row.sender_id, receiver_id: row.receiver_id,
+        exam_id: row.exam_id, receiver_exam_id: row.receiver_exam_id,
+        status: row.status, created_at: row.created_at, updated_at: row.updated_at,
+        examName: row.exams?.examName || 'Deleted Exam',
+        totalQuestions: row.exams?.totalQuestions || 0,
+        difficulty: row.exams?.difficulty || 'medium',
+        friendName: row.receiver?.name || 'Someone',
+        friendUsername: row.receiver?.username || 'user',
+        friendProfilePic: row.receiver?.profile_picture,
+        senderResultId: resultsMap[row.exam_id] || null,
+        receiverResultId: resultsMap[row.receiver_exam_id] || null,
+      }));
+    },
+    enabled: !!userId && activeTab === 'challenges' && challengeView === 'sent',
+    staleTime: 0,
+    gcTime: Infinity,
+  });
+
+  // Derived display lists: useQuery first page + any "load more" pages appended
+  const friendsList = friendsData;
+  const incomingRequests = requestsData;
+  const dailyChallengeCount = dailyChallengeCountData;
+  const receivedChallenges = [...receivedChallengesPage, ...moreReceivedChallenges];
+  const sentChallenges = [...sentChallengesPage, ...moreSentChallenges];
+  // Show "Load More" if first page was full OR a manual page came back full
+  const canLoadMoreReceived = receivedChallengesPage.length === 10 || hasMoreReceived;
+  const canLoadMoreSent = sentChallengesPage.length === 10 || hasMoreSent;
+  // ────────────────────────────────────────────────────────────────
 
   const checkChallengesCategory = async () => {
     if (!userProfile?.id) return;
@@ -150,14 +316,6 @@ export default function Friends() {
     }
   };
 
-  const getFriendLimit = () => {
-    const tier = userProfile?.PremiumType?.toLowerCase() || 'free';
-    if (tier.includes('peak')) return 50;
-    if (tier.includes('rise')) return 30;
-    if (tier.includes('lite')) return 15;
-    return 5;
-  };
-
   const getMaxChallengesPerDay = () => {
     const tier = userProfile?.PremiumType?.toLowerCase() || 'free';
     if (tier.includes('peak')) return 20;
@@ -167,60 +325,38 @@ export default function Friends() {
   };
 
 
-  const fetchReceivedChallenges = async (offset = 0) => {
-    if (!userProfile?.id) return;
-    if (offset === 0) {
-      setLoadingReceived(true);
-      setReceivedOffset(0);
-    }
+  const fetchReceivedChallengesMore = async (offset: number) => {
+    if (!userId) return;
+    setLoadingMoreReceived(true);
+    setReceivedOffset(offset);
     try {
       const { data, error } = await supabase
         .from('challenges')
         .select(`
-          id,
-          sender_id,
-          receiver_id,
-          status,
-          created_at,
-          updated_at,
-          exam_id,
-          receiver_exam_id,
+          id, sender_id, receiver_id, status, created_at, updated_at, exam_id, receiver_exam_id,
           sender:profiles!challenges_sender_id_fkey (id, name, username, profile_picture),
           exams!challenges_exam_id_fkey (id, examName, totalQuestions, difficulty)
         `)
-        .eq('receiver_id', userProfile.id)
+        .eq('receiver_id', userId)
         .order('created_at', { ascending: false })
         .range(offset, offset + 9);
 
       if (error) throw error;
 
-      const examIds = (data || []).map((row: any) => row.exam_id).filter(Boolean);
-      const receiverExamIds = (data || []).map((row: any) => row.receiver_exam_id).filter(Boolean);
-      const allExamIds = [...new Set([...examIds, ...receiverExamIds])];
-
-      let resultsMap: { [key: string]: string } = {};
-      if (allExamIds.length > 0) {
-        const { data: resultsData } = await supabase
-          .from('results')
-          .select('id, examId')
-          .in('examId', allExamIds);
-
-        if (resultsData) {
-          resultsData.forEach((r: any) => {
-            resultsMap[r.examId] = r.id;
-          });
-        }
+      const examIds = [...new Set([
+        ...(data || []).map((r: any) => r.exam_id),
+        ...(data || []).map((r: any) => r.receiver_exam_id),
+      ].filter(Boolean))];
+      let resultsMap: Record<string, string> = {};
+      if (examIds.length > 0) {
+        const { data: rd } = await supabase.from('results').select('id, examId').in('examId', examIds);
+        (rd || []).forEach((r: any) => { resultsMap[r.examId] = r.id; });
       }
 
       const list = (data || []).map((row: any) => ({
-        id: row.id,
-        sender_id: row.sender_id,
-        receiver_id: row.receiver_id,
-        exam_id: row.exam_id,
-        receiver_exam_id: row.receiver_exam_id,
-        status: row.status,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
+        id: row.id, sender_id: row.sender_id, receiver_id: row.receiver_id,
+        exam_id: row.exam_id, receiver_exam_id: row.receiver_exam_id,
+        status: row.status, created_at: row.created_at, updated_at: row.updated_at,
         examName: row.exams?.examName || 'Deleted Exam',
         totalQuestions: row.exams?.totalQuestions || 0,
         difficulty: row.exams?.difficulty || 'medium',
@@ -231,73 +367,47 @@ export default function Friends() {
         receiverResultId: resultsMap[row.receiver_exam_id] || null,
       }));
 
-      if (offset === 0) {
-        setReceivedChallenges(list);
-      } else {
-        setReceivedChallenges(prev => [...prev, ...list]);
-      }
+      setMoreReceivedChallenges(prev => [...prev, ...list]);
       setHasMoreReceived(list.length === 10);
     } catch (err) {
-      console.error('Error fetching received challenges:', err);
+      console.error('Error fetching more received challenges:', err);
     } finally {
-      setLoadingReceived(false);
+      setLoadingMoreReceived(false);
     }
   };
 
-  const fetchSentChallenges = async (offset = 0) => {
-    if (!userProfile?.id) return;
-    if (offset === 0) {
-      setLoadingSent(true);
-      setSentOffset(0);
-    }
+  const fetchSentChallengesMore = async (offset: number) => {
+    if (!userId) return;
+    setLoadingMoreSent(true);
+    setSentOffset(offset);
     try {
       const { data, error } = await supabase
         .from('challenges')
         .select(`
-          id,
-          sender_id,
-          receiver_id,
-          status,
-          created_at,
-          updated_at,
-          exam_id,
-          receiver_exam_id,
+          id, sender_id, receiver_id, status, created_at, updated_at, exam_id, receiver_exam_id,
           receiver:profiles!challenges_receiver_id_fkey (id, name, username, profile_picture),
           exams!challenges_exam_id_fkey (id, examName, totalQuestions, difficulty)
         `)
-        .eq('sender_id', userProfile.id)
+        .eq('sender_id', userId)
         .order('created_at', { ascending: false })
         .range(offset, offset + 9);
 
       if (error) throw error;
 
-      const examIds = (data || []).map((row: any) => row.exam_id).filter(Boolean);
-      const receiverExamIds = (data || []).map((row: any) => row.receiver_exam_id).filter(Boolean);
-      const allExamIds = [...new Set([...examIds, ...receiverExamIds])];
-
-      let resultsMap: { [key: string]: string } = {};
-      if (allExamIds.length > 0) {
-        const { data: resultsData } = await supabase
-          .from('results')
-          .select('id, examId')
-          .in('examId', allExamIds);
-
-        if (resultsData) {
-          resultsData.forEach((r: any) => {
-            resultsMap[r.examId] = r.id;
-          });
-        }
+      const examIds = [...new Set([
+        ...(data || []).map((r: any) => r.exam_id),
+        ...(data || []).map((r: any) => r.receiver_exam_id),
+      ].filter(Boolean))];
+      let resultsMap: Record<string, string> = {};
+      if (examIds.length > 0) {
+        const { data: rd } = await supabase.from('results').select('id, examId').in('examId', examIds);
+        (rd || []).forEach((r: any) => { resultsMap[r.examId] = r.id; });
       }
 
       const list = (data || []).map((row: any) => ({
-        id: row.id,
-        sender_id: row.sender_id,
-        receiver_id: row.receiver_id,
-        exam_id: row.exam_id,
-        receiver_exam_id: row.receiver_exam_id,
-        status: row.status,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
+        id: row.id, sender_id: row.sender_id, receiver_id: row.receiver_id,
+        exam_id: row.exam_id, receiver_exam_id: row.receiver_exam_id,
+        status: row.status, created_at: row.created_at, updated_at: row.updated_at,
         examName: row.exams?.examName || 'Deleted Exam',
         totalQuestions: row.exams?.totalQuestions || 0,
         difficulty: row.exams?.difficulty || 'medium',
@@ -308,51 +418,27 @@ export default function Friends() {
         receiverResultId: resultsMap[row.receiver_exam_id] || null,
       }));
 
-      if (offset === 0) {
-        setSentChallenges(list);
-      } else {
-        setSentChallenges(prev => [...prev, ...list]);
-      }
+      setMoreSentChallenges(prev => [...prev, ...list]);
       setHasMoreSent(list.length === 10);
     } catch (err) {
-      console.error('Error fetching sent challenges:', err);
+      console.error('Error fetching more sent challenges:', err);
     } finally {
-      setLoadingSent(false);
+      setLoadingMoreSent(false);
     }
   };
 
   const loadMoreReceived = async () => {
-    if (loadingReceived || !hasMoreReceived) return;
+    if (loadingMoreReceived || !hasMoreReceived) return;
     const newOffset = receivedOffset + 10;
-    setReceivedOffset(newOffset);
-    await fetchReceivedChallenges(newOffset);
+    await fetchReceivedChallengesMore(newOffset);
   };
 
   const loadMoreSent = async () => {
-    if (loadingSent || !hasMoreSent) return;
+    if (loadingMoreSent || !hasMoreSent) return;
     const newOffset = sentOffset + 10;
-    setSentOffset(newOffset);
-    await fetchSentChallenges(newOffset);
+    await fetchSentChallengesMore(newOffset);
   };
 
-  const fetchDailyChallengeCount = async () => {
-    if (!userProfile?.id) return;
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const { count, error } = await supabase
-        .from('challenges')
-        .select('id', { count: 'exact' })
-        .eq('sender_id', userProfile.id)
-        .gte('created_at', today.toISOString());
-
-      if (error) throw error;
-      setDailyChallengeCount(count || 0);
-    } catch (err) {
-      console.error('Error fetching daily challenge count:', err);
-    }
-  };
 
 
   const fetchExamsForChallenge = async (offset = 0, query = '', append = false) => {
@@ -473,10 +559,10 @@ export default function Friends() {
       setShowExamSelector(false);
       setSelectedFriendForChallenge(null);
       setConfirmSendExamId(null);
-      await fetchDailyChallengeCount();
-      if (activeTab === 'challenges') {
-        await fetchSentChallenges(0);
-      }
+      queryClient.invalidateQueries({ queryKey: ['dailyChallengeCount', userId] });
+      queryClient.invalidateQueries({ queryKey: ['sentChallenges', userId] });
+      setMoreSentChallenges([]);
+      setSentOffset(0);
     } catch (err: any) {
       console.error('Error sending challenge:', err);
       setChallengeError(err?.message || 'Failed to send challenge');
@@ -556,7 +642,9 @@ export default function Friends() {
       if (error) throw error;
 
       setConfirmAcceptChallenge(null);
-      await fetchReceivedChallenges(0);
+      queryClient.invalidateQueries({ queryKey: ['receivedChallenges', userId] });
+      setMoreReceivedChallenges([]);
+      setReceivedOffset(0);
       navigate(`/exam-details/${categoryId}`);
     } catch (err: any) {
       console.error('Error accepting challenge:', err);
@@ -577,7 +665,9 @@ export default function Friends() {
 
       if (error) throw error;
       setConfirmDeclineChallengeId(null);
-      await fetchReceivedChallenges(0);
+      queryClient.invalidateQueries({ queryKey: ['receivedChallenges', userId] });
+      setMoreReceivedChallenges([]);
+      setReceivedOffset(0);
     } catch (err: any) {
       console.error('Error declining challenge:', err);
       setChallengeError(err.message || 'Failed to decline challenge');
@@ -586,64 +676,6 @@ export default function Friends() {
     }
   };
 
-  const fetchFriends = async () => {
-    if (!userProfile?.id) return;
-    setLoadingFriends(true);
-    try {
-      const { data, error } = await supabase
-        .from('friends')
-        .select(`
-          sender_id,
-          receiver_id,
-          status,
-          sender:profiles!sender_id (id, name, username, profile_picture),
-          receiver:profiles!receiver_id (id, name, username, profile_picture)
-        `)
-        .or(`sender_id.eq.${userProfile.id},receiver_id.eq.${userProfile.id}`)
-        .eq('status', 'accepted')
-        .order('updated_at', { ascending: false })
-        .limit(getFriendLimit());
-
-      if (error) throw error;
-
-      const list = (data || []).map((row: any) => {
-        if (row.sender_id === userProfile.id) {
-          return row.receiver;
-        } else {
-          return row.sender;
-        }
-      });
-      setFriendsList(list);
-    } catch (err) {
-      console.error('Error fetching friends:', err);
-    } finally {
-      setLoadingFriends(false);
-    }
-  };
-
-  const fetchRequests = async () => {
-    if (!userProfile?.id) return;
-    setLoadingRequests(true);
-    try {
-      const { data, error } = await supabase
-        .from('friends')
-        .select(`
-          id,
-          created_at,
-          sender:profiles!sender_id (id, name, username, profile_picture)
-        `)
-        .eq('receiver_id', userProfile.id)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setIncomingRequests((data || []) as any[]);
-    } catch (err) {
-      console.error('Error fetching incoming requests:', err);
-    } finally {
-      setLoadingRequests(false);
-    }
-  };
 
   const handleAcceptRequest = async (requestId: string) => {
     try {
@@ -653,8 +685,8 @@ export default function Friends() {
         .eq('id', requestId);
 
       if (error) throw error;
-      await fetchRequests();
-      await fetchFriends();
+      queryClient.invalidateQueries({ queryKey: ['friendRequests', userId] });
+      queryClient.invalidateQueries({ queryKey: ['friends', userId] });
     } catch (err) {
       console.error('Error accepting request:', err);
     }
@@ -668,30 +700,17 @@ export default function Friends() {
         .eq('id', requestId);
 
       if (error) throw error;
-      await fetchRequests();
+      queryClient.invalidateQueries({ queryKey: ['friendRequests', userId] });
     } catch (err) {
       console.error('Error declining request:', err);
     }
   };
 
   useEffect(() => {
-    if (userProfile?.id) {
-      fetchRequests();
-      fetchFriends();
-      fetchDailyChallengeCount();
+    if (userId) {
       checkChallengesCategory();
     }
-  }, [userProfile]);
-
-  useEffect(() => {
-    if (userProfile?.id && activeTab === 'challenges') {
-      if (challengeView === 'received') {
-        fetchReceivedChallenges(0);
-      } else {
-        fetchSentChallenges(0);
-      }
-    }
-  }, [userProfile?.id, activeTab, challengeView]);
+  }, [userId]);
 
   const handleSendRequest = async (targetId: string) => {
     if (!userProfile?.id) return;
@@ -850,13 +869,13 @@ export default function Friends() {
             setChallengeView={setChallengeView}
             maxChallengesPerDay={getMaxChallengesPerDay()}
             dailyChallengeCount={dailyChallengeCount}
-            loadingReceived={loadingReceived}
+            loadingReceived={loadingReceived || loadingMoreReceived}
             receivedChallenges={receivedChallenges}
-            hasMoreReceived={hasMoreReceived}
+            hasMoreReceived={canLoadMoreReceived}
             onLoadMoreReceived={loadMoreReceived}
-            loadingSent={loadingSent}
+            loadingSent={loadingSent || loadingMoreSent}
             sentChallenges={sentChallenges}
-            hasMoreSent={hasMoreSent}
+            hasMoreSent={canLoadMoreSent}
             onLoadMoreSent={loadMoreSent}
             challengeActionLoading={challengeActionLoading}
             challengesExamTypeId={challengesExamTypeId}

@@ -38,7 +38,7 @@ export default function RevisionQuestionsList({ questions }: RevisionQuestionsLi
                 <div className="break-words w-full">
                   <span className="text-zinc-500 font-medium block mb-1">Your Answer:</span>
                   <span className="text-red-650 dark:text-red-400 font-medium break-words block w-full whitespace-normal">
-                    {question.userAnswer ? <MathText text={question.userAnswer} /> : <span className="text-zinc-500 dark:text-zinc-650 italic">Skipped</span>}
+                    {question.userAnswer ? <MathText text={question.userAnswer} /> : <span className="text-zinc-500 dark:text-zinc-650 ">Skipped</span>}
                   </span>
                 </div>
                 {(question.correctAnswer || question.correct_answer) && (

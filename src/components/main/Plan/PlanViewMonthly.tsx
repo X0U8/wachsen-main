@@ -25,7 +25,7 @@ export default function PlanViewMonthly({ createdAt, planJson }: PlanViewMonthly
   const todayMidnight = new Date();
   const diffDays = Math.max(0, Math.floor(
     (Date.UTC(todayMidnight.getFullYear(), todayMidnight.getMonth(), todayMidnight.getDate()) -
-     Date.UTC(createdMidnight.getFullYear(), createdMidnight.getMonth(), createdMidnight.getDate())) /
+      Date.UTC(createdMidnight.getFullYear(), createdMidnight.getMonth(), createdMidnight.getDate())) /
     (1000 * 60 * 60 * 24)
   ));
   const activeMonth = Math.min(Math.floor(diffDays / 30) + 1, planJson?.months?.length || 1);
@@ -41,7 +41,7 @@ export default function PlanViewMonthly({ createdAt, planJson }: PlanViewMonthly
     start.setDate(start.getDate() + (monthNum - 1) * 30);
     const end = new Date(start);
     end.setDate(start.getDate() + 29);
-    
+
     const formatDateStr = (d: Date) => {
       const dd = String(d.getDate()).padStart(2, '0');
       const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -105,7 +105,7 @@ export default function PlanViewMonthly({ createdAt, planJson }: PlanViewMonthly
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-zinc-400 dark:text-gray-600 italic font-medium text-xs">
+                      <p className="text-zinc-400 dark:text-gray-600  font-medium text-xs">
                         Revision / Practice or no syllabus allocated
                       </p>
                     )}

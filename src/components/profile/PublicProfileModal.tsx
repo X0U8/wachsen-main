@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { fontSize } from '../../lib/utils';
 import { useTheme } from '../../lib/ThemeContext.tsx';
 import { supabase } from '../../services/supabase';
+import { useQueryClient } from '@tanstack/react-query';
+import localStorageCache from '../../lib/localStorage';
 import ProfileCard from './ProfileCard';
 import ProfileAnalyticsView from './ProfileAnalyticsView';
 
@@ -21,6 +23,7 @@ const getDailyImportLimit = (plan: string) => {
 
 export default function PublicProfileModal({ onClose, userId }: { onClose: () => void; userId?: string }) {
   const { userProfile: loggedInProfile } = useUserProfile();
+  const queryClient = useQueryClient();
   const { theme, fontSizeLevel } = useTheme();
   const scale = {
     small: 0.85,
@@ -220,15 +223,18 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
     }
 
     try {
-      const { data: countData, error: countErr } = await supabase
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const { count: todayCount, error: countErr } = await supabase
         .from('import_logs')
-        .select('created_at')
-        .eq('userId', loggedInProfile?.id);
+        .select('*', { count: 'exact', head: true })
+        .eq('userId', loggedInProfile?.id)
+        .gte('created_at', today.toISOString());
 
       if (countErr) throw countErr;
 
-      const todayStr = new Date().toDateString();
-      const todayImports = (countData || []).filter(log => new Date(log.created_at).toDateString() === todayStr).length;
+      const todayImports = todayCount ?? 0;
 
       const limit = getDailyImportLimit(loggedInProfile?.PremiumType || '');
       if (todayImports >= limit) {
@@ -269,16 +275,27 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
     setImporting(true);
     setImportError('');
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('examtypes')
         .insert({
           userId: loggedInProfile.id,
           name: 'others',
           subjects: ['any'],
           academicLevel: 'any'
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Update localStorage cache so ExamPage shows 'others' immediately
+      const cached = localStorageCache.get<any[]>(localStorageCache.keys.EXAM_CATEGORIES) || [];
+      const newCategory = { id: data.id, name: 'others', subjects: ['any'], academicLevel: 'any' };
+      localStorageCache.set(localStorageCache.keys.EXAM_CATEGORIES, [...cached, newCategory]);
+
+      // Invalidate the TanStack Query so ExamPage re-renders
+      queryClient.invalidateQueries({ queryKey: ['examCategories', loggedInProfile.id] });
+
       setShowCreateOthersCategoryModal(false);
       setShowConfirmImportModal(true);
     } catch (err: any) {

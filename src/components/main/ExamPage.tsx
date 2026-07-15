@@ -356,9 +356,11 @@ export default function Exam() {
   });
 
   const displayedCategories = examTypes.filter(cat => {
-    if (filterOutDefaultAny(cat)) return false;
+    // Check special categories by name FIRST — filterOutDefaultAny would incorrectly
+    // exclude 'others'/'challenges' since they use subjects:['any'] / academicLevel:'any'
     if (cat.name === 'challenges') return showChallenges;
     if (cat.name === 'others') return showOthers;
+    if (filterOutDefaultAny(cat)) return false;
     return true;
   });
   const slotsLeft = getMaxExamTypes() - nonChallengeExamTypes.length;

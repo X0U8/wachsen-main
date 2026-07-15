@@ -455,6 +455,7 @@ export default function Friends() {
         .from('exams')
         .select('id, examName, totalQuestions, difficulty')
         .eq('createdBy', userProfile.id)
+        .eq('status', 'Completed')
         .order('created_at', { ascending: false })
         .range(offset, offset + 9);
 

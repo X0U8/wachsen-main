@@ -274,7 +274,8 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
         .insert({
           userId: loggedInProfile.id,
           name: 'others',
-          sub: []
+          subjects: ['any'],
+          academicLevel: 'any'
         });
 
       if (error) throw error;

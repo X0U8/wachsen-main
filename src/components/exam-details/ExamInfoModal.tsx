@@ -149,6 +149,7 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
                   if (isExpired) message = "This exam has expired.";
                   else if (exam.status === 'Ongoing') message = "This exam is already ongoing.";
                   else if (exam.status === 'Completed') message = "This exam is already completed.";
+                  console.log('[ExamInfoModal] Start blocked:', message);
 
                   return (
                     <div className="space-y-3">

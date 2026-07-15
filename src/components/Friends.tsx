@@ -629,8 +629,9 @@ export default function Friends() {
           status: 'Pending',
           examType: 'practice',
           accessType: 'anytime',
-          startDateTime: null,
-          endDateTime: null,
+          startDateTime: 'anytime',
+          endDateTime: 'anytime',
+          isPublic: true,
         })
         .select('id')
         .single();

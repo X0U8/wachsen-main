@@ -133,6 +133,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUserProfile(null);
         setUserPresence(null);
         setProfileLoading(false);
+        localStorage.removeItem('wachsen_react_query_cache');
       }
     });
 
@@ -144,6 +145,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUserProfile(null);
         setUserPresence(null);
         setProfileLoading(false);
+        localStorage.removeItem('wachsen_react_query_cache');
       }
     });
 

@@ -20,7 +20,7 @@ import { MathJaxProvider } from './lib/MathJaxContext.tsx';
 import Loading from './components/Loading';
 import SuspendedOverlay from './components/SuspendedOverlay';
 import { Session } from '@supabase/supabase-js';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, dehydrate, hydrate } from '@tanstack/react-query';
 import localStorageCache from './lib/localStorage';
 
 const queryClient = new QueryClient({
@@ -33,6 +33,29 @@ const queryClient = new QueryClient({
       gcTime: Infinity,
     },
   },
+});
+
+// Restore dehydrated cache state on startup
+try {
+  const savedState = localStorage.getItem('wachsen_react_query_cache');
+  if (savedState) {
+    const parsed = JSON.parse(savedState);
+    hydrate(queryClient, parsed);
+  }
+} catch (e) {
+  console.warn('Failed to restore query client cache:', e);
+}
+
+// Persist query cache updates on query successes
+queryClient.getQueryCache().subscribe((event) => {
+  if (event.type === 'updated' && event.query.state.status === 'success') {
+    try {
+      const dehydrated = dehydrate(queryClient);
+      localStorage.setItem('wachsen_react_query_cache', JSON.stringify(dehydrated));
+    } catch (e) {
+      console.warn('Failed to persist query client cache:', e);
+    }
+  }
 });
 
 function MainApp() {

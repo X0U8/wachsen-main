@@ -323,8 +323,22 @@ export default function Exam() {
     }
   };
 
-  const showChallenges = localStorage.getItem('show_challenges_category') === 'true';
-  const showOthers = localStorage.getItem('show_others_category') === 'true';
+  const [showChallenges, setShowChallenges] = useState(
+    () => localStorage.getItem('show_challenges_category') === 'true'
+  );
+  const [showOthers, setShowOthers] = useState(
+    () => localStorage.getItem('show_others_category') === 'true'
+  );
+
+  // Re-sync when Settings writes to localStorage (same-tab navigation or cross-tab)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'show_challenges_category') setShowChallenges(e.newValue === 'true');
+      if (e.key === 'show_others_category') setShowOthers(e.newValue === 'true');
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const filterOutDefaultAny = (cat: ExamType) => {
     const hasAnyAcademic = cat.academicLevel?.toLowerCase() === 'any';

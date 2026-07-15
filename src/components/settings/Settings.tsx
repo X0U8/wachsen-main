@@ -110,12 +110,14 @@ export default function Settings() {
     const nextVal = !showChallengesCategory;
     setShowChallengesCategory(nextVal);
     localStorage.setItem('show_challenges_category', nextVal ? 'true' : 'false');
+    window.dispatchEvent(new StorageEvent('storage', { key: 'show_challenges_category', newValue: nextVal ? 'true' : 'false' }));
   };
 
   const toggleShowOthersCategory = () => {
     const nextVal = !showOthersCategory;
     setShowOthersCategory(nextVal);
     localStorage.setItem('show_others_category', nextVal ? 'true' : 'false');
+    window.dispatchEvent(new StorageEvent('storage', { key: 'show_others_category', newValue: nextVal ? 'true' : 'false' }));
   };
 
   const handleLogout = async () => {

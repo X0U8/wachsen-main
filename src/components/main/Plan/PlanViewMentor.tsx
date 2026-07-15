@@ -235,7 +235,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
       if (!response.ok) {
         const errorText = await response.text();
         let errorData: any = {};
-        try { errorData = JSON.parse(errorText); } catch (_) {}
+        try { errorData = JSON.parse(errorText); } catch (_) { }
         throw new Error(errorData.error || 'Failed to fetch response from Mentor.');
       }
 
@@ -246,7 +246,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
         text: '',
         timestamp: Date.now()
       };
-      
+
       let currentMessages = [...updatedMessages, aiMsgObj];
       setMessages(currentMessages);
 
@@ -303,7 +303,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
               setMessages(currentMessages);
             }
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       await idbSet(`mentor_chat_${planId}`, currentMessages);
@@ -328,6 +328,15 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
   const handleLoadOlder = () => {
     setVisibleCount(prev => prev + 20);
   };
+
+  if (loadingCategories || !chatLoaded) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-3 border border-black/15 dark:border-white/20 bg-white dark:bg-zinc-900/40 rounded-3xl h-[600px] shadow-sm">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+        <p className="text-zinc-400 text-xs font-semibold">Loading Study Mentor</p>
+      </div>
+    );
+  }
 
   return (
     <>

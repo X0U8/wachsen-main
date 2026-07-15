@@ -84,7 +84,7 @@ export const ActionConfirmModals: React.FC<ActionConfirmModalsProps> = ({
             <h3 className="font-semibold text-zinc-900 dark:text-white mb-2 text-sm">Accept Challenge?</h3>
             <p
               className="text-zinc-500 dark:text-zinc-400 mb-5 leading-relaxed font-medium text-xs">
-              Accepting will copy this exam to your <strong>challenges</strong> category so you can take it. Ready?
+              Accepting will copy this exam to your <strong>challenges</strong> ExamType so you can take it. Ready?
             </p>
 
             {challengeError && (

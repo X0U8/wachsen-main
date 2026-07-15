@@ -39,7 +39,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [showProfileCard, setShowProfileCard] = useState(true);
-  
+
   const [activeTab, setActiveTab] = useState<'questions' | 'analytics'>('questions');
   const [expandedExamIds, setExpandedExamIds] = useState<string[]>([]);
 
@@ -283,7 +283,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       setShowCreateOthersCategoryModal(false);
       setShowConfirmImportModal(true);
     } catch (err: any) {
-      setImportError(err.message || 'Failed to create others category.');
+      setImportError(err.message || 'Failed to create others ExamType.');
     } finally {
       setImporting(false);
     }
@@ -296,7 +296,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
     setImportSuccess('');
     try {
       const othersId = await checkOthersCategory();
-      if (!othersId) throw new Error("Category 'others' not found.");
+      if (!othersId) throw new Error("ExamType 'others' not found.");
 
       const { data: sourceQuestions, error: qErr } = await supabase
         .from('questions')
@@ -410,28 +410,26 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
             <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-[280px] mx-auto flex-shrink-0">
               <button
                 onClick={() => setActiveTab('questions')}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${
-                  activeTab === 'questions'
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${activeTab === 'questions'
                     ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
                     : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-                }`}
+                  }`}
               >
                 Questions
               </button>
               <button
                 onClick={() => setActiveTab('analytics')}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${
-                  activeTab === 'analytics'
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${activeTab === 'analytics'
                     ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
                     : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
-                }`}
+                  }`}
               >
                 Analytics
               </button>
             </div>
 
             <div className="flex-1 w-full max-w-[360px] sm:max-w-[560px] md:max-w-[660px] lg:max-w-[740px] flex flex-col min-h-0 overflow-y-auto pr-1">
-              
+
               {activeTab === 'questions' ? (
                 <div className="flex-grow flex flex-col min-h-0 space-y-4">
                   <div className="flex items-center justify-between px-1 flex-shrink-0">
@@ -490,7 +488,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                                 </button>
                               )}
                             </div>
-                             {groupedPlan.length > 0 && (() => {
+                            {groupedPlan.length > 0 && (() => {
                               const isExpanded = expandedExamIds.includes(exam.id);
                               return (
                                 <div className="w-full pt-1.5 flex items-start gap-3">
@@ -596,9 +594,9 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       {showCreateOthersCategoryModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[260] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800/80 rounded-3xl p-5 w-full max-w-[340px] shadow-2xl relative overflow-hidden text-center space-y-4">
-            <h4 className="font-bold text-zinc-900 dark:text-white text-base">Create Category</h4>
+            <h4 className="font-bold text-zinc-900 dark:text-white text-base">Create ExamType</h4>
             <p className="text-zinc-500 font-medium text-xs leading-relaxed">
-              We need to initialize a default category named <strong>others</strong> on your account to import this exam.
+              We need to initialize a default ExamType named <strong>others</strong> on your account to import this exam.
             </p>
             {importError && (
               <div className="flex items-center gap-1.5 text-red-500 justify-center font-semibold text-[10px]">

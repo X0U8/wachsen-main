@@ -345,7 +345,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
           <div className="space-y-1.5 max-w-sm">
             <h4 className="font-bold text-zinc-800 dark:text-gray-250 text-sm">Link Exam Type to Mentor AI</h4>
             <p className="text-zinc-500 dark:text-gray-400 text-xs leading-relaxed">
-              Select a preparation category to provide Mentor AI with mock exam scores and progress context automatically.
+              Select a preparation ExamType to provide Mentor AI with mock exam scores and progress context automatically.
             </p>
           </div>
 

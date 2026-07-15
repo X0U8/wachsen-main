@@ -280,7 +280,7 @@ export default function Friends() {
         setShowMissingCategoryModal(true);
       }
     } catch (err) {
-      console.error('Error checking challenges category:', err);
+      console.error('Error checking challenges ExamType:', err);
     }
   };
 
@@ -310,7 +310,7 @@ export default function Friends() {
 
       queryClient.invalidateQueries({ queryKey: ['examCategories', userProfile.id] });
     } catch (err) {
-      console.error('Error creating challenges category:', err);
+      console.error('Error creating challenges ExamType:', err);
     } finally {
       setCreatingCategory(false);
     }
@@ -590,7 +590,7 @@ export default function Friends() {
       }
 
       if (!categoryId) {
-        throw new Error('Please create the "challenges" category first.');
+        throw new Error('Please create the "challenges" ExamType first.');
       }
 
 

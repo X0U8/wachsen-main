@@ -96,7 +96,7 @@ export default function EditCategoryModal({
             </div>
 
             <div>
-              <label className="text-zinc-500 dark:text-gray-500 mb-1 block text-xs">Category Name</label>
+              <label className="text-zinc-500 dark:text-gray-500 mb-1 block text-xs">ExamType Name</label>
               <input
                 autoFocus
                 value={form.examName}

@@ -380,7 +380,7 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
             </h3>
 
             <div className="flex items-center gap-3">
-              <span className="text-zinc-550 font-semibold text-xs">Category:</span>
+              <span className="text-zinc-550 font-semibold text-xs">ExamType:</span>
               <select
                 value={selectedCatId}
                 onChange={(e) => {
@@ -456,7 +456,7 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
             ) : (
               <div
                 className="flex flex-col items-center justify-center py-10 text-center text-zinc-500 font-semibold text-xs">
-                No exam score history found for this category.
+                No exam score history found for this ExamType.
               </div>
             )}
           </div>
@@ -464,7 +464,7 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
           <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-zinc-800 rounded-2xl p-4 space-y-3">
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-zinc-800 dark:text-zinc-100 text-sm">
-                Category Summary
+                ExamType Summary
               </h3>
               <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-xl border border-zinc-200 dark:border-zinc-800">
                 <button

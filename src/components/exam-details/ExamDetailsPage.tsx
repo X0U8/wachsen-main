@@ -198,7 +198,7 @@ Return ONLY a valid JSON array matching this format:
         {
           question: `Subject: ${trimmedSubject}. Topic: ${trimmedTopic}. Generate exactly 20 cheat-card style memorization items.
 VERY IMPORTANT: The target academic difficulty level of the student is: ${level}. The requested difficulty for this deck is: ${diffLabel}.
-Exam category / context: ${categoryName}.
+Exam ExamType / context: ${categoryName}.
 ${contentInstruction}
 For "easy", use simple recall items. For "medium", standard memorization items. For "hard", deeper or more detailed recall. For "advance", generate the absolute hardest memorization items possible for this topic and academic level — the most exam-critical, complex, and demanding facts/formulas the student must master.
 Each item must be short and designed for fast memorization.
@@ -285,7 +285,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
     gcTime: Infinity,
   });
 
-  // Count pending exams for this category to enforce 100-exam spam limit
+  // Count pending exams for this ExamType to enforce 100-exam spam limit
   const { data: pendingExamCount = 0 } = useQuery({
     queryKey: ['pendingExamCount', id, userProfile?.id],
     queryFn: async () => {
@@ -304,7 +304,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
     gcTime: Infinity,
   });
 
-  // Count pending LAQ exams for this category
+  // Count pending LAQ exams for this ExamType
   const { data: pendingLaqCount = 0 } = useQuery({
     queryKey: ['pendingLaqCount', id, userProfile?.id],
     queryFn: async () => {
@@ -388,8 +388,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       setShowEditCategoryModal(false);
       queryClient.invalidateQueries({ queryKey: ['examCategories', userProfile?.$id] });
     } catch (error) {
-      console.error('Error updating category:', error);
-      showNotification('error', 'Failed to update category. Please try again.');
+      console.error('Error updating ExamType:', error);
+      showNotification('error', 'Failed to update ExamType. Please try again.');
     } finally {
       setIsSavingCategory(false);
     }
@@ -420,7 +420,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           {examType?.name !== 'challenges' && examType?.name !== 'others' && (
             <button onClick={handleOpenEditCategoryModal}
               className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors"
-              title="Update Category">
+              title="Update ExamType">
               <Wrench className="w-4 h-4 text-zinc-500 dark:text-gray-400" />
             </button>
           )}
@@ -439,8 +439,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex-1 py-2 sm:py-2.5 px-2 sm:px-4 font-semibold tracking-wider rounded-lg transition-all duration-200 cursor-pointer text-xs ${activeTab === tab.key
-                    ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
                   }`}
               >
                 {tab.label}
@@ -557,7 +557,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                 onClick={() => {
                   if ((pendingExamCount as number) >= 100) {
                     setShowTypeSelector(false);
-                    showNotification('error', 'You already have 100+ pending exams in this category that you haven\'t taken yet.');
+                    showNotification('error', 'You already have 100+ pending exams in this ExamType that you haven\'t taken yet.');
                     return;
                   }
                   setShowTypeSelector(false);
@@ -596,7 +596,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                 onClick={() => {
                   if ((pendingLaqCount as number) >= 100) {
                     setShowTypeSelector(false);
-                    showNotification('error', 'You already have 100+ pending LAQ exams in this category that you haven\'t taken yet.');
+                    showNotification('error', 'You already have 100+ pending LAQ exams in this ExamType that you haven\'t taken yet.');
                     return;
                   }
                   setShowTypeSelector(false);

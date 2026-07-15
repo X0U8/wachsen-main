@@ -135,7 +135,7 @@ export default function Exam() {
               changed = true;
             }
           } catch (e) {
-            console.error("Error loading challenges category separately:", e);
+            console.error("Error loading challenges ExamType separately:", e);
           }
         }
 
@@ -158,7 +158,7 @@ export default function Exam() {
               changed = true;
             }
           } catch (e) {
-            console.error("Error loading others category separately:", e);
+            console.error("Error loading others ExamType separately:", e);
           }
         }
 

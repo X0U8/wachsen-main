@@ -77,7 +77,7 @@ const resolveConceptsFromPlan = (questions: any[], planData: any) => {
             const topicsText = Array.isArray(segment.topics)
               ? segment.topics.join(', ')
               : (segment.topics || '');
-            
+
             resolvedSubject = subName;
             resolvedTopic = topicsText;
             break;
@@ -95,9 +95,9 @@ const resolveConceptsFromPlan = (questions: any[], planData: any) => {
     }
 
     const currentConcept = q.concept || q.chapter || '';
-    const isPlaceholder = !currentConcept || 
-      /review/i.test(currentConcept) || 
-      /subtopic/i.test(currentConcept) || 
+    const isPlaceholder = !currentConcept ||
+      /review/i.test(currentConcept) ||
+      /subtopic/i.test(currentConcept) ||
       currentConcept === 'N/A';
 
     if (conceptText && (isPlaceholder || conceptText !== currentConcept)) {
@@ -322,7 +322,7 @@ Return ONLY a valid JSON array matching this format:
             acadLevel = catDataDoc?.academicLevel || '';
           }
         } catch (dbErr) {
-          console.error('Error loading exam category details:', dbErr);
+          console.error('Error loading exam ExamType details:', dbErr);
         }
         setExamCategoryId(categoryId);
         setAcademicLevel(acadLevel);
@@ -485,9 +485,8 @@ Return ONLY a valid JSON array matching this format:
               }
             }}
             disabled={generatingCards}
-            className={`p-1 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 ${
-              generatingCards ? 'opacity-40 cursor-not-allowed' : 'hover:bg-zinc-150 dark:hover:bg-zinc-900 cursor-pointer'
-            }`}
+            className={`p-1 rounded-xl transition-all border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 ${generatingCards ? 'opacity-40 cursor-not-allowed' : 'hover:bg-zinc-150 dark:hover:bg-zinc-900 cursor-pointer'
+              }`}
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
@@ -621,7 +620,7 @@ Return ONLY a valid JSON array matching this format:
         <RevisionQuestionsList questions={logData.questions} />
       </main>
       {showConceptCards && (
-      <ConceptCards
+        <ConceptCards
           onClose={() => setShowConceptCards(false)}
           cards={conceptCards}
           topics={activeTopics}

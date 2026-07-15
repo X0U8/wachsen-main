@@ -297,9 +297,9 @@ export default function Settings() {
           </div>
 
           <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 space-y-3">
-            <Row label={'Show "challenges" category'} sub="Visible in exam list" right={<Toggle on={showChallengesCategory} onToggle={toggleShowChallengesCategory} />} />
+            <Row label={'Show "challenges" ExamType'} sub="Visible in exam list" right={<Toggle on={showChallengesCategory} onToggle={toggleShowChallengesCategory} />} />
             <div className="border-t border-zinc-100 dark:border-gray-800" />
-            <Row label={'Show "others" category'} sub="Visible in exam list" right={<Toggle on={showOthersCategory} onToggle={toggleShowOthersCategory} />} />
+            <Row label={'Show "others" ExamType'} sub="Visible in exam list" right={<Toggle on={showOthersCategory} onToggle={toggleShowOthersCategory} />} />
           </div>
 
           <div className="bg-white dark:bg-zinc-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5">

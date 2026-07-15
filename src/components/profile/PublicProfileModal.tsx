@@ -38,9 +38,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
   const [examsLoading, setExamsLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [showProfileCard, setShowProfileCard] = useState(true);
-
-  const [activeTab, setActiveTab] = useState<'questions' | 'analytics'>('questions');
+  const [activeTab, setActiveTab] = useState<'profile' | 'questions' | 'analytics'>('profile');
   const [expandedExamIds, setExpandedExamIds] = useState<string[]>([]);
 
   const toggleExamExpanded = (id: string) => {
@@ -240,10 +238,10 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       }
 
       const { data: checkLink, error: linkErr } = await supabase
-        .from('exams')
+        .from('import_logs')
         .select('id')
-        .eq('createdBy', loggedInProfile?.id)
-        .eq('importedFrom', exam.id)
+        .eq('userId', loggedInProfile?.id)
+        .eq('examId', exam.id)
         .maybeSingle();
 
       if (linkErr) throw linkErr;
@@ -318,7 +316,6 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
           totalTime: importTargetExam.totalTime,
           totalMarks: importTargetExam.totalMarks,
           isPublic: false,
-          importedFrom: importTargetExam.id,
           ExamPlan: importTargetExam.ExamPlan
         })
         .select('id')
@@ -401,13 +398,16 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
 
           <div className="flex-1 flex flex-col items-center p-5 overflow-hidden min-h-0 space-y-4">
 
-            {showProfileCard && (
-              <div className="flex-shrink-0">
-                <ProfileCard userProfile={userProfile} variant="public" />
-              </div>
-            )}
-
-            <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-[280px] mx-auto flex-shrink-0">
+            <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 rounded-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-[360px] mx-auto flex-shrink-0">
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${activeTab === 'profile'
+                    ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  }`}
+              >
+                Profile
+              </button>
               <button
                 onClick={() => setActiveTab('questions')}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${activeTab === 'questions'
@@ -415,7 +415,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                     : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
               >
-                Questions
+                Exams
               </button>
               <button
                 onClick={() => setActiveTab('analytics')}
@@ -428,25 +428,22 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
               </button>
             </div>
 
-            <div className="flex-1 w-full max-w-[360px] sm:max-w-[560px] md:max-w-[660px] lg:max-w-[740px] flex flex-col min-h-0 overflow-y-auto pr-1">
+            <div className="flex-1 w-full max-w-[360px] sm:max-w-[560px] md:max-w-[660px] lg:max-w-[740px] flex flex-col min-h-0 overflow-hidden">
 
-              {activeTab === 'questions' ? (
+              {activeTab === 'profile' && (
+                <div className="flex-grow flex flex-col items-center justify-center p-4">
+                  <ProfileCard userProfile={userProfile} variant="public" />
+                </div>
+              )}
+
+              {activeTab === 'questions' && (
                 <div className="flex-grow flex flex-col min-h-0 space-y-4">
                   <div className="flex items-center justify-between px-1 flex-shrink-0">
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="font-semibold text-zinc-500 text-xs">Public Exams</h4>
-                      <button
-                        onClick={() => setShowProfileCard(!showProfileCard)}
-                        className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-550 dark:text-zinc-455 cursor-pointer flex items-center justify-center"
-                        title={showProfileCard ? "Collapse Card" : "Expand Card"}
-                      >
-                        {showProfileCard ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
+                    <h4 className="font-semibold text-zinc-500 text-xs">Public Exams</h4>
                     <span className="text-zinc-500 font-medium text-xs">Total: {totalCount}</span>
                   </div>
 
-                  <div className="space-y-3 pb-4">
+                  <div className="flex-1 overflow-y-auto space-y-3 pb-4 pr-1">
                     {examsLoading ? (
                       <div className="flex flex-col items-center justify-center py-8">
                         <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
@@ -495,8 +492,16 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                                   <div className={`flex-1 text-zinc-500 dark:text-zinc-400 text-xs overflow-hidden ${isExpanded ? 'space-y-1' : 'line-clamp-1 truncate'}`}>
                                     {groupedPlan.map((g, idx) => (
                                       <div key={idx} className={isExpanded ? "leading-relaxed animate-fade-in" : "inline mr-3"}>
-                                        <strong className="text-zinc-700 dark:text-zinc-300 uppercase"><MathText text={g.subject} />:</strong>{' '}
-                                        <span><MathText text={g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'} /></span>
+                                        <strong className="text-zinc-700 dark:text-zinc-300 uppercase">
+                                          {isExpanded ? <MathText text={g.subject} /> : g.subject}:
+                                        </strong>{' '}
+                                        <span>
+                                          {isExpanded ? (
+                                            <MathText text={g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'} />
+                                          ) : (
+                                            g.topics.length > 0 ? g.topics.join(', ') : 'All Topics'
+                                          )}
+                                        </span>
                                         {!isExpanded && idx < groupedPlan.length - 1 && <span className="text-zinc-400"> | </span>}
                                       </div>
                                     ))}
@@ -544,8 +549,12 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                     </div>
                   )}
                 </div>
-              ) : (
-                <ProfileAnalyticsView userId={targetUserId} isOwner={isOwner} />
+              )}
+
+              {activeTab === 'analytics' && (
+                <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+                  <ProfileAnalyticsView userId={targetUserId} isOwner={isOwner} />
+                </div>
               )}
 
             </div>

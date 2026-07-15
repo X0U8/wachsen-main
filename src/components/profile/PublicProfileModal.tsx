@@ -297,57 +297,50 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       const othersId = await checkOthersCategory();
       if (!othersId) throw new Error("ExamType 'others' not found.");
 
-      const { data: sourceQuestions, error: qErr } = await supabase
-        .from('questions')
-        .select('questionText, options, correctOption, solutionText, marks, negativeMarks, subject, topic')
-        .eq('examId', importTargetExam.id);
+      // Fetch all source exam data — questions live inside generatedExam JSON
+      const { data: sourceExam, error: srcErr } = await supabase
+        .from('exams')
+        .select('examName, examType, difficulty, totalTime, totalQuestions, totalMarks, subjects, generatedExam, correct_marks, negative_marks, language, ExamPlan')
+        .eq('id', importTargetExam.id)
+        .single();
 
-      if (qErr) throw qErr;
-      if (!sourceQuestions || sourceQuestions.length === 0) {
-        throw new Error("No questions found in this exam to import.");
-      }
+      if (srcErr || !sourceExam) throw srcErr || new Error('Could not fetch source exam.');
+      if (!sourceExam.generatedExam) throw new Error('This exam has no questions to import.');
 
-      const { data: newExam, error: examErr } = await supabase
+      const { error: examErr } = await supabase
         .from('exams')
         .insert({
+          // User-specific overrides
           createdBy: loggedInProfile.id,
-          examName: importTargetExam.examName,
-          difficulty: importTargetExam.difficulty,
-          examTypeId: othersId,
-          totalTime: importTargetExam.totalTime,
-          totalMarks: importTargetExam.totalMarks,
+          accessIds: [loggedInProfile.id],
+          accessType: 'anytime',
+          startDateTime: null,
+          endDateTime: null,
+          categoryId: othersId,
+          status: 'Pending',
           isPublic: false,
-          ExamPlan: importTargetExam.ExamPlan
-        })
-        .select('id')
-        .single();
+          likes: 0,
+          likedBy: [],
+          // Everything else copied exactly from source
+          examName: sourceExam.examName,
+          examType: sourceExam.examType,
+          difficulty: sourceExam.difficulty,
+          totalTime: sourceExam.totalTime,
+          totalQuestions: sourceExam.totalQuestions,
+          totalMarks: sourceExam.totalMarks,
+          subjects: sourceExam.subjects,
+          generatedExam: sourceExam.generatedExam,
+          correct_marks: sourceExam.correct_marks,
+          negative_marks: sourceExam.negative_marks,
+          language: sourceExam.language,
+          ExamPlan: sourceExam.ExamPlan,
+        });
 
       if (examErr) throw examErr;
 
-      const questionsToInsert = sourceQuestions.map(q => ({
-        examId: newExam.id,
-        questionText: q.questionText,
-        options: q.options,
-        correctOption: q.correctOption,
-        solutionText: q.solutionText,
-        marks: q.marks,
-        negativeMarks: q.negativeMarks,
-        subject: q.subject,
-        topic: q.topic
-      }));
-
-      const { error: batchErr } = await supabase
-        .from('questions')
-        .insert(questionsToInsert);
-
-      if (batchErr) throw batchErr;
-
       await supabase
         .from('import_logs')
-        .insert({
-          userId: loggedInProfile.id,
-          examId: importTargetExam.id
-        });
+        .insert({ userId: loggedInProfile.id, examId: importTargetExam.id });
 
       setImportSuccess('Exam successfully imported!');
       setTimeout(() => {

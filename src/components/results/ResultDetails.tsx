@@ -242,7 +242,8 @@ export default function ResultDetails() {
   };
 
   const createRevisionLog = async () => {
-    if (!result || !questions.length || isCreatingRevision || hasRevisionLog) return;
+    const hasNoWrongOrSkipped = analytics ? (analytics.correctIds.length === questions.length) : false;
+    if (!result || !questions.length || isCreatingRevision || hasRevisionLog || hasNoWrongOrSkipped) return;
     setIsCreatingRevision(true);
 
     try {
@@ -656,7 +657,7 @@ export default function ResultDetails() {
           {!isRestrictedView && (
             <button
               onClick={createRevisionLog}
-              disabled={hasRevisionLog || isCreatingRevision}
+              disabled={hasRevisionLog || isCreatingRevision || (analytics ? analytics.correctIds.length === questions.length : false)}
               className="px-2.5 sm:px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-200 dark:disabled:bg-gray-800 text-white disabled:text-zinc-500 dark:disabled:text-gray-400 rounded-xl font-semibold shadow-sm hover:shadow-md disabled:shadow-none transition-all flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed text-xs">
               {isCreatingRevision ? (
                 <>
@@ -668,6 +669,11 @@ export default function ResultDetails() {
                 <>
                   <span className="hidden sm:inline">Revision Log Created</span>
                   <span className="sm:hidden">Created</span>
+                </>
+              ) : (analytics && analytics.correctIds.length === questions.length) ? (
+                <>
+                  <span className="hidden sm:inline">No Mistakes to Revise</span>
+                  <span className="sm:hidden">No Mistakes</span>
                 </>
               ) : (
                 <>
@@ -1072,7 +1078,7 @@ export default function ResultDetails() {
                               : status === 'wrong' ? 'bg-red-500/5 border-red-500/20 text-red-600 dark:text-red-400'
                                 : 'bg-zinc-100 dark:bg-gray-900 border-zinc-200 dark:border-gray-800 text-zinc-500 dark:text-gray-400'
                               } text-xs`}>
-                            <div className="flex flex-col gap-1 flex-1">
+                            <div className="flex flex-col gap-1 flex-1 mt-4">
                               <span className="text-zinc-500 dark:text-gray-455 font-medium text-xs">Your Answer</span>
                               <span className="font-semibold"><MathText text={userAns || 'Not Attempted'} /></span>
                             </div>

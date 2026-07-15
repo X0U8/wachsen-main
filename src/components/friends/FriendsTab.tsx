@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader2, Swords } from 'lucide-react';
 
 interface ProfileData {
@@ -43,12 +44,15 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      {incomingRequests.length > 0 && (
-        <div className="bg-blue-50/50 dark:bg-blue-950/15 border border-blue-100 dark:border-blue-900/50 rounded-2xl p-4 space-y-3 animate-fade-in">
-          <h3 className="text-xs font-bold text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
-            Incoming Friend Requests
-          </h3>
-          <div className="space-y-2.5">
+      {/* Incoming Friend Requests section — always shown with loading/empty state */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-blue-700 dark:text-blue-400 px-1">Incoming Requests</h3>
+        {loadingRequests ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+          </div>
+        ) : incomingRequests.length > 0 ? (
+          <div className="bg-blue-50/50 dark:bg-blue-950/15 border border-blue-100 dark:border-blue-900/50 rounded-2xl p-4 space-y-2.5 animate-fade-in">
             {incomingRequests.map((req) => (
               <div
                 key={req.id}
@@ -85,8 +89,12 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="text-center py-5 bg-zinc-50 dark:bg-zinc-900/20 border border-dashed border-black/10 dark:border-white/10 rounded-2xl">
+            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">No incoming requests</p>
+          </div>
+        )}
+      </div>
 
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 px-1">

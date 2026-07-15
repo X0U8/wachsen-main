@@ -139,13 +139,15 @@ export default function Friends() {
         `)
         .eq('receiver_id', userId)
         .eq('status', 'pending')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(10);
       if (error) throw error;
       return (data || []) as any[];
     },
     enabled: !!userId,
     staleTime: 0,
-    gcTime: Infinity,
+    gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: dailyChallengeCountData = 0 } = useQuery<number>({

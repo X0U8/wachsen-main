@@ -260,7 +260,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                             onClick={() => navigate(`/results/${challenge.receiver_id}/${challenge.receiver_exam_id}`)}
                             className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-emerald-200/30"
                           >
-                            Freinds's Performance
+                            Friend's Performance
                           </button>
                         ) : (
                           <button

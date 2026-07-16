@@ -157,7 +157,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
                   {cards[currentIndex].options.map((option, idx) => {
                     const isSelected = selectedOptions.includes(idx);
                     const isCorrect = cards[currentIndex].correctAnswers.includes(idx);
-                    let optionStyle = 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/30 border-zinc-200 dark:border-zinc-850 text-zinc-800 dark:text-zinc-300';
+                    let optionStyle = 'bg-zinc-50 hover:bg-zinc-200 dark:bg-zinc-900/30 dark:hover:bg-zinc-800 border-zinc-200 dark:border-zinc-850 text-zinc-800 dark:text-zinc-300';
                     if (isSelected) {
                       optionStyle = 'bg-blue-600/10 border-blue-600 text-zinc-900 dark:text-white';
                     }
@@ -258,10 +258,10 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
                     setShowNameInputModal(true);
                   }}
                   className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs ${saveStatus === 'saved'
-                      ? 'bg-green-600 hover:bg-green-700 text-white cursor-default font-semibold'
-                      : saveStatus === 'error'
-                        ? 'bg-red-650 hover:bg-red-700 text-white'
-                        : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/35'
+                    ? 'bg-green-600 hover:bg-green-700 text-white cursor-default font-semibold'
+                    : saveStatus === 'error'
+                      ? 'bg-red-650 hover:bg-red-700 text-white'
+                      : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/35'
                     }`}
                 >
                   {saveStatus === 'saving'

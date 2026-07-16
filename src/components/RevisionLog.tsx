@@ -112,7 +112,7 @@ export default function RevisionLog() {
   const { examId } = useParams<{ examId: string }>();
   const navigate = useNavigate();
   const { userProfile, refreshProfile } = useUserProfile();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [logData, setLogData] = useState<RevisionLogData | null>(null);
   const [showConceptCards, setShowConceptCards] = useState(false);
@@ -292,108 +292,47 @@ Return ONLY a valid JSON array matching this format:
     return wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
   };
 
-  useEffect(() => {
-    if (!userProfile?.id || !examId) return;
+  const { data: revisionDetailData, isLoading: revDetailLoading, error: revDetailError } = useQuery<{
+    mergedQuestions: any[];
+    examLogsData: any;
+    categoryId: string | null;
+    acadLevel: string;
+    resultId: string | null;
+  } | null>({
+    queryKey: ['revisionDetail', examId, userProfile?.id],
+    queryFn: async () => {
+      if (!userProfile?.id || !examId) return null;
 
-    const fetchRevisionLog = async () => {
+      let categoryId: string | null = null;
+      let acadLevel = '';
       try {
-        setLoading(true);
-        setLogData(null);
-        setExamQuestions([]);
-        setSubtopics([]);
-        setResultId(null);
-        setExamPlan(null);
-
-        let categoryId = null;
-        let acadLevel = '';
-        try {
-          const { data: examDataDoc } = await supabase
-            .from('exams')
-            .select('categoryId')
-            .eq('id', examId)
+        const { data: examDataDoc } = await supabase
+          .from('exams')
+          .select('categoryId')
+          .eq('id', examId)
+          .maybeSingle();
+        if (examDataDoc?.categoryId) {
+          categoryId = examDataDoc.categoryId;
+          const { data: catDataDoc } = await supabase
+            .from('examtypes')
+            .select('academicLevel')
+            .eq('id', categoryId)
             .maybeSingle();
-          if (examDataDoc?.categoryId) {
-            categoryId = examDataDoc.categoryId;
-            const { data: catDataDoc } = await supabase
-              .from('examtypes')
-              .select('academicLevel')
-              .eq('id', categoryId)
-              .maybeSingle();
-            acadLevel = catDataDoc?.academicLevel || '';
-          }
-        } catch (dbErr) {
-          console.error('Error loading exam ExamType details:', dbErr);
+          acadLevel = catDataDoc?.academicLevel || '';
         }
-        setExamCategoryId(categoryId);
-        setAcademicLevel(acadLevel);
+      } catch (dbErr) {
+        console.error('Error loading exam ExamType details:', dbErr);
+      }
 
-        const cacheKey = `revision_${examId}`;
-        const cachedData = await idbGet(cacheKey);
+      const cacheKey = `revision_${examId}`;
+      const cachedData = await idbGet(cacheKey);
 
-        if (cachedData) {
-          try {
-            const questionsData = JSON.parse(cachedData.questions);
-            const examLogsData = JSON.parse(cachedData.examLogs);
-            setExamPlan(examLogsData);
-
-            let loadedResultId = cachedData.resultId;
-            if (!loadedResultId) {
-              const { data: resultDocs } = await supabase
-                .from('results')
-                .select('id')
-                .eq('examId', examId)
-                .eq('userId', userProfile.id)
-                .limit(1);
-              if (resultDocs && resultDocs.length > 0) {
-                loadedResultId = resultDocs[0].id;
-                await idbSet(cacheKey, {
-                  questions: cachedData.questions,
-                  examLogs: cachedData.examLogs,
-                  resultId: loadedResultId
-                });
-              }
-            }
-            setResultId(loadedResultId || null);
-
-            const mergedQuestions = resolveConceptsFromPlan(questionsData, examLogsData);
-
-            setLogData({ questions: mergedQuestions });
-            setExamQuestions(mergedQuestions);
-
-
-            const topics = mergedQuestions
-              .map((q: any) => q.concept?.split(':')[0]?.trim())
-              .filter((t: string) => t);
-            setSubtopics(topics);
-
-
-            setCardCount(mergedQuestions.length * 2);
-            setLoading(false);
-            return;
-          } catch (cacheErr) {
-            console.error('Cache parse error:', cacheErr);
-          }
-        }
-
-
-        const { data: revDocs, error: revError } = await supabase
-          .from('revision')
-          .select('questions, examLogs')
-          .eq('userID', userProfile.id)
-          .eq('examID', examId)
-          .limit(1);
-
-        if (revError) throw revError;
-
-        if (revDocs && revDocs.length > 0) {
-          const doc = revDocs[0];
-          const questionsData = JSON.parse(doc.questions as string);
-          const examLogsData = JSON.parse(doc.examLogs as string);
-          setExamPlan(examLogsData);
-
-
-          let fetchedResultId = null;
-          try {
+      if (cachedData) {
+        try {
+          const questionsData = JSON.parse(cachedData.questions);
+          const examLogsData = JSON.parse(cachedData.examLogs);
+          let loadedResultId = cachedData.resultId;
+          if (!loadedResultId) {
             const { data: resultDocs } = await supabase
               .from('results')
               .select('id')
@@ -401,46 +340,71 @@ Return ONLY a valid JSON array matching this format:
               .eq('userId', userProfile.id)
               .limit(1);
             if (resultDocs && resultDocs.length > 0) {
-              fetchedResultId = resultDocs[0].id;
-              setResultId(fetchedResultId);
+              loadedResultId = resultDocs[0].id;
+              await idbSet(cacheKey, { questions: cachedData.questions, examLogs: cachedData.examLogs, resultId: loadedResultId });
             }
-          } catch (resErr) {
-            console.error('Error fetching associated resultId:', resErr);
           }
-
-
-          await idbSet(cacheKey, {
-            questions: doc.questions,
-            examLogs: doc.examLogs,
-            resultId: fetchedResultId
-          });
-
           const mergedQuestions = resolveConceptsFromPlan(questionsData, examLogsData);
-
-          setLogData({ questions: mergedQuestions });
-          setExamQuestions(mergedQuestions);
-
-
-          const topics = mergedQuestions
-            .map((q: any) => q.concept?.split(':')[0]?.trim())
-            .filter((t: string) => t);
-          setSubtopics(topics);
-
-
-          setCardCount(mergedQuestions.length * 2);
-        } else {
-          setError('No revision log found for this exam');
+          return { mergedQuestions, examLogsData, categoryId, acadLevel, resultId: loadedResultId || null };
+        } catch (cacheErr) {
+          console.error('Cache parse error:', cacheErr);
         }
-      } catch (err) {
-        console.error('Error fetching revision log:', err);
-        setError('Failed to load revision log');
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchRevisionLog();
-  }, [examId, userProfile?.id]);
+      const { data: revDocs, error: revError } = await supabase
+        .from('revision')
+        .select('questions, examLogs')
+        .eq('userID', userProfile.id)
+        .eq('examID', examId)
+        .limit(1);
+
+      if (revError) throw revError;
+      if (!revDocs || revDocs.length === 0) throw new Error('No revision log found for this exam');
+
+      const doc = revDocs[0];
+      const questionsData = JSON.parse(doc.questions as string);
+      const examLogsData = JSON.parse(doc.examLogs as string);
+
+      let fetchedResultId: string | null = null;
+      try {
+        const { data: resultDocs } = await supabase
+          .from('results')
+          .select('id')
+          .eq('examId', examId)
+          .eq('userId', userProfile.id)
+          .limit(1);
+        if (resultDocs && resultDocs.length > 0) fetchedResultId = resultDocs[0].id;
+      } catch (resErr) {
+        console.error('Error fetching associated resultId:', resErr);
+      }
+
+      await idbSet(cacheKey, { questions: doc.questions, examLogs: doc.examLogs, resultId: fetchedResultId });
+      const mergedQuestions = resolveConceptsFromPlan(questionsData, examLogsData);
+      return { mergedQuestions, examLogsData, categoryId, acadLevel, resultId: fetchedResultId };
+    },
+    enabled: !!userProfile?.id && !!examId,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (!revisionDetailData) return;
+    const { mergedQuestions, examLogsData, categoryId, acadLevel, resultId: rid } = revisionDetailData;
+    setExamPlan(examLogsData);
+    setExamCategoryId(categoryId);
+    setAcademicLevel(acadLevel);
+    setResultId(rid);
+    setLogData({ questions: mergedQuestions });
+    setExamQuestions(mergedQuestions);
+    setSubtopics(mergedQuestions.map((q: any) => q.concept?.split(':')[0]?.trim()).filter((t: string) => t));
+    setCardCount(mergedQuestions.length * 2);
+  }, [revisionDetailData]);
+
+  useEffect(() => {
+    if (!examId) return;
+    setLoading(revDetailLoading);
+    if (revDetailError) setError((revDetailError as Error).message || 'Failed to load revision log');
+  }, [examId, revDetailLoading, revDetailError]);
 
 
 

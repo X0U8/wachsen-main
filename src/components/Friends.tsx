@@ -819,14 +819,9 @@ export default function Friends() {
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white font-sans antialiased select-none pb-24">
-      <header className="sticky top-0 z-[100] backdrop-blur-md bg-white/70 dark:bg-black/70 border-b border-zinc-150 dark:border-zinc-900/60 px-4 py-4 flex items-center justify-between">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white cursor-pointer"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <h2 className="font-semibold text-zinc-800 dark:text-white text-base">Friends</h2>
+      <header className="sticky top-0 z-40 w-full px-6 py-4 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-gray-800 flex items-center justify-between transition-colors duration-300">
+
+        <h2 className="font-semibold text-zinc-800 dark:text-gray-100 text-base">Friends</h2>
         <div className="w-8" />
       </header>
       <main className="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-5 space-y-6">

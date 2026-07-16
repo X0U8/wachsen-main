@@ -80,7 +80,6 @@ const UsersIcon = forwardRef<UsersIconHandle, UsersIconProps>(
         {...props}
       >
         <svg
-          fill="none"
           height={size}
           stroke="currentColor"
           strokeLinecap="round"

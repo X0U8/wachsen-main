@@ -57,10 +57,10 @@ export default function Footer() {
       className="flex-1 flex flex-col items-center justify-center py-2 sm:py-3 h-full transition-all duration-200"
     >
       <div
-        className={`flex items-center justify-center p-2 rounded-2xl transition-all duration-200
+        className={`flex items-center justify-center transition-all duration-200 [&_svg]:fill-current/15
           ${isActive(to)
-            ? 'text-blue-600 dark:text-blue-400 scale-110 drop-shadow-[0_2px_8px_rgba(37,99,235,0.2)] bg-blue-600/10 dark:bg-blue-400/10'
-            : 'text-zinc-450 dark:text-gray-550 hover:text-zinc-700 dark:hover:text-gray-100 bg-transparent'
+            ? 'text-blue-600 dark:text-blue-400 scale-110 drop-shadow-[0_2px_8px_rgba(37,99,235,0.2)] [&_svg]:fill-blue-600/15 dark:[&_svg]:fill-blue-400/15'
+            : 'text-zinc-450 dark:text-gray-550 hover:text-zinc-700 dark:hover:text-gray-100 [&_svg]:fill-zinc-450/15 dark:[&_svg]:fill-gray-550/10'
           }`}
       >
         {icon}

@@ -77,7 +77,6 @@ const FileCheck2Icon = forwardRef<FileCheck2IconHandle, FileCheck2IconProps>(
         {...props}
       >
         <svg
-          fill="none"
           height={size}
           stroke="currentColor"
           strokeLinecap="round"

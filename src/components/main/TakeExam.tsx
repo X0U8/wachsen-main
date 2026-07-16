@@ -661,7 +661,7 @@ export default function TakeExam() {
                 <h1 className="text-zinc-900 dark:text-white truncate max-w-[150px] text-sm">{examData?.examName}</h1>
                 <div className="flex items-center gap-2">
                   {examData?.examType === 'casual' && (
-                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-500/10 rounded text-[8px] text-blue-500 uppercase">
+                    <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-500/10 rounded text-[8px] text-blue-500 ">
                       <Clock className="w-2 h-2" /> Casual
                     </div>
                   )}
@@ -724,13 +724,13 @@ export default function TakeExam() {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-zinc-200 dark:bg-gray-800 text-zinc-900 dark:text-white rounded-md text-[10px] uppercase tracking-wider">
+                          <span className="px-2 py-0.5 bg-zinc-200 dark:bg-gray-800 text-zinc-900 dark:text-white rounded-md text-[10px]  tracking-wider">
                             {currentQuestionIdx + 1}
                           </span>
-                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-md text-[10px] uppercase tracking-wider">
+                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-md text-[10px]  tracking-wider">
                             +{currentQuestion.marks} <span className="hidden sm:inline">Marks</span>
                           </span>
-                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-400 dark:text-gray-500 rounded-md text-[10px] uppercase tracking-wider border border-zinc-200 dark:border-gray-800">
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-400 dark:text-gray-500 rounded-md text-[10px]  tracking-wider border border-zinc-200 dark:border-gray-800">
                             <Clock className="w-2.5 h-2.5" />
                             {formatTime((questionTimes[currentQuestion.id] || 0) + currentQuestionTime)}
                           </div>
@@ -813,7 +813,7 @@ export default function TakeExam() {
                             }}
                             className="w-full bg-zinc-100 dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-2xl p-6 text-center text-3xl text-zinc-900 dark:text-white focus:ring-2 focus:ring-blue-600 focus:outline-none transition-all placeholder:text-zinc-300 dark:placeholder:text-gray-800"
                           />
-                          <p className="text-[10px] text-zinc-400 dark:text-gray-600 text-center uppercase">Max 15 Digits</p>
+                          <p className="text-[10px] text-zinc-400 dark:text-gray-600 text-center ">Max 15 Digits</p>
                         </div>
                       )}
                     </div>
@@ -824,7 +824,7 @@ export default function TakeExam() {
               <aside className="hidden md:block w-64 shrink-0">
                 <div className="bg-zinc-100/50 dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 max-h-[calc(100vh-8rem)] flex flex-col">
                   <h3
-                    className="font-medium uppercase text-zinc-400 dark:text-gray-500 mb-4 shrink-0 text-xs">Questions</h3>
+                    className="font-medium  text-zinc-400 dark:text-gray-500 mb-4 shrink-0 text-xs">Questions</h3>
 
                   {subjects.length > 1 && (
                     <div className="mb-4 shrink-0">
@@ -1036,7 +1036,7 @@ export default function TakeExam() {
                 >
                   <div className="flex items-center justify-between mb-4 shrink-0">
                     <h3
-                      className="font-medium uppercase text-zinc-500 dark:text-gray-400 text-sm">Questions</h3>
+                      className="font-medium  text-zinc-500 dark:text-gray-400 text-sm">Questions</h3>
                     <button
                       onClick={() => setShowQuestionModal(false)}
                       className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded-lg transition-colors"

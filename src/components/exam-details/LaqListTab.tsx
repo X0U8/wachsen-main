@@ -158,23 +158,21 @@ export default function LaqListTab({ categoryId, userProfile }: LaqListTabProps)
                   </td>
                   <td className="px-4 py-4">
                     <span
-                      className={`px-2 py-0.5 rounded-full font-medium uppercase ${
-                        laq.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
-                        laq.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
-                        laq.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
-                        'bg-red-500/10 text-red-500'
-                      } text-xs`}
+                      className={`px-2 py-0.5 rounded-full font-medium  ${laq.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
+                          laq.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
+                            laq.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
+                              'bg-red-500/10 text-red-500'
+                        } text-xs`}
                     >
                       {laq.difficulty}
                     </span>
                   </td>
                   <td className="px-4 py-4">
                     <span
-                      className={`px-2 py-0.5 rounded-full font-medium ${
-                        laq.status === 'completed' ? 'bg-green-500/10 text-green-500' :
-                        laq.status === 'ongoing' ? 'bg-blue-500/10 text-blue-500' :
-                        'bg-yellow-500/10 text-yellow-500'
-                      } text-xs`}
+                      className={`px-2 py-0.5 rounded-full font-medium ${laq.status === 'completed' ? 'bg-green-500/10 text-green-500' :
+                          laq.status === 'ongoing' ? 'bg-blue-500/10 text-blue-500' :
+                            'bg-yellow-500/10 text-yellow-500'
+                        } text-xs`}
                     >
                       {laq.status}
                     </span>

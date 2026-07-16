@@ -81,7 +81,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         <p className="text-[10px] text-zinc-550 dark:text-zinc-400">@{challenge.friendUsername}</p>
                       </div>
                       <span
-                        className={`px-2 py-0.5 rounded-full font-semibold uppercase ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
+                        className={`px-2 py-0.5 rounded-full font-semibold  ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
                           challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
                             challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
                               'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
@@ -98,7 +98,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                       className="flex gap-2 text-zinc-500 dark:text-zinc-400 font-medium text-xs">
                       <span>{challenge.totalQuestions} questions</span>
                       <span>•</span>
-                      <span className="uppercase">{challenge.difficulty}</span>
+                      <span className="">{challenge.difficulty}</span>
                     </div>
                   </div>
 
@@ -215,7 +215,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         <p className="text-[10px] text-zinc-550 dark:text-zinc-400 truncate">@{challenge.friendUsername}</p>
                       </div>
                       <span
-                        className={`px-2 py-0.5 rounded-full font-semibold uppercase ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
+                        className={`px-2 py-0.5 rounded-full font-semibold  ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
                           challenge.status === 'active' ? 'bg-blue-500/10 text-blue-500 dark:bg-blue-500/20' :
                             challenge.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20' :
                               'bg-zinc-500/10 text-zinc-400 dark:text-zinc-550'
@@ -232,7 +232,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                       className="flex gap-2 text-zinc-500 dark:text-zinc-400 font-medium text-xs">
                       <span>{challenge.totalQuestions} questions</span>
                       <span>•</span>
-                      <span className="uppercase">{challenge.difficulty}</span>
+                      <span className="">{challenge.difficulty}</span>
                     </div>
                   </div>
 

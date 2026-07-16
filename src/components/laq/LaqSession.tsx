@@ -340,7 +340,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-zinc-200 dark:bg-gray-800 text-zinc-900 dark:text-white rounded-md text-[10px] uppercase tracking-wider font-semibold">
+                      <span className="px-2 py-0.5 bg-zinc-200 dark:bg-gray-800 text-zinc-900 dark:text-white rounded-md text-[10px]  tracking-wider font-semibold">
                         Q{currentIndex + 1}
                       </span>
                       <button
@@ -377,7 +377,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
           <aside className="hidden md:block w-64 shrink-0">
             <div className="bg-zinc-100/50 dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 rounded-2xl p-4 max-h-[calc(100vh-8rem)] flex flex-col">
-              <h3 className="font-semibold uppercase text-zinc-400 dark:text-gray-500 mb-4 shrink-0 text-[10px] tracking-wider">
+              <h3 className="font-semibold  text-zinc-400 dark:text-gray-500 mb-4 shrink-0 text-[10px] tracking-wider">
                 Questions
               </h3>
 
@@ -387,10 +387,10 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                     key={idx}
                     onClick={() => handleSelectQuestion(idx)}
                     className={`w-10 h-10 rounded-lg transition-all font-semibold ${idx === currentIndex
-                        ? 'bg-blue-600 text-white border border-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.4)] ring-2 ring-blue-500/30'
-                        : answers[idx]?.text.trim()
-                          ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30'
-                          : 'bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 border border-zinc-300 dark:border-gray-700 hover:border-zinc-450 dark:hover:border-gray-655'
+                      ? 'bg-blue-600 text-white border border-blue-600 shadow-[0_0_12px_rgba(37,99,235,0.4)] ring-2 ring-blue-500/30'
+                      : answers[idx]?.text.trim()
+                        ? 'bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30'
+                        : 'bg-zinc-200/50 dark:bg-gray-800/50 text-zinc-500 dark:text-gray-400 border border-zinc-300 dark:border-gray-700 hover:border-zinc-450 dark:hover:border-gray-655'
                       } text-xs`}
                   >
                     {idx + 1}
@@ -432,10 +432,10 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                 key={idx}
                 onClick={() => handleSelectQuestion(idx)}
                 className={`w-2 h-2 rounded-full shrink-0 transition-all ${idx === currentIndex
-                    ? 'bg-blue-600 scale-125'
-                    : answers[idx]?.text.trim()
-                      ? 'bg-green-500'
-                      : 'bg-zinc-300 dark:bg-gray-700'
+                  ? 'bg-blue-600 scale-125'
+                  : answers[idx]?.text.trim()
+                    ? 'bg-green-500'
+                    : 'bg-zinc-300 dark:bg-gray-700'
                   }`}
               />
             ))}
@@ -481,7 +481,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
             >
               <div className="w-12 h-1 bg-zinc-300 dark:bg-gray-800 rounded-full mx-auto mb-4 shrink-0" />
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm uppercase text-zinc-400 dark:text-gray-500">
+                <h3 className="font-semibold text-sm  text-zinc-400 dark:text-gray-500">
                   Questions
                 </h3>
                 <button
@@ -501,10 +501,10 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                       setShowQuestionModal(false);
                     }}
                     className={`h-12 rounded-2xl transition-all font-semibold flex items-center justify-center ${idx === currentIndex
-                        ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
-                        : answers[idx]?.text.trim()
-                          ? 'bg-green-500/20 text-green-600'
-                          : 'bg-zinc-100 dark:bg-gray-900 text-zinc-555 dark:text-gray-400'
+                      ? 'bg-blue-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
+                      : answers[idx]?.text.trim()
+                        ? 'bg-green-500/20 text-green-600'
+                        : 'bg-zinc-100 dark:bg-gray-900 text-zinc-555 dark:text-gray-400'
                       } text-sm`}
                   >
                     {idx + 1}

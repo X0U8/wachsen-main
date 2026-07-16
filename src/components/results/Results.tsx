@@ -83,7 +83,7 @@ export default function Results() {
     return (
       <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-black text-zinc-900 dark:text-white items-center justify-center p-6 font-sans antialiased">
         <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
-        <p className="mt-2 text-zinc-400 font-semibold uppercase tracking-wider text-xs">Loading Results</p>
+        <p className="mt-2 text-zinc-400 font-semibold  tracking-wider text-xs">Loading Results</p>
       </div>
     );
   }
@@ -107,7 +107,7 @@ export default function Results() {
                 onClick={() => setShowFilterDropdown(false)}
               />
               <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-2 py-1.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="font-semibold text-zinc-400 dark:text-zinc-505 px-3 py-1.5 uppercase tracking-wider text-xs">
+                <div className="font-semibold text-zinc-400 dark:text-zinc-505 px-3 py-1.5  tracking-wider text-xs">
                   Filter by Exam Type
                 </div>
                 <div className="space-y-0.5 max-h-48 overflow-y-auto">
@@ -118,8 +118,8 @@ export default function Results() {
                       setShowFilterDropdown(false);
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${!selectedExamTypeId
-                        ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
-                        : 'text-zinc-655 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                      ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
+                      : 'text-zinc-655 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                       } text-xs`}>
                     <span>All Exam Types</span>
                     {!selectedExamTypeId && <Check className="w-3.5 h-3.5" />}
@@ -134,8 +134,8 @@ export default function Results() {
                         setShowFilterDropdown(false);
                       }}
                       className={`w-full text-left px-3 py-1.5 rounded-xl flex items-center justify-between transition-all cursor-pointer ${selectedExamTypeId === type.id
-                          ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
-                          : 'text-zinc-655 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                        ? 'bg-blue-500/10 text-blue-600 dark:text-white font-semibold'
+                        : 'text-zinc-655 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                         } text-xs`}>
                       <span className="truncate">{type.name}</span>
                       {selectedExamTypeId === type.id && <Check className="w-3.5 h-3.5" />}
@@ -162,8 +162,8 @@ export default function Results() {
                   setPage(1);
                 }}
                 className={`flex-1 py-2 sm:py-2.5 px-2 sm:px-4 font-semibold tracking-wider rounded-lg transition-all duration-200 cursor-pointer text-xs ${activeTab === tab.key
-                    ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
-                    : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
                   }`}
               >
                 {tab.label}
@@ -241,7 +241,7 @@ export default function Results() {
                         <h3 className="font-semibold text-zinc-850 dark:text-gray-100 truncate text-sm">
                           {res.examName || 'Untitled Exam'}
                         </h3>
-                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-505 font-semibold tracking-wide uppercase text-xs">
+                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-505 font-semibold tracking-wide  text-xs">
                           <span>{date}</span><span>•</span><span>{time}</span><span>•</span><span>{timeSpent} mins</span>
                         </div>
                       </div>
@@ -269,12 +269,12 @@ export default function Results() {
                         <h3 className="font-semibold text-zinc-850 dark:text-gray-100 truncate text-sm">
                           {res.name || 'Untitled LAQ Exam'}
                         </h3>
-                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-505 font-semibold tracking-wide uppercase text-xs">
+                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-505 font-semibold tracking-wide  text-xs">
                           <span>{date}</span><span>•</span><span>{time}</span><span>•</span><span>{res.subject_name || 'General'}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 font-medium">
-                        <span className="px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold text-[10px] bg-blue-500/10 text-blue-500">
+                        <span className="px-2 py-0.5 rounded-full  tracking-wider font-semibold text-[10px] bg-blue-500/10 text-blue-500">
                           {res.difficulty}
                         </span>
                         <ChevronRight className="w-4 h-4 text-zinc-400 dark:text-zinc-650" />

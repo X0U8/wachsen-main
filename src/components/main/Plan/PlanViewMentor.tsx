@@ -474,7 +474,7 @@ export default function PlanViewMentor({ planId, createdAt }: PlanViewMentorProp
                       handleLinkCategory(cat.id, cat.name);
                       setShowSelectModal(false);
                     }}
-                    className="w-full py-3 px-4 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 text-zinc-700 dark:text-gray-300 font-bold rounded-2xl transition-all cursor-pointer text-xs uppercase tracking-wide text-center shrink-0 text-xs">
+                    className="w-full py-3 px-4 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-blue-500 text-zinc-700 dark:text-gray-300 font-bold rounded-2xl transition-all cursor-pointer text-xs  tracking-wide text-center shrink-0 text-xs">
                     {cat.name}
                   </button>
                 ))

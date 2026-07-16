@@ -133,8 +133,8 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
             key={sub}
             onClick={() => setSelectedSubject(sub)}
             className={`px-4.5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer border shrink-0 ${selectedSubject === sub
-                ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                : 'bg-white dark:bg-zinc-900 border-zinc-250 dark:border-gray-800 text-zinc-650 dark:text-gray-350 hover:bg-zinc-50 dark:hover:bg-white/5'
+              ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+              : 'bg-white dark:bg-zinc-900 border-zinc-250 dark:border-gray-800 text-zinc-650 dark:text-gray-350 hover:bg-zinc-50 dark:hover:bg-white/5'
               }`}
           >
             {sub}
@@ -146,7 +146,7 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
           if (!groupedSubjects[subName]) return null;
           return (
             <div key={subName} className="space-y-2.5 animate-fadeIn">
-              <h5 className="text-xs font-bold text-zinc-400 dark:text-gray-500 uppercase tracking-widest pl-1 border-b border-zinc-200 dark:border-gray-850 pb-1">
+              <h5 className="text-xs font-bold text-zinc-400 dark:text-gray-500  tracking-widest pl-1 border-b border-zinc-200 dark:border-gray-850 pb-1">
                 {subName} ({groupedSubjects[subName].filter(chap => checkedChapters[`${subName}-${chap}`]).length} / {groupedSubjects[subName].length})
               </h5>
 
@@ -159,8 +159,8 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
                       key={chap}
                       onClick={() => handleToggle(key)}
                       className={`p-3.5 border rounded-2xl cursor-pointer transition-all flex items-center justify-between gap-4 ${isChecked
-                          ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-white/40 dark:bg-gray-900/40 border-zinc-200 dark:border-gray-800 text-zinc-700 dark:text-gray-300 hover:border-zinc-300 dark:hover:border-gray-705'
+                        ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-white/40 dark:bg-gray-900/40 border-zinc-200 dark:border-gray-800 text-zinc-700 dark:text-gray-300 hover:border-zinc-300 dark:hover:border-gray-705'
                         }`}
                     >
                       <span className="font-semibold text-xs leading-relaxed">
@@ -168,8 +168,8 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
                       </span>
 
                       <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${isChecked
-                          ? 'bg-emerald-500 border-emerald-500 text-white'
-                          : 'border-zinc-300 dark:border-gray-750'
+                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                        : 'border-zinc-300 dark:border-gray-750'
                         }`}>
                         {isChecked && (
                           <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">

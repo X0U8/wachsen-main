@@ -374,7 +374,8 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
   const getDifficultyColor = (diff: string) => {
     const d = String(diff || '').toLowerCase();
     if (d === 'easy') return 'bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400';
-    if (d === 'hard') return 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400';
+    if (d === 'hard') return 'bg-yellow-500/10 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400';
+    if (d === 'advance') return 'bg-red-500/10 text-red-600 dark:bg-red-500/20 dark:text-red-400';
     return 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400';
   };
 
@@ -413,8 +414,8 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
               <button
                 onClick={() => setActiveTab('profile')}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${activeTab === 'profile'
-                    ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
-                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
               >
                 Profile
@@ -422,8 +423,8 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
               <button
                 onClick={() => setActiveTab('questions')}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${activeTab === 'questions'
-                    ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
-                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
               >
                 Exams
@@ -431,8 +432,8 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
               <button
                 onClick={() => setActiveTab('analytics')}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer text-center ${activeTab === 'analytics'
-                    ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
-                    : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                  ? 'bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white shadow-xs'
+                  : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
                   }`}
               >
                 Analytics
@@ -503,7 +504,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
                                   <div className={`flex-1 text-zinc-500 dark:text-zinc-400 text-xs overflow-hidden ${isExpanded ? 'space-y-1' : 'line-clamp-1 truncate'}`}>
                                     {groupedPlan.map((g, idx) => (
                                       <div key={idx} className={isExpanded ? "leading-relaxed animate-fade-in" : "inline mr-3"}>
-                                        <strong className="text-zinc-700 dark:text-zinc-300 uppercase">
+                                        <strong className="text-zinc-700 dark:text-zinc-300 ">
                                           {isExpanded ? <MathText text={g.subject} /> : g.subject}:
                                         </strong>{' '}
                                         <span>

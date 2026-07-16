@@ -182,7 +182,7 @@ export default function CheatCards({
                     className="absolute inset-0 backface-hidden bg-gradient-to-br from-blue-500/5 to-purple-500/5 dark:from-blue-500/10 dark:to-purple-500/10 border border-blue-500/20 dark:border-blue-500/30 rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm"
                     style={{ backfaceVisibility: 'hidden' }}
                   >
-                    <span className="text-[10px] uppercase tracking-widest text-blue-500/80 font-semibold mb-3">Question</span>
+                    <span className="text-[10px]  tracking-widest text-blue-500/80 font-semibold mb-3">Question</span>
                     <div className="text-zinc-800 dark:text-zinc-100 leading-relaxed font-medium text-sm overflow-y-auto max-h-full pr-1">
                       <MathText text={currentCard.question} />
                     </div>
@@ -196,7 +196,7 @@ export default function CheatCards({
                       transform: 'rotateY(180deg)'
                     }}
                   >
-                    <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold mb-3">Answer</span>
+                    <span className="text-[10px]  tracking-widest text-zinc-400 font-semibold mb-3">Answer</span>
                     <div className="text-zinc-800 dark:text-zinc-100 leading-relaxed font-medium text-sm overflow-y-auto max-h-full pr-1">
                       <MathText text={currentCard.answer} />
                     </div>
@@ -220,7 +220,7 @@ export default function CheatCards({
           <div className="flex-grow flex flex-col justify-between bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 my-3 overflow-y-auto">
             <div className="text-center space-y-3 flex-grow flex flex-col justify-center">
               <div>
-                <h4 className="font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider text-[10px]">Practice Completed</h4>
+                <h4 className="font-semibold text-zinc-400 dark:text-zinc-500  tracking-wider text-[10px]">Practice Completed</h4>
                 <div className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
                   All {cards.length} Cards Done
                 </div>
@@ -230,7 +230,7 @@ export default function CheatCards({
 
               {/* Time spent chart */}
               <div className="space-y-1.5 pt-2">
-                <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider text-left pl-2">Time Spent per Card (seconds)</p>
+                <p className="text-[9px] font-semibold text-zinc-400  tracking-wider text-left pl-2">Time Spent per Card (seconds)</p>
                 <div className="h-[140px] w-full bg-white dark:bg-zinc-950/20 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
@@ -261,10 +261,10 @@ export default function CheatCards({
                     setShowNameInputModal(true);
                   }}
                   className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs ${saveStatus === 'saved'
-                      ? 'bg-green-600 hover:bg-green-700 text-white cursor-default font-semibold'
-                      : saveStatus === 'error'
-                        ? 'bg-red-650 hover:bg-red-700 text-white'
-                        : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/35'
+                    ? 'bg-green-600 hover:bg-green-700 text-white cursor-default font-semibold'
+                    : saveStatus === 'error'
+                      ? 'bg-red-650 hover:bg-red-700 text-white'
+                      : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/35'
                     }`}
                 >
                   {saveStatus === 'saving'

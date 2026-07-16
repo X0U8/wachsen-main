@@ -71,7 +71,7 @@ export default function SegmentSelectorModal({
         </div>
 
         <div className="space-y-1 flex-shrink-0">
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
+          <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Difficulty</label>
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value as typeof difficulty)}

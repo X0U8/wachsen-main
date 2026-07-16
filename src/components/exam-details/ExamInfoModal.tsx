@@ -81,7 +81,7 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
               <h3 className="font-medium text-zinc-900 dark:text-gray-100 text-lg">{exam.name}</h3>
               <div className="flex items-center gap-2">
                 <span
-                  className={`px-2 py-0.5 rounded-full uppercase tracking-wider font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
+                  className={`px-2 py-0.5 rounded-full  tracking-wider font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
                     exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
                       exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
                         'bg-yellow-500/10 text-yellow-500'
@@ -94,29 +94,29 @@ export default function ExamInfoModal({ exam, onClose, formatSimpleDate }: ExamI
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
                 <p
-                  className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1 text-xs">Exam Type</p>
+                  className="text-zinc-500 dark:text-gray-550  tracking-wider mb-1 text-xs">Exam Type</p>
                 <p className="font-medium text-zinc-900 dark:text-white capitalize text-sm">{exam.examType || 'N/A'}</p>
               </div>
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
                 <p
-                  className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1 text-xs">Difficulty</p>
+                  className="text-zinc-500 dark:text-gray-550  tracking-wider mb-1 text-xs">Difficulty</p>
                 <p className="font-medium text-zinc-900 dark:text-white capitalize text-sm">{exam.difficulty}</p>
               </div>
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
                 <p
-                  className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider mb-1 text-xs">Questions</p>
+                  className="text-zinc-500 dark:text-gray-550  tracking-wider mb-1 text-xs">Questions</p>
                 <p className="font-medium text-zinc-900 dark:text-white text-sm">{exam.totalQuestions}</p>
               </div>
               <div className="bg-zinc-50 dark:bg-black/50 p-3 rounded-2xl border border-black/10 dark:border-white/15 h-full flex flex-col justify-center">
                 <p
-                  className="text-zinc-500 dark:text-gray-555 uppercase tracking-wider mb-1 text-xs">Total Marks</p>
+                  className="text-zinc-500 dark:text-gray-555  tracking-wider mb-1 text-xs">Total Marks</p>
                 <p className="font-medium text-zinc-900 dark:text-white text-sm">{exam.totalMarks}</p>
               </div>
             </div>
 
             <div className="space-y-2">
               <p
-                className="text-zinc-500 dark:text-gray-550 uppercase tracking-wider text-xs">Subjects</p>
+                className="text-zinc-500 dark:text-gray-550  tracking-wider text-xs">Subjects</p>
               <div className="flex flex-wrap gap-2">
                 {exam.subjects.map((sub: any, idx: number) => (
                   <span

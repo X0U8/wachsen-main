@@ -251,34 +251,34 @@ export default function PlanViewDaily({
             const isToday = selectedMonthNum === currentActiveMonth &&
               currentDayInMonth >= blockStartDay && currentDayInMonth <= blockEndDay;
             return (
-            <div key={idx} ref={isToday ? todayRef : null} className="relative group animate-fadeIn space-y-2">
-              <div className="absolute -left-[31px] md:-left-[39px] top-1 w-4 h-4 rounded-full border-2 border-blue-500 bg-white dark:bg-zinc-950 flex items-center justify-center transition-colors group-hover:bg-blue-500" />
+              <div key={idx} ref={isToday ? todayRef : null} className="relative group animate-fadeIn space-y-2">
+                <div className="absolute -left-[31px] md:-left-[39px] top-1 w-4 h-4 rounded-full border-2 border-blue-500 bg-white dark:bg-zinc-950 flex items-center justify-center transition-colors group-hover:bg-blue-500" />
 
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h4 className="text-sm font-extrabold text-zinc-800 dark:text-white uppercase tracking-wide">
-                  {block.label || `Block ${idx + 1}`}
-                </h4>
-                <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md">
-                  {block.dates}
-                </span>
-              </div>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <h4 className="text-sm font-extrabold text-zinc-800 dark:text-white  tracking-wide">
+                    {block.label || `Block ${idx + 1}`}
+                  </h4>
+                  <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md">
+                    {block.dates}
+                  </span>
+                </div>
 
-              <div className="grid md:grid-cols-2 gap-3 pt-1">
-                {block.subjects.map((sub: any, sIdx: number) => (
-                  <div
-                    key={sIdx}
-                    className="p-3.5 bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-2xl space-y-1 hover:border-zinc-300 dark:hover:border-gray-700 transition-colors shadow-sm"
-                  >
-                    <span className="text-[10px] font-bold text-zinc-400 dark:text-gray-500 uppercase tracking-widest block">
-                      <MathText text={sub.subjectName} />
-                    </span>
-                    <p className="text-zinc-755 dark:text-gray-300 text-[11px] leading-relaxed font-medium">
-                      <MathText text={sub.task || 'Revision / Mock practice'} />
-                    </p>
-                  </div>
-                ))}
+                <div className="grid md:grid-cols-2 gap-3 pt-1">
+                  {block.subjects.map((sub: any, sIdx: number) => (
+                    <div
+                      key={sIdx}
+                      className="p-3.5 bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-2xl space-y-1 hover:border-zinc-300 dark:hover:border-gray-700 transition-colors shadow-sm"
+                    >
+                      <span className="text-[10px] font-bold text-zinc-400 dark:text-gray-500  tracking-widest block">
+                        <MathText text={sub.subjectName} />
+                      </span>
+                      <p className="text-zinc-755 dark:text-gray-300 text-[11px] leading-relaxed font-medium">
+                        <MathText text={sub.task || 'Revision / Mock practice'} />
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
             );
           })}
         </div>

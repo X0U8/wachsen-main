@@ -85,7 +85,7 @@ export const ExamSelectorModal: React.FC<ExamSelectorModalProps> = ({
                     {exam.examName || 'Untitled Exam'}
                   </span>
                   <span
-                    className="text-zinc-500 dark:text-zinc-400 font-medium uppercase text-xs">
+                    className="text-zinc-500 dark:text-zinc-400 font-medium  text-xs">
                     {exam.totalQuestions} Questions • {exam.difficulty}
                   </span>
                 </button>

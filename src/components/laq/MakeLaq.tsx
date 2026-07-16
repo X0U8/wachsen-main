@@ -197,7 +197,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
           <>
             <div className="flex-1 overflow-y-auto pr-1 py-3 text-left space-y-3 no-scrollbar">
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Subject</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Subject</label>
                 {availableSubjects.length > 0 ? (
                   <select
                     value={subject}
@@ -222,7 +222,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Name</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Name</label>
                 <input
                   type="text"
                   maxLength={100}
@@ -234,7 +234,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Difficulty</label>
                 <select
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value as typeof difficulty)}
@@ -247,7 +247,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">
                   Question Count
                 </label>
                 <div className="flex items-center gap-3">
@@ -271,7 +271,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">
                   Time Limit: {timeLimitMinutes} minutes
                 </label>
                 <input
@@ -290,7 +290,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topics</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Topics</label>
                 <textarea
                   rows={3}
                   maxLength={300}

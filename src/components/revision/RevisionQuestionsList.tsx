@@ -54,7 +54,7 @@ export default function RevisionQuestionsList({ questions }: RevisionQuestionsLi
               {question.concept && (
                 <div className="p-3 bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/10 dark:border-blue-500/20 rounded-xl space-y-1">
                   <div
-                    className="text-blue-500 dark:text-blue-400 flex items-center gap-1.5 uppercase tracking-wider font-semibold text-xs">
+                    className="text-blue-500 dark:text-blue-400 flex items-center gap-1.5  tracking-wider font-semibold text-xs">
                     <Square className="w-2.5 h-2.5 fill-current text-blue-500 dark:text-blue-400" />
                     Subtopic
                   </div>

@@ -143,12 +143,11 @@ export default function CheatCardsListTab({ categoryId, userProfile, onSelect }:
                   </td>
                   <td className="px-4 py-4">
                     <span
-                      className={`px-2 py-0.5 rounded-full font-medium uppercase ${
-                        deck.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
-                        deck.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
-                        deck.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
-                        'bg-red-500/10 text-red-500'
-                      } text-xs`}
+                      className={`px-2 py-0.5 rounded-full font-medium  ${deck.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
+                          deck.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
+                            deck.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
+                              'bg-red-500/10 text-red-500'
+                        } text-xs`}
                     >
                       {deck.difficulty}
                     </span>

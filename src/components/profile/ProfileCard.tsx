@@ -244,7 +244,7 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
                     <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
                     <span style={{
                       fontSize: `${9 * scale}px`, fontWeight: 600, letterSpacing: '0.05em',
-                      color: '#ffffff', textTransform: 'uppercase',
+                      color: '#ffffff', textTransform: '',
                     }}>
                       {getShortPlanName(userProfile.PremiumType)}
                     </span>
@@ -266,7 +266,7 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
                   userProfile.country && { l: 'Nation', v: userProfile.country },
                 ] as any[]).filter(Boolean).map((f: any) => (
                   <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: `${10 * scale}px` }}>
-                    <span style={{ fontSize: `${10 * scale}px`, textTransform: 'uppercase', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${65 * scale}px`, fontWeight: 500 }}>{f.l}</span>
+                    <span style={{ fontSize: `${10 * scale}px`, textTransform: '', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${65 * scale}px`, fontWeight: 500 }}>{f.l}</span>
                     <span style={{
                       fontSize: f.l === 'Name' ? `${12 * scale}px` : `${11 * scale}px`,
                       fontWeight: f.l === 'Name' ? 700 : 400,
@@ -330,7 +330,7 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
               fontWeight: 750,
               letterSpacing: '0.15em',
               color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-              textTransform: 'uppercase',
+              textTransform: '',
               zIndex: 10,
             }}
           >
@@ -367,7 +367,7 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
                   <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
                   <span style={{
                     fontSize: `${8 * scale}px`, fontWeight: 600, letterSpacing: '0.05em',
-                    color: '#ffffff', textTransform: 'uppercase',
+                    color: '#ffffff', textTransform: '',
                   }}>
                     {getShortPlanName(userProfile.PremiumType)}
                   </span>
@@ -389,7 +389,7 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
                 userProfile.country && { l: 'Nation', v: userProfile.country },
               ] as any[]).filter(Boolean).map((f: any) => (
                 <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: `${8 * scale}px` }}>
-                  <span style={{ fontSize: `${9 * scale}px`, textTransform: 'uppercase', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${55 * scale}px`, fontWeight: 500 }}>{f.l}</span>
+                  <span style={{ fontSize: `${9 * scale}px`, textTransform: '', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${55 * scale}px`, fontWeight: 500 }}>{f.l}</span>
                   <span style={{
                     fontSize: f.l === 'Name' ? `${11 * scale}px` : `${10 * scale}px`,
                     fontWeight: f.l === 'Name' ? 700 : 400,

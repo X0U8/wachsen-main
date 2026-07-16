@@ -59,7 +59,7 @@ const getInitialTheme = (): Theme => {
 
 const getInitialFontSize = (): FontSizeLevel => {
   const saved = localStorage.getItem('fontSizeLevel');
-  const level = (saved === 'small' || saved === 'medium' || saved === 'large' || saved === 'larger') ? saved : 'small';
+  const level = (saved === 'small' || saved === 'medium' || saved === 'large' || saved === 'larger') ? saved : 'medium';
   const values = FONT_SIZE_VALUES[level];
   const root = document.documentElement;
   (Object.entries(values) as [string, string][]).forEach(([key, val]) => {

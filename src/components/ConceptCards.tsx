@@ -146,7 +146,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
           <>
             <div className="flex-grow flex flex-col justify-between my-2 overflow-y-auto no-scrollbar">
               <div className="space-y-4">
-                <div className="text-zinc-450 dark:text-zinc-500 font-semibold tracking-wider text-[10px] uppercase">
+                <div className="text-zinc-450 dark:text-zinc-500 font-semibold tracking-wider text-[10px] ">
                   Card {currentIndex + 1} of {cards.length}
                 </div>
                 <h4 className="font-medium text-zinc-850 dark:text-zinc-150 leading-relaxed text-sm sm:text-base px-2">
@@ -179,9 +179,8 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
                         className={`w-full p-3 border rounded-2xl text-left text-xs transition-all flex items-center gap-2.5 cursor-pointer ${optionStyle}`}
                       >
                         <div
-                          className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                            isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-zinc-350 dark:border-zinc-800'
-                          } text-[10px]`}
+                          className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-zinc-350 dark:border-zinc-800'
+                            } text-[10px]`}
                         >
                           {String.fromCharCode(65 + idx)}
                         </div>
@@ -220,14 +219,14 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
           <div className="flex-grow flex flex-col justify-between bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 my-3 overflow-y-auto">
             <div className="text-center space-y-3 flex-grow flex flex-col justify-center">
               <div>
-                <h4 className="font-semibold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider text-[10px]">Practice Completed</h4>
+                <h4 className="font-semibold text-zinc-450 dark:text-zinc-500  tracking-wider text-[10px]">Practice Completed</h4>
                 <div className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
                   {correctCount} / {cards.length} Correct
                 </div>
               </div>
 
               <div className="space-y-1.5 pt-2">
-                <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider text-left pl-2">Time Spent per Card (seconds)</p>
+                <p className="text-[9px] font-semibold text-zinc-400  tracking-wider text-left pl-2">Time Spent per Card (seconds)</p>
                 <div className="h-[140px] w-full bg-white dark:bg-zinc-950/20 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
@@ -258,21 +257,20 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
                     setCustomName(defaultName.length > 50 ? `${defaultName.substring(0, 50)}...` : defaultName);
                     setShowNameInputModal(true);
                   }}
-                  className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs ${
-                    saveStatus === 'saved'
+                  className={`w-full py-2.5 rounded-xl font-semibold transition-all cursor-pointer text-xs ${saveStatus === 'saved'
                       ? 'bg-green-600 hover:bg-green-700 text-white cursor-default font-semibold'
                       : saveStatus === 'error'
-                      ? 'bg-red-650 hover:bg-red-700 text-white'
-                      : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/35'
-                  }`}
+                        ? 'bg-red-650 hover:bg-red-700 text-white'
+                        : 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 dark:bg-blue-500/25 dark:text-blue-400 dark:hover:bg-blue-500/35'
+                    }`}
                 >
                   {saveStatus === 'saving'
                     ? 'Saving...'
                     : saveStatus === 'saved'
-                    ? 'Saved Successfully!'
-                    : saveStatus === 'error'
-                    ? 'Failed to Save. Retry?'
-                    : 'Save Concept Cards'}
+                      ? 'Saved Successfully!'
+                      : saveStatus === 'error'
+                        ? 'Failed to Save. Retry?'
+                        : 'Save Concept Cards'}
                 </button>
               )}
               <button
@@ -292,7 +290,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
               <h3 className="font-semibold text-zinc-850 dark:text-white text-sm">Save Concept Card Deck</h3>
               <p className="text-zinc-500 dark:text-zinc-400 text-[10px] mt-0.5">Enter a name to save this flashcard deck for future practice</p>
             </div>
-            
+
             <div className="space-y-1">
               <input
                 type="text"

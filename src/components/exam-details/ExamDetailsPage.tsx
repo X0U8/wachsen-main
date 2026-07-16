@@ -662,7 +662,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
 
             <div className="space-y-3 text-left">
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Subject</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Subject</label>
                 {availableSubjects.length > 0 ? (
                   <select
                     value={conceptSubject}
@@ -687,7 +687,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Difficulty</label>
                 <select
                   value={conceptDifficulty}
                   onChange={(e) => setConceptDifficulty(e.target.value as typeof conceptDifficulty)}
@@ -701,7 +701,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Topic</label>
                 <textarea
                   rows={3}
                   maxLength={200}
@@ -798,7 +798,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
 
             <div className="space-y-3 text-left">
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Subject</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Subject</label>
                 {availableSubjects.length > 0 ? (
                   <select
                     value={cheatSubject}
@@ -823,7 +823,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Difficulty</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Difficulty</label>
                 <select
                   value={cheatDifficulty}
                   onChange={(e) => setCheatDifficulty(e.target.value as typeof cheatDifficulty)}
@@ -837,7 +837,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Topic</label>
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Topic</label>
                 <textarea
                   rows={3}
                   maxLength={200}

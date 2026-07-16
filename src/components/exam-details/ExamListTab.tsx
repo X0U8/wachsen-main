@@ -198,24 +198,22 @@ export default function ExamListTab({ categoryId, userProfile, canCreate = true 
                   </td>
                   <td className="px-4 py-4">
                     <span
-                      className={`px-2 py-0.5 rounded-full font-medium ${
-                        exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
-                        exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
-                        exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
-                        'bg-yellow-500/10 text-yellow-500'
-                      } text-xs`}
+                      className={`px-2 py-0.5 rounded-full font-medium ${exam.status === 'Completed' ? 'bg-green-500/10 text-green-500' :
+                          exam.status === 'Ongoing' ? 'bg-blue-500/10 text-blue-500' :
+                            exam.status === 'Expired' ? 'bg-red-500/10 text-red-500' :
+                              'bg-yellow-500/10 text-yellow-500'
+                        } text-xs`}
                     >
                       {exam.status}
                     </span>
                   </td>
                   <td className="px-4 py-4 text-right">
                     <span
-                      className={`px-2 py-0.5 rounded-full font-medium uppercase ${
-                        exam.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
-                        exam.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
-                        exam.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
-                        'bg-red-500/10 text-red-500'
-                      } text-xs`}
+                      className={`px-2 py-0.5 rounded-full font-medium  ${exam.difficulty === 'easy' ? 'bg-blue-500/10 text-blue-500' :
+                          exam.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-500' :
+                            exam.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-500' :
+                              'bg-red-500/10 text-red-500'
+                        } text-xs`}
                     >
                       {exam.difficulty}
                     </span>

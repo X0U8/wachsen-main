@@ -127,7 +127,7 @@ export default function RevisionRetryModal({
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-5 sm:p-6 w-full max-w-lg h-[620px] flex flex-col shadow-2xl relative text-zinc-900 dark:text-white justify-between overflow-hidden">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-zinc-150 dark:border-zinc-900 flex-shrink-0">
           <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-xs">Retry Questions</h3>
@@ -144,10 +144,10 @@ export default function RevisionRetryModal({
             {/* Card Content wrapper */}
             <div className="flex-grow flex flex-col justify-between my-2 overflow-y-auto no-scrollbar">
               <div className="space-y-4">
-                <div className="text-zinc-450 dark:text-zinc-500 font-semibold tracking-wider text-[10px] uppercase">
+                <div className="text-zinc-450 dark:text-zinc-500 font-semibold tracking-wider text-[10px] ">
                   Question {currentIndex + 1} of {retryData.length}
                 </div>
-                
+
                 {/* Snapping Card Wrapper */}
                 <div
                   className={`w-full ${isTransitioning ? 'transition-none opacity-0' : 'transition-all duration-300 opacity-100'}`}
@@ -186,9 +186,8 @@ export default function RevisionRetryModal({
                               className={`w-full p-3 border rounded-2xl text-left text-xs transition-all flex items-center gap-2.5 cursor-pointer ${optionStyle}`}
                             >
                               <div
-                                className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
-                                  isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-zinc-350 dark:border-zinc-800'
-                                } text-[10px]`}
+                                className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-zinc-350 dark:border-zinc-800'
+                                  } text-[10px]`}
                               >
                                 {String.fromCharCode(65 + optIdx)}
                               </div>
@@ -257,7 +256,7 @@ export default function RevisionRetryModal({
           <div className="flex-grow flex flex-col justify-between bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 my-3 overflow-y-auto">
             <div className="text-center space-y-3 flex-grow flex flex-col justify-center">
               <div>
-                <h4 className="font-semibold text-zinc-450 dark:text-zinc-500 uppercase tracking-wider text-[10px]">Practice Completed</h4>
+                <h4 className="font-semibold text-zinc-450 dark:text-zinc-500  tracking-wider text-[10px]">Practice Completed</h4>
                 <div className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
                   {correctCount} / {totalCount} Correct
                 </div>
@@ -268,7 +267,7 @@ export default function RevisionRetryModal({
 
               {/* Time spent line chart */}
               <div className="space-y-1.5 pt-2">
-                <p className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider text-left pl-2">Time Spent per Question (seconds)</p>
+                <p className="text-[9px] font-semibold text-zinc-400  tracking-wider text-left pl-2">Time Spent per Question (seconds)</p>
                 <div className="h-[140px] w-full bg-white dark:bg-zinc-950/20 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-2">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>

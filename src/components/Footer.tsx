@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useUserProfile } from '../lib/UserContext.tsx';
 import { useTheme } from '../lib/ThemeContext.tsx';
 import { FilePenLineIcon } from '../icons/FilePenLineIcon';
-import { FileCheck2Icon } from '../icons/FileCheck2Icon';
+import { FileCheckIcon } from '../icons/FileCheckIcon';
 import { UsersIcon } from '../icons/UsersIcon';
 import { TelescopeIcon } from '../icons/TelescopeIcon';
 import { fontSize } from '../lib/utils';
@@ -73,7 +73,7 @@ export default function Footer() {
       <footer className="fixed bottom-0 left-0 w-full bg-white/80 dark:bg-black border-t border-zinc-200 dark:border-gray-900 shadow-[0_-8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_-8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-colors duration-300 z-50">
         <div className="w-full max-w-5xl mx-auto flex items-center justify-between h-14 sm:h-16 px-2">
           <NavLink to="/exam" icon={<FilePenLineIcon ref={examRef} size={iconSize} />} />
-          <NavLink to="/results" icon={<FileCheck2Icon ref={resultsRef} size={iconSize} />} />
+          <NavLink to="/results" icon={<FileCheckIcon ref={resultsRef} size={iconSize} />} />
 
           <button
             onClick={() => setShowProfile(true)}

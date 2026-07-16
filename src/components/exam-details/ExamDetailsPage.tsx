@@ -406,7 +406,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             <ChevronLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="font-medium text-zinc-900 dark:text-gray-100 text-base">{examType?.name || 'Exam Details'}</h1>
+            <h1 className="font-medium text-zinc-900 dark:text-gray-100 text-base">{examType?.name === 'challenges' ? 'Challenges' : examType?.name === 'others' ? 'Others' : examType?.name || 'Exam Details'}</h1>
           </div>
         </div>
         <div className="flex items-center gap-2">

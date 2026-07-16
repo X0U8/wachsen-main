@@ -259,7 +259,7 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
               <div style={{ display: 'flex', flexDirection: 'column', gap: `${5 * scale}px`, marginTop: `${30 * scale}px`, flex: 1 }}>
                 {([
                   { l: 'Name', v: userProfile.name?.toUpperCase() },
-                  { l: 'USER ID', v: `@${userProfile.username || ''}` },
+                  { l: 'User ID', v: `@${userProfile.username || ''}` },
                   { l: 'Email', v: maskEmail(userProfile.email || '') },
                   userProfile.DOB && { l: 'DOB', v: userProfile.DOB },
                   userProfile.gender && { l: 'Gender', v: userProfile.gender },
@@ -382,7 +382,7 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
             <div style={{ display: 'flex', flexDirection: 'column', gap: `${4 * scale}px`, marginTop: `${24 * scale}px`, flex: 1 }}>
               {([
                 { l: 'Name', v: userProfile.name?.toUpperCase() },
-                { l: 'USER ID', v: `@${userProfile.username || ''}` },
+                { l: 'User ID', v: `@${userProfile.username || ''}` },
                 { l: 'Email', v: maskEmail(userProfile.email || '') },
                 userProfile.DOB && { l: 'DOB', v: userProfile.DOB },
                 userProfile.gender && { l: 'Gender', v: userProfile.gender },

@@ -464,11 +464,11 @@ export default function Exam() {
                       >
                         <div className="p-3 sm:p-4">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-zinc-800 dark:text-gray-100 font-medium truncate text-sm">{exam.name}</p>
+                            <p className="text-zinc-800 dark:text-gray-100 font-medium truncate text-sm">{exam.name === 'challenges' ? 'Challenges' : exam.name === 'others' ? 'Others' : exam.name}</p>
                             {isDisabled && <Lock className="w-3.5 h-3.5 text-zinc-400 dark:text-gray-600 shrink-0 mt-0.5" />}
                           </div>
                           {exam.academicLevel && (
-                            <p className="text-zinc-500 dark:text-gray-400 mt-1 font-medium text-xs">{exam.academicLevel}</p>
+                            <p className="text-zinc-500 dark:text-gray-400 mt-1 font-medium text-xs">{exam.academicLevel === 'any' ? 'Any' : exam.academicLevel}</p>
                           )}
                           {exam.subjects.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-3">
@@ -476,7 +476,7 @@ export default function Exam() {
                                 <span
                                   key={si}
                                   className="bg-zinc-100 dark:bg-gray-800 text-zinc-600 dark:text-gray-400 px-2 py-0.5 border border-zinc-200 dark:border-gray-700/60 rounded-full text-xs">
-                                  {s}
+                                  {s === 'any' ? 'Any' : s}
                                 </span>
                               ))}
                               {exam.subjects.length > 3 && (

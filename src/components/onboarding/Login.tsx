@@ -234,6 +234,17 @@ export default function Login() {
               </button>
             </form>
           )}
+
+          <p className="text-center text-zinc-400 dark:text-zinc-600 text-[10px] mt-2 leading-relaxed px-2">
+            By continuing, you agree to our{' '}
+            <a href="/terms" onClick={(e) => { e.preventDefault(); window.open('/terms', '_blank'); }} className="underline hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors">
+              Terms of Service
+            </a>
+            {' '}and{' '}
+            <a href="/terms#privacy" onClick={(e) => { e.preventDefault(); window.open('/terms#privacy', '_blank'); }} className="underline hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors">
+              Privacy Policy
+            </a>
+          </p>
         </div>
       </div>
     </SpotlightCard>

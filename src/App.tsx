@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { supabase } from './services/supabase';
 import Login from './components/onboarding/Login';
 import Onboarding from './components/onboarding/OnboardingPage';
@@ -13,6 +13,7 @@ import ResultDetails from './components/results/ResultDetails';
 import RevisionLog from './components/RevisionLog';
 import Friends from './components/Friends';
 import Subscription from './components/Subscription';
+import TermsPage from './components/terms/TermsPage';
 
 import { UserProvider, useUserProfile } from './lib/UserContext.tsx';
 import { ThemeProvider } from './lib/ThemeContext.tsx';
@@ -65,6 +66,9 @@ function MainApp() {
   const [banned, setBanned] = useState(false);
   const [banChecked, setBanChecked] = useState(false);
   const [examTypesReady, setExamTypesReady] = useState(false);
+  const location = useLocation();
+
+  const isTermsPage = location.pathname === '/terms';
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -113,6 +117,7 @@ function MainApp() {
 
 
   if (sessionLoading || (session && !banChecked) || (session && !examTypesReady) || profileLoading) {
+    if (isTermsPage) return <TermsPage />;
     return <Loading />;
   }
 
@@ -121,6 +126,7 @@ function MainApp() {
   }
 
   if (!session) {
+    if (isTermsPage) return <TermsPage />;
     return <Login />;
   }
 
@@ -143,6 +149,7 @@ function MainApp() {
       <Route path="/friends" element={<Friends />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/subscription" element={<Subscription />} />
+      <Route path="/terms" element={<TermsPage />} />
       <Route path="*" element={<Navigate to="/exam" />} />
     </Routes>
   );

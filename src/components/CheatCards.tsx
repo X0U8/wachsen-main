@@ -221,7 +221,7 @@ export default function CheatCards({
             <div className="text-center space-y-3 flex-grow flex flex-col justify-center">
               <div>
                 <h4 className="font-semibold text-zinc-400 dark:text-zinc-500  tracking-wider text-[10px]">Practice Completed</h4>
-                <div className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
+                <div className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-2">
                   All {cards.length} Cards Done
                 </div>
               </div>

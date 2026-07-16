@@ -62,7 +62,7 @@ export default function PlanDashboard({ plan, onContinue, onDelete, isDeleting }
         <div className="w-8" />
         <h2
           className="font-semibold text-zinc-900 dark:text-white text-center flex-1 text-base">
-          {plan.exam_name} preparation
+          {plan.exam_name}
         </h2>
         {createdDate.getDate() === currentDate.getDate() &&
           createdDate.getMonth() === currentDate.getMonth() &&

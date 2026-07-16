@@ -43,12 +43,12 @@ export default function PlanViewMonthly({ createdAt, planJson }: PlanViewMonthly
     end.setDate(start.getDate() + 29);
 
     const formatDateStr = (d: Date) => {
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${dd}-${mm}-${yyyy}`;
+      const day = d.getDate();
+      const suffix = day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
+      const month = d.toLocaleString('en', { month: 'long' });
+      return `${day}${suffix} ${month}`;
     };
-    return `${formatDateStr(start)} to ${formatDateStr(end)}`;
+    return `${formatDateStr(start)} – ${formatDateStr(end)}`;
   };
 
   return (

@@ -23,7 +23,7 @@ function CircularProgress({ value, label, colorClass, trailColorClass }: { value
           <circle cx="36" cy="36" r={radius} className={`${colorClass} stroke-current transition-all duration-1000 ease-out`} strokeWidth={strokeWidth} fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-zinc-800 dark:text-white">
-          {(value || 0).toFixed(1)}/10
+          {(value || 0).toFixed(1)}
         </div>
       </div>
       <span className="text-[10px] tracking-wider font-semibold text-zinc-400 mt-3">{label}</span>
@@ -149,15 +149,15 @@ export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
 
               {/* Feedback Section */}
               <div className="bg-white dark:bg-zinc-950 border border-zinc-200/85 dark:border-zinc-900 rounded-3xl p-6 shadow-sm flex flex-col gap-4">
-                <h2 className="font-semibold text-xs tracking-wider text-zinc-450 dark:text-zinc-400">AI Evaluation Feedback</h2>
-                <p className="text-zinc-700 dark:text-zinc-350 text-sm leading-relaxed whitespace-pre-wrap">{aiFeedback}</p>
+                <h2 className="font-semibold text-xs tracking-wider text-zinc-450 dark:text-zinc-400">AI Overall Feedback</h2>
+                <p className="text-zinc-700 dark:text-white/80 text-sm leading-relaxed whitespace-pre-wrap">{aiFeedback}</p>
               </div>
 
               {/* Per-Question Section — ResultDetails style */}
               {perQuestion.length > 0 && (
                 <div className="space-y-6">
                   <div className="flex items-center justify-between border-b border-zinc-200 dark:border-gray-800 pb-4">
-                    <h2 className="text-sm font-medium text-zinc-900 dark:text-white">Question-wise Analysis</h2>
+                    <h2 className="text-sm font-medium text-zinc-900 dark:text-white">Question wise Analysis</h2>
                     {/* Legend */}
                     <div className="flex items-center gap-3 text-[10px] font-semibold text-zinc-400">
                       <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-green-500" />Correct</span>
@@ -199,7 +199,7 @@ export default function LaqAnalysis({ laq }: LaqAnalysisProps) {
                             {typeof selectedQuestion.rating === 'number' && (
                               <div className="px-2 py-1 bg-zinc-100 dark:bg-gray-800/50 border border-zinc-200 dark:border-gray-700 rounded-lg flex items-center gap-1.5 sm:px-3 sm:py-1.5 sm:gap-2 sm:rounded-xl">
                                 <div className="text-zinc-550 dark:text-gray-450 font-medium text-xs">Rating</div>
-                                <div className="text-zinc-900 dark:text-white font-bold text-xs">{selectedQuestion.rating}/10</div>
+                                <div className="text-zinc-900 dark:text-white font-bold text-xs">{selectedQuestion.rating}</div>
                               </div>
                             )}
                             {/* Correctness badge */}

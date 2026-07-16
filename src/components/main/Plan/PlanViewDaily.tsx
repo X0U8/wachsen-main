@@ -61,18 +61,39 @@ export default function PlanViewDaily({
     end.setDate(start.getDate() + 29);
 
     const formatDateStr = (d: Date) => {
-      const dd = String(d.getDate()).padStart(2, '0');
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const yyyy = d.getFullYear();
-      return `${dd}-${mm}-${yyyy}`;
+      const day = d.getDate();
+      const suffix = day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
+      const month = d.toLocaleString('en', { month: 'long' });
+      return `${day}${suffix} ${month}`;
     };
-    return `${formatDateStr(start)} to ${formatDateStr(end)}`;
+    return `${formatDateStr(start)} – ${formatDateStr(end)}`;
   };
 
   const getUnlockDateString = (mNum: number) => {
     const unlockDate = new Date(createdDate);
     unlockDate.setDate(createdDate.getDate() + (mNum - 1) * 30);
     return unlockDate.toLocaleDateString(undefined, { dateStyle: 'medium' });
+  };
+
+  const ordinalSuffix = (day: number) =>
+    day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
+
+  const formatBlockDates = (raw: string) => {
+    // handles formats like "15-07-2026 to 14-08-2026" or "15th July – 14th August"
+    if (!raw) return raw;
+    const parts = raw.split(/\s+(?:to|–|-)\s+/);
+    if (parts.length !== 2) return raw;
+    const parse = (s: string) => {
+      // try dd-mm-yyyy
+      const m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+      if (m) {
+        const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+        const day = d.getDate();
+        return `${day}${ordinalSuffix(day)} ${d.toLocaleString('en', { month: 'long' })}`;
+      }
+      return s; // already formatted
+    };
+    return `${parse(parts[0])} – ${parse(parts[1])}`;
   };
 
 
@@ -259,7 +280,7 @@ export default function PlanViewDaily({
                     {block.label || `Block ${idx + 1}`}
                   </h4>
                   <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md">
-                    {block.dates}
+                    {formatBlockDates(block.dates)}
                   </span>
                 </div>
 

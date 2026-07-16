@@ -65,7 +65,7 @@ export default function PlanView({ planId, createdAt, examName, days, planJson, 
           </button>
 
           <h2 className="font-semibold text-zinc-800 dark:text-white text-base">
-            {examName} roadmap
+            {examName} Roadmap
           </h2>
 
           <div className="w-10" />

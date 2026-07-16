@@ -37,8 +37,6 @@ Evaluate the student's answer on accuracy, depth, and clarity. Be fair: partial 
       userId,
       authToken,
       useOwnKey: false,
-      provider: 'mesh',
-      model: '',
       deductAmount: 0,
     }),
   });

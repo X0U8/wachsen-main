@@ -1,9 +1,9 @@
 import { jsonrepair } from 'jsonrepair';
 import { createClient } from '@supabase/supabase-js';
+import { resolveAiConfig } from './lib/ai-config.mjs';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
-const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -13,20 +13,19 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { segment, subjectName, questionTypes, difficulty, academicLevel, userId, authToken, apiKey: userKey, provider, model, creditsPreReserved, files } = req.body;
-    const isByok = !!(userKey && userKey.trim());
-    const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
-    const isMistral = activeProvider === 'mistral';
-    const meshKey = isByok ? userKey : MESH_API_KEY;
-    const apiUrl = isMistral ? MISTRAL_API_URL : MESH_API_URL;
-    const apiLabel = isMistral ? 'Mistral' : 'Mesh';
-    const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);
+    const { segment, subjectName, questionTypes, difficulty, academicLevel, userId, authToken, creditsPreReserved, files } = req.body;
+    const aiConfig = resolveAiConfig(req.body, {
+      meshApiKey: MESH_API_KEY,
+      meshApiUrl: MESH_API_URL,
+      meshModel: MESH_MODEL
+    });
+    const isByok = aiConfig.mode === 'byok';
 
     if (!segment || !subjectName || !questionTypes || !Array.isArray(questionTypes)) {
       return res.status(400).json({ error: 'Invalid segment data' });
     }
 
-    if (!meshKey) {
+    if (!aiConfig.apiKey) {
       return res.status(500).json({ error: 'No API key provided.' });
     }
 
@@ -219,24 +218,24 @@ ${formatExample}`;
       messages.push({ role: 'user', content: textPrompt });
     }
 
-    console.log(`[API QUESTIONS] Sending request to: ${apiUrl}`);
-    console.log(`[API QUESTIONS] Using model: ${activeModel}`);
+    console.log(`[API QUESTIONS] Sending request to: ${aiConfig.apiUrl}`);
+    console.log(`[API QUESTIONS] Using model: ${aiConfig.model}`);
     console.log(`[API QUESTIONS] Messages payload:`, JSON.stringify(messages, null, 2));
 
     let response;
     try {
-      response = await fetch(apiUrl, {
+      response = await fetch(aiConfig.apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${meshKey}`,
+          'Authorization': `Bearer ${aiConfig.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: activeModel,
+          model: aiConfig.model,
           messages: messages,
           temperature: 0.4,
           response_format: { type: 'json_object' },
-          ...(!isMistral && { reasoning_effort: "none" })
+          ...(aiConfig.includeReasoningEffort && { reasoning_effort: "none" })
         })
       });
     } catch (fetchErr) {
@@ -258,9 +257,9 @@ ${formatExample}`;
     }
 
     if (!response.ok) {
-      console.error(`${apiLabel} API request failed:`, response.status, responseText);
+      console.error(`${aiConfig.apiLabel} API request failed:`, response.status, responseText);
       return res.status(502).json({
-        error: `${apiLabel} API request failed`,
+        error: `${aiConfig.apiLabel} API request failed`,
         code: data.error?.code,
         details: data.error?.message || responseText,
         request_id: data.error?.request_id
@@ -270,28 +269,28 @@ ${formatExample}`;
     let content = data.choices?.[0]?.message?.content || '';
 
     if (!content) {
-      return res.status(502).json({ error: `${apiLabel} API returned no content` });
+      return res.status(502).json({ error: `${aiConfig.apiLabel} API returned no content` });
     }
 
     content = content.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
 
     const repairJsonWithAI = async (brokenContent) => {
       try {
-        const repairResponse = await fetch(apiUrl, {
+        const repairResponse = await fetch(aiConfig.apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${meshKey}`,
+            'Authorization': `Bearer ${aiConfig.apiKey}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model: activeModel,
+            model: aiConfig.model,
             messages: [
               { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors (like missing commas, unescaped quotes, or mismatched braces), and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
               { role: 'user', content: brokenContent }
             ],
             temperature: 0.1,
             response_format: { type: 'json_object' },
-            ...(!isMistral && { reasoning_effort: "none" })
+            ...(aiConfig.includeReasoningEffort && { reasoning_effort: "none" })
           })
         });
 

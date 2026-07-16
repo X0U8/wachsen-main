@@ -6,6 +6,7 @@ import Notification from '../../ui/Notification';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
 import { supabase } from '../../services/supabase';
+import { getAiRequestMode } from '../../lib/aiRequest';
 
 interface FinalizeExamProps {
   show: boolean;
@@ -161,9 +162,6 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     return data.session?.access_token || '';
   };
 
-  const getProvider = () => localStorage.getItem('provider') || 'mesh';
-  const getApiKey = () => localStorage.getItem(getProvider() === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
-  const getActiveModel = () => localStorage.getItem('mesh_active_model') || '';
   const getUseOwnKey = () => localStorage.getItem('use_own_key') === 'true';
 
 
@@ -230,9 +228,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
     try {
       const authToken = await getAuthToken();
       if (isStale(myId)) return;
-      const apiKey = getUseOwnKey() ? getApiKey() : '';
-      const provider = getUseOwnKey() ? getProvider() : 'mesh';
-      const model = getUseOwnKey() ? (provider === 'mistral' ? 'mistral-small-latest' : getActiveModel()) : '';
+      const aiRequestMode = getAiRequestMode();
 
       const hasFiles = examData.scannedFiles && examData.scannedFiles.length > 0;
       let filesPayload = [];
@@ -250,9 +246,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
           difficulty: examData.difficulty,
           userId,
           authToken,
-          apiKey,
-          provider,
-          model,
+          ...aiRequestMode,
           files: hasFiles ? filesPayload : undefined,
         }),
       });
@@ -368,9 +362,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
         }
 
         const authToken = await getAuthToken();
-        const apiKey = getUseOwnKey() ? getApiKey() : '';
-        const provider = getUseOwnKey() ? getProvider() : 'mesh';
-        const model = getUseOwnKey() ? (provider === 'mistral' ? 'mistral-small-latest' : getActiveModel()) : '';
+        const aiRequestMode = getAiRequestMode();
 
         const originalSubject = examData.subjects.find((s: any) =>
           (s.name || '').toLowerCase().trim() === (subject.name || '').toLowerCase().trim()
@@ -408,9 +400,7 @@ export default function FinalizeExam({ show, onClose, examData, userId }: Finali
             academicLevel: examData.subjects.find((s: any) => s.name === subject.name)?.academicLevel || examData.academicLevel || '',
             userId,
             authToken,
-            apiKey: apiKey || undefined,
-            provider,
-            model: model || undefined,
+            ...aiRequestMode,
             creditsPreReserved: true,
             files: hasFiles ? filesPayload : undefined
           }),

@@ -12,6 +12,7 @@ import { fontSize } from '../lib/utils';
 import { idbGet, idbSet } from '../lib/idb';
 import { jsonrepair } from 'jsonrepair';
 import { streamConceptCards } from '../lib/streamConceptCards';
+import { getAiRequestMode } from '../lib/aiRequest';
 
 export const safeParseJSON = (str: string) => {
   try {
@@ -225,10 +226,7 @@ export default function RevisionLog() {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
 
-      const useOwnKey = localStorage.getItem('use_own_key') === 'true';
-      const userApiKey = localStorage.getItem(localStorage.getItem('provider') === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
-      const activeProvider = localStorage.getItem('provider') || 'mesh';
-      const activeModel = localStorage.getItem('mesh_active_model') || '';
+      const aiRequestMode = getAiRequestMode();
 
       const level = academicLevel || 'Grade 10';
       const diffLabel = difficulty || 'medium';
@@ -253,10 +251,7 @@ Return ONLY a valid JSON array matching this format:
           userAnswer: '',
           userId: userProfile?.id,
           authToken,
-          apiKey: useOwnKey ? userApiKey : undefined,
-          useOwnKey,
-          provider: activeProvider,
-          model: activeModel,
+          ...aiRequestMode,
           deductAmount: 10
         },
         (count) => setCardGenProgress(count)

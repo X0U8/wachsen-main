@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench, ClipboardX, Mic, Binary, GraduationCap, X, SquarePen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../services/supabase';
+import { getAiRequestMode } from '../../lib/aiRequest';
 import { useUserProfile } from '../../lib/UserContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MakeAIForm from '../make-exam/MakeQuestions';
@@ -88,10 +89,7 @@ export default function ExamDetails() {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
 
-      const useOwnKey = localStorage.getItem('use_own_key') === 'true';
-      const userApiKey = localStorage.getItem(localStorage.getItem('provider') === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
-      const activeProvider = localStorage.getItem('provider') || 'mesh';
-      const activeModel = localStorage.getItem('mesh_active_model') || '';
+      const aiRequestMode = getAiRequestMode();
 
       const level = examType?.academicLevel || 'Grade 10';
       const diffLabel = conceptDifficulty;
@@ -116,10 +114,7 @@ Return ONLY a valid JSON array matching this format:
           userAnswer: '',
           userId: userProfile?.id,
           authToken,
-          apiKey: useOwnKey ? userApiKey : undefined,
-          useOwnKey,
-          provider: activeProvider,
-          model: activeModel,
+          ...aiRequestMode,
           deductAmount: 10
         },
         (count) => setCardGenProgress(count)
@@ -180,10 +175,7 @@ Return ONLY a valid JSON array matching this format:
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
 
-      const useOwnKey = localStorage.getItem('use_own_key') === 'true';
-      const userApiKey = localStorage.getItem(localStorage.getItem('provider') === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
-      const activeProvider = localStorage.getItem('provider') || 'mesh';
-      const activeModel = localStorage.getItem('mesh_active_model') || '';
+      const aiRequestMode = getAiRequestMode();
 
       const level = examType?.academicLevel || 'Grade 10';
       const categoryName = examType?.name || '';
@@ -213,10 +205,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           userAnswer: '',
           userId: userProfile?.id,
           authToken,
-          apiKey: useOwnKey ? userApiKey : undefined,
-          useOwnKey,
-          provider: activeProvider,
-          model: activeModel,
+          ...aiRequestMode,
           deductAmount: 10
         },
         (count) => setCheatCardProgress(count),

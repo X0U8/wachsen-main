@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { jsonrepair } from 'jsonrepair';
+import { resolveAiConfig } from './lib/ai-config.mjs';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
-const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -14,11 +14,13 @@ const DEDUCT_AMOUNT = 2;
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { subjects, examName, difficulty, userId, authToken, apiKey: userKey, provider, model, files } = req.body;
-  const isByok = !!(userKey && userKey.trim());
-  const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
-  const isMistral = activeProvider === 'mistral';
-  const meshKey = isByok ? userKey : MESH_API_KEY;
+  const { subjects, examName, difficulty, userId, authToken, files } = req.body;
+  const aiConfig = resolveAiConfig(req.body, {
+    meshApiKey: MESH_API_KEY,
+    meshApiUrl: MESH_API_URL,
+    meshModel: MESH_MODEL
+  });
+  const isByok = aiConfig.mode === 'byok';
 
   const refundCredits = async () => {
     if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
@@ -37,7 +39,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid subjects data' });
     }
 
-    if (!meshKey) {
+    if (!aiConfig.apiKey) {
       return res.status(500).json({ error: 'No API key provided. Set MESH_API_KEY in .env or provide an apiKey.' });
     }
 
@@ -109,10 +111,6 @@ STRICT RULES:
 3. Ensure every "topics" array contains 2 to 4 relevant subtopic strings.
 4. The question ranges are continuous across all subjects (e.g. if the first subject ends at range 5 like 1-5, the next subject must start at range 6-10, not reset to 1-5). You must keep the exact range values provided in the JSON template without altering them.`;
 
-    const apiUrl = isMistral ? MISTRAL_API_URL : MESH_API_URL;
-    const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);
-    const apiLabel = isMistral ? 'Mistral' : 'Mesh';
-
     let textPrompt = prompt;
     let userMessageContent = [];
 
@@ -149,24 +147,24 @@ STRICT RULES:
       messages.push({ role: 'user', content: textPrompt });
     }
 
-    console.log(`[API PLAN] Sending request to: ${apiUrl}`);
-    console.log(`[API PLAN] Using model: ${activeModel}`);
+    console.log(`[API PLAN] Sending request to: ${aiConfig.apiUrl}`);
+    console.log(`[API PLAN] Using model: ${aiConfig.model}`);
     console.log(`[API PLAN] Messages payload:`, JSON.stringify(messages, null, 2));
 
     let response;
     try {
-      response = await fetch(apiUrl, {
+      response = await fetch(aiConfig.apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${meshKey}`,
+          'Authorization': `Bearer ${aiConfig.apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: activeModel,
+          model: aiConfig.model,
           messages: messages,
           temperature: 0.7,
           response_format: { type: 'json_object' },
-          ...(!isMistral && { reasoning_effort: "none" })
+          ...(aiConfig.includeReasoningEffort && { reasoning_effort: "none" })
         })
       });
     } catch (fetchErr) {
@@ -191,7 +189,7 @@ STRICT RULES:
     if (!response.ok) {
       await refundCredits();
       return res.status(502).json({
-        error: `${apiLabel} API request failed`,
+        error: `${aiConfig.apiLabel} API request failed`,
         code: data.error?.code,
         details: data.error?.message || responseText,
         request_id: data.error?.request_id
@@ -202,30 +200,30 @@ STRICT RULES:
 
     if (!content) {
       await refundCredits();
-      return res.status(502).json({ error: `${apiLabel} API returned empty content` });
+      return res.status(502).json({ error: `${aiConfig.apiLabel} API returned empty content` });
     }
 
     content = content.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
 
     const repairJsonWithAI = async (brokenContent) => {
       try {
-        const repairResponse = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${meshKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: activeModel,
-            messages: [
-              { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors (like missing commas, unescaped quotes, or mismatched braces), and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
-              { role: 'user', content: brokenContent }
-            ],
-            temperature: 0.1,
-            response_format: { type: 'json_object' },
-            ...(!isMistral && { reasoning_effort: "none" })
-          })
-        });
+          const repairResponse = await fetch(aiConfig.apiUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${aiConfig.apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: aiConfig.model,
+              messages: [
+                { role: 'system', content: 'You are a JSON repair tool. Your only task is to take the broken JSON string provided by the user, fix any syntax errors (like missing commas, unescaped quotes, or mismatched braces), and return the fixed JSON. Do NOT output any markdown, no code fences, no extra text. Just return the raw corrected JSON.' },
+                { role: 'user', content: brokenContent }
+              ],
+              temperature: 0.1,
+              response_format: { type: 'json_object' },
+              ...(aiConfig.includeReasoningEffort && { reasoning_effort: "none" })
+            })
+          });
 
         if (repairResponse.ok) {
           const repairData = await repairResponse.json();

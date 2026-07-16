@@ -102,8 +102,6 @@ Return ONLY a valid JSON array of question strings in this exact format:
           userId: userProfile.id,
           authToken,
           useOwnKey: false,
-          provider: 'mesh',
-          model: '',
           deductAmount: creditsNeeded,
         },
         (count) => setProgress(count),

@@ -67,8 +67,6 @@ Return ONLY a valid JSON object in this exact format:
       userId,
       authToken,
       useOwnKey: false,
-      provider: 'mesh',
-      model: '',
       deductAmount: 0,
     }),
   });

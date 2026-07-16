@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../services/supabase';
 import MathText from '../../ui/MathText';
 import { fontSize } from '../../lib/utils';
+import { getAiRequestMode } from '../../lib/aiRequest';
 import {
   Sparkle, X, Send, Loader2, Lightbulb, XCircle, HelpCircle, BookOpen, ListOrdered
 } from 'lucide-react';
@@ -85,8 +86,8 @@ export default function AITutorModal({
       setChatInput('');
     }
 
-    const useOwnKey = localStorage.getItem('use_own_key') === 'true';
-    if (!useOwnKey && (userProfile?.credits || 0) < 1) {
+    const aiRequestMode = getAiRequestMode();
+    if (!aiRequestMode.useOwnKey && (userProfile?.credits || 0) < 1) {
       showNotification('error', 'Insufficient credits. You need at least 1 credit to ask the tutor.');
       return;
     }
@@ -101,10 +102,7 @@ export default function AITutorModal({
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
 
-      const useOwnKey = localStorage.getItem('use_own_key') === 'true';
-      const userApiKey = localStorage.getItem(localStorage.getItem('provider') === 'mistral' ? 'mistral_api_key' : 'mesh_api_key') || '';
-      const activeProvider = localStorage.getItem('provider') || 'mesh';
-      const activeModel = localStorage.getItem('mesh_active_model') || '';
+      const latestAiRequestMode = getAiRequestMode();
 
       const response = await fetch('/api/ask-question', {
         method: 'POST',
@@ -117,10 +115,7 @@ export default function AITutorModal({
           history: updatedHistory.slice(1),
           userId: userId,
           authToken,
-          apiKey: useOwnKey ? userApiKey : undefined,
-          useOwnKey,
-          provider: activeProvider,
-          model: activeModel,
+          ...latestAiRequestMode,
           stream: true
         })
       });
@@ -191,7 +186,7 @@ export default function AITutorModal({
         } catch (_) {}
       }
 
-      if (!useOwnKey) {
+      if (!aiRequestMode.useOwnKey) {
         refreshCredits();
       }
     } catch (err: any) {

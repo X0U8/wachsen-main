@@ -14,7 +14,7 @@ const FONT_OPTIONS = [
   { value: 'larger' as const, label: 'Larger' },
 ];
 
-const DEFAULT_MODELS = ['anthropic/claude-sonnet-5', 'google/gemini-3.5-flash'];
+const DEFAULT_MODELS = ['openai/chatgpt-4o-latest', 'anthropic/claude-sonnet-5', 'google/gemini-3.5-flash'];
 
 export default function Settings() {
   const navigate = useNavigate();

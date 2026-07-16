@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import { resolveAiConfig } from './lib/ai-config.mjs';
 
 const MESH_API_KEY = process.env.MESH_API_KEY;
 const MESH_API_URL = process.env.MESH_API_URL || 'https://api.meshapi.ai/v1/chat/completions';
-const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 const MESH_MODEL = process.env.MESH_MODEL;
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -22,30 +22,28 @@ export default async function handler(req, res) {
       history = [],
       userId,
       authToken,
-      apiKey: userKey,
-      useOwnKey,
-      provider,
-      model,
       stream = false,
       deductAmount = 1
     } = req.body;
 
-    const isByok = !!(useOwnKey && userKey && userKey.trim());
-    const activeProvider = isByok ? (provider || 'mesh') : 'mesh';
-    const isMistral = activeProvider === 'mistral';
-    const meshKey = isByok ? userKey : MESH_API_KEY;
+    const aiConfig = resolveAiConfig(req.body, {
+      meshApiKey: MESH_API_KEY,
+      meshApiUrl: MESH_API_URL,
+      meshModel: MESH_MODEL
+    });
+    const isByok = aiConfig.mode === 'byok';
 
     if (!question) {
       return res.status(400).json({ error: 'Missing question content' });
     }
 
-    if (!meshKey) {
+    if (!aiConfig.apiKey) {
       return res.status(500).json({ error: 'No API key provided. Set MESH_API_KEY in .env or provide an apiKey.' });
     }
 
     let currentCredits = 0;
     let authedSupabase = null;
-    if (!useOwnKey && supabaseUrl && supabaseAnonKey && userId && authToken) {
+    if (!isByok && supabaseUrl && supabaseAnonKey && userId && authToken) {
       authedSupabase = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${authToken}` } }
       });
@@ -88,10 +86,6 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       });
     }
 
-    const apiUrl = isMistral ? MISTRAL_API_URL : MESH_API_URL;
-    const activeModel = isMistral ? (model || 'mistral-small-latest') : (model || MESH_MODEL);
-    const apiLabel = isMistral ? 'Mistral' : 'Mesh';
-
     let finalCredits = null;
     let creditsDeducted = 0;
     const refundCredits = async () => {
@@ -105,7 +99,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       }
     };
 
-    if (stream && !useOwnKey && authedSupabase && userId) {
+    if (stream && !isByok && authedSupabase && userId) {
       creditsDeducted = deductAmount;
       const newCreditsTotal = Math.max(0, currentCredits - creditsDeducted);
       const { data: updated } = await authedSupabase.from('profiles')
@@ -115,17 +109,17 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       finalCredits = updated?.[0]?.credits ?? newCreditsTotal;
     }
 
-    const response = await fetch(apiUrl, {
+    const response = await fetch(aiConfig.apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${meshKey}`,
+        'Authorization': `Bearer ${aiConfig.apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: activeModel,
+        model: aiConfig.model,
         messages: conversationMessages,
         temperature: 0.7,
-        ...(!isMistral && { reasoning_effort: "none" }),
+        ...(aiConfig.includeReasoningEffort && { reasoning_effort: "none" }),
         stream: stream
       })
     });
@@ -136,7 +130,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
       try { errData = JSON.parse(errText); } catch (_) {}
       await refundCredits();
       return res.status(502).json({
-        error: `${apiLabel} API request failed`,
+        error: `${aiConfig.apiLabel} API request failed`,
         code: errData.error?.code,
         details: errData.error?.message || errText
       });
@@ -166,7 +160,7 @@ User's Answer: "${userAnswer || '(No answer provided)'}"`;
     const data = await response.json();
     const reply = data.choices?.[0]?.message?.content || '';
 
-    if (!useOwnKey && authedSupabase && userId) {
+    if (!isByok && authedSupabase && userId) {
       creditsDeducted = deductAmount;
       const newCreditsTotal = Math.max(0, currentCredits - creditsDeducted);
 

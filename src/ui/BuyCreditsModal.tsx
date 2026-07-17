@@ -212,8 +212,19 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
   const [exchangeRates, setExchangeRates] = useState<{ [key: string]: number }>({});
   const [loadingRates, setLoadingRates] = useState(false);
   const [ratesLoaded, setRatesLoaded] = useState(false);
+  const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
+  const [pendingDowngradeTier, setPendingDowngradeTier] = useState<any>(null);
+  const [downgradeTimer, setDowngradeTimer] = useState(15);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showDowngradeWarning || downgradeTimer <= 0) return;
+    const interval = setInterval(() => {
+      setDowngradeTimer(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showDowngradeWarning, downgradeTimer]);
 
   useEffect(() => {
     const savedCountry = localStorage.getItem('wachsen_country');
@@ -356,6 +367,16 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
   };
 
   const handlePurchaseClick = (tier: any) => {
+    const activePlanName = currentPlan || userProfile?.PremiumType;
+    const isDowngrade = getTierLevel(tier.name) < getTierLevel(activePlanName?.replace(/_monthly|_yearly|_month|_year$/, '') || '');
+
+    if (isDowngrade) {
+      setPendingDowngradeTier(tier);
+      setDowngradeTimer(15);
+      setShowDowngradeWarning(true);
+      return;
+    }
+
     if (isPremiumActive() && !isCurrentPlan(tier.name)) {
       setPendingTier(tier);
       setShowUpgradeWarning(true);
@@ -841,6 +862,47 @@ export default function BuyCreditsModal({ onClose, userId, onPaymentSuccess, cur
                 className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
               >
                 Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDowngradeWarning && pendingDowngradeTier && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-950 border border-black/15 dark:border-white/20 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-5">
+            <div className="text-center pt-2">
+              <CircleStop className="w-12 h-12 text-red-500 mx-auto mb-3 animate-pulse" />
+              <h3 className="font-bold text-zinc-900 dark:text-white text-base">Downgrade Plan Warning</h3>
+              <p className="text-zinc-550 dark:text-zinc-400 text-xs mt-2 leading-relaxed">
+                You are downgrading from <strong className="text-zinc-800 dark:text-zinc-100">{currentPlan?.replace(/_monthly|_yearly|_month|_year$/, '') || 'your current plan'}</strong> to <strong className="text-red-500">{pendingDowngradeTier.name}</strong>.
+              </p>
+              <div className="p-3 bg-red-500/5 dark:bg-red-500/10 border border-red-500/10 dark:border-red-500/20 rounded-2xl text-left mt-3.5 text-[11px] text-red-600 dark:text-red-400 leading-relaxed font-semibold">
+                ⚠️ IMPORTANT: Once you downgrade, you will lose access to higher limits and timelines. Furthermore, you will not be able to upgrade back to this premium tier for a cooling-off period.
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDowngradeWarning(false);
+                  setPendingDowngradeTier(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-zinc-300 font-bold hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors cursor-pointer text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowDowngradeWarning(false);
+                  const tier = pendingDowngradeTier;
+                  setPendingDowngradeTier(null);
+                  handlePurchase(tier);
+                }}
+                disabled={downgradeTimer > 0}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 disabled:bg-zinc-200 dark:disabled:bg-gray-850 text-white disabled:text-zinc-400 dark:disabled:text-gray-600 font-bold hover:bg-red-700 disabled:hover:bg-zinc-200 dark:disabled:hover:bg-gray-850 transition-all text-xs cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+              >
+                {downgradeTimer > 0 ? `Wait (${downgradeTimer}s)` : 'Confirm'}
               </button>
             </div>
           </div>

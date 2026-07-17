@@ -49,8 +49,9 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
       if (profData?.created_at) {
         const createdDate = new Date(profData.created_at);
         const currentDate = new Date();
-        const diffTime = currentDate.getTime() - createdDate.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        createdDate.setHours(0, 0, 0, 0);
+        currentDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.round((currentDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
         calcMemberDays = Math.max(1, diffDays + 1);
       }
 

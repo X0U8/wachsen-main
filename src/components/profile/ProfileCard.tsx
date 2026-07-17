@@ -256,14 +256,13 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
             <div style={{ width: '0.5px', background: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', alignSelf: 'stretch', flexShrink: 0 }} />
 
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: `${5 * scale}px`, marginTop: `${30 * scale}px`, flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: `${10 * scale}px`, marginTop: `${30 * scale}px`, flex: 1 }}>
                 {([
-                  { l: 'Name', v: userProfile.name?.toUpperCase() },
-                  { l: 'User ID', v: `@${userProfile.username || ''}` },
-                  { l: 'Email', v: maskEmail(userProfile.email || '') },
+                  { l: 'NAME', v: userProfile.name?.toUpperCase() },
+                  { l: 'USER ID', v: `@${userProfile.username || ''}` },
                   userProfile.DOB && { l: 'DOB', v: userProfile.DOB },
-                  userProfile.gender && { l: 'Gender', v: userProfile.gender },
-                  userProfile.country && { l: 'Nation', v: userProfile.country },
+                  userProfile.gender && { l: 'GENDER', v: userProfile.gender?.toUpperCase() },
+                  userProfile.country && { l: 'NATION', v: userProfile.country?.toUpperCase() },
                 ] as any[]).filter(Boolean).map((f: any) => (
                   <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: `${10 * scale}px` }}>
                     <span style={{ fontSize: `${10 * scale}px`, textTransform: '', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${65 * scale}px`, fontWeight: 500 }}>{f.l}</span>

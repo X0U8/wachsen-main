@@ -115,20 +115,42 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
     setError('');
     try {
       const compressedBlob = await compressImage(file);
-      const filePath = `avatars/${userProfile.id}_${Date.now()}.jpg`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('scan-refs')
-        .upload(filePath, compressedBlob, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'image/jpeg'
+      
+      // Convert blob to base64 for API transmission
+      const blobToBase64 = (blob: Blob): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(blob);
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
         });
+      };
+      
+      const base64Data = await blobToBase64(compressedBlob);
+      const fileName = `avatars/${userProfile.id}_${Date.now()}.jpg`;
 
-      if (uploadError) throw new Error(uploadError.message);
+      const response = await fetch('/api/upload-to-b2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'upload',
+          fileName,
+          fileType: 'image/jpeg',
+          fileBase64: base64Data
+        })
+      });
 
-      const { data } = supabase.storage.from('scan-refs').getPublicUrl(filePath);
-      setEditPicUrl(data.publicUrl);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Upload failed: ${errorText}`);
+      }
+
+      const uploadResult = await response.json();
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.error || 'Failed to upload to B2');
+      }
+
+      setEditPicUrl(uploadResult.url);
     } catch (err: any) {
       setError(err?.message || 'Failed to upload image');
     } finally {

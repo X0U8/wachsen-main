@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTheme } from '../../lib/ThemeContext.tsx';
 import {
   Loader2, CheckCircle2, XCircle, Clock, Award, ChevronLeft, ChevronUp,
   BarChart3, Brain, Target, Zap, AlertTriangle, Info, PieChart, Activity, Sparkle, X, Printer, RefreshCw
@@ -131,6 +132,7 @@ function buildPlanTopicEntries(planSubject: any) {
 }
 
 export default function ResultDetails() {
+  const { theme } = useTheme();
   const { resultId, viewUserId, examId } = useParams<{ resultId?: string; viewUserId?: string; examId?: string }>();
   const navigate = useNavigate();
   const { userProfile, refreshProfile, refreshCredits } = useUserProfile();
@@ -765,8 +767,14 @@ export default function ResultDetails() {
                       />
                       <YAxis hide />
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }}
+                        contentStyle={{
+                          backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+                          border: theme === 'dark' ? '1px solid #374151' : '1px solid #e4e4e7',
+                          borderRadius: '12px',
+                          color: theme === 'dark' ? '#ffffff' : '#09090b'
+                        }}
                         itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
+                        labelStyle={{ color: theme === 'dark' ? '#ffffff' : '#09090b' }}
                       />
                       <Line
                         type="monotone"
@@ -774,7 +782,7 @@ export default function ResultDetails() {
                         stroke="#3b82f6"
                         strokeWidth={2}
                         dot={{ fill: '#3b82f6', r: 2 }}
-                        activeDot={{ r: 5, stroke: '#111827', strokeWidth: 2 }}
+                        activeDot={{ r: 5, stroke: theme === 'dark' ? '#111827' : '#ffffff', strokeWidth: 2 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -791,8 +799,14 @@ export default function ResultDetails() {
                     <XAxis dataKey="level" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
                     <YAxis hide />
                     <Tooltip
-                      cursor={{ fill: 'rgba(59, 130, 246, 0.05)' }}
-                      contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }}
+                      cursor={{ fill: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' }}
+                      contentStyle={{
+                        backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+                        border: theme === 'dark' ? '1px solid #374151' : '1px solid #e4e4e7',
+                        borderRadius: '12px',
+                        color: theme === 'dark' ? '#ffffff' : '#09090b'
+                      }}
+                      labelStyle={{ color: theme === 'dark' ? '#ffffff' : '#09090b' }}
                     />
                     <Bar dataKey="correct" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
                     <Bar dataKey="skipped" stackId="a" fill="#4b5563" />
@@ -821,7 +835,13 @@ export default function ResultDetails() {
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }}
+                      contentStyle={{
+                        backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+                        border: theme === 'dark' ? '1px solid #374151' : '1px solid #e4e4e7',
+                        borderRadius: '12px',
+                        color: theme === 'dark' ? '#ffffff' : '#09090b'
+                      }}
+                      labelStyle={{ color: theme === 'dark' ? '#ffffff' : '#09090b' }}
                     />
                     <Legend verticalAlign="bottom" height={36} />
                   </RePieChart>
@@ -917,24 +937,28 @@ export default function ResultDetails() {
                             <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 8 }} tickLine={false} axisLine={false} interval={0} angle={0} textAnchor="middle" height={40} />
                             <YAxis hide />
                             <Tooltip
-                              cursor={{ fill: 'rgba(59,130,246,0.05)' }}
-                              contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '12px' }}
-                              content={({ active, payload }: any) => {
-                                if (active && payload && payload.length) {
-                                  const d = payload[0].payload;
-                                  return (
-                                    <div className="bg-white dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-xl p-3 space-y-1 shadow-lg">
-                                      <div className="text-[10px] text-zinc-900 dark:text-white font-bold">{d.fullName}</div>
-                                      {d.chapter ? <div className="text-[9px] text-zinc-500 dark:text-gray-400">{d.chapter}</div> : null}
-                                      <div className="text-[9px] text-green-600 dark:text-green-400 font-semibold">Correct: {d.correct}</div>
-                                      <div className="text-[9px] text-red-600 dark:text-red-400 font-semibold">Wrong: {d.wrong}</div>
-                                      <div className="text-[9px] text-zinc-600 dark:text-gray-400 font-semibold">Skipped: {d.skipped}</div>
-                                    </div>
-                                  );
-                                }
-                                return null;
-                              }}
-                            />
+                               cursor={{ fill: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+                               contentStyle={{
+                                 backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+                                 border: theme === 'dark' ? '1px solid #374151' : '1px solid #e4e4e7',
+                                 borderRadius: '12px'
+                               }}
+                               content={({ active, payload }: any) => {
+                                 if (active && payload && payload.length) {
+                                   const d = payload[0].payload;
+                                   return (
+                                     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 space-y-1 shadow-lg">
+                                       <div className="text-[10px] text-zinc-900 dark:text-white font-bold">{d.fullName}</div>
+                                       {d.chapter ? <div className="text-[9px] text-zinc-500 dark:text-gray-400">{d.chapter}</div> : null}
+                                       <div className="text-[9px] text-green-600 dark:text-green-400 font-semibold">Correct: {d.correct}</div>
+                                       <div className="text-[9px] text-red-600 dark:text-red-400 font-semibold">Wrong: {d.wrong}</div>
+                                       <div className="text-[9px] text-zinc-600 dark:text-gray-400 font-semibold">Skipped: {d.skipped}</div>
+                                     </div>
+                                   );
+                                 }
+                                 return null;
+                               }}
+                             />
                             <Bar dataKey="correct" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
                             <Bar dataKey="wrong" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} />
                             <Bar dataKey="skipped" stackId="a" fill="#4b5563" radius={[6, 6, 0, 0]} />

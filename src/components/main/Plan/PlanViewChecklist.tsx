@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { fontSize } from '../../../lib/utils';
 import { idbGet, idbSet } from '../../../lib/idb';
 import { TrendingUp, Loader2 } from 'lucide-react';
+import MathText from '../../../ui/MathText';
 
 interface SubjectChapter {
   subjectName: string;
@@ -137,7 +138,7 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
               : 'bg-white dark:bg-zinc-900 border-zinc-250 dark:border-gray-800 text-zinc-650 dark:text-gray-350 hover:bg-zinc-50 dark:hover:bg-white/5'
               }`}
           >
-            {sub}
+            <MathText text={sub} />
           </button>
         ))}
       </div>
@@ -146,8 +147,8 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
           if (!groupedSubjects[subName]) return null;
           return (
             <div key={subName} className="space-y-2.5 animate-fadeIn">
-              <h5 className="text-xs font-bold text-zinc-400 dark:text-gray-500  tracking-widest pl-1 border-b border-zinc-200 dark:border-gray-850 pb-1">
-                {subName} ({groupedSubjects[subName].filter(chap => checkedChapters[`${subName}-${chap}`]).length} / {groupedSubjects[subName].length})
+              <h5 className="text-xs font-bold text-zinc-400 dark:text-gray-500  tracking-widest pl-1 border-b border-zinc-200 dark:border-gray-855 pb-1">
+                <MathText text={subName} /> ({groupedSubjects[subName].filter(chap => checkedChapters[`${subName}-${chap}`]).length} / {groupedSubjects[subName].length})
               </h5>
 
               <div className="grid md:grid-cols-2 gap-2">
@@ -164,7 +165,7 @@ export default function PlanViewChecklist({ planId, planJson }: PlanViewChecklis
                         }`}
                     >
                       <span className="font-semibold text-xs leading-relaxed">
-                        {chap}
+                        <MathText text={chap} />
                       </span>
 
                       <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all shrink-0 ${isChecked

@@ -1,14 +1,27 @@
 # Wachsen
 
 Wachsen is a comprehensive, exam preparation and revision platform. Designed to help students plan schedules, execute exam-taking sessions, scan physical questions, generate conceptual flashcards via AI, and track revision logs all in one place.
-***Powered By Mesh API***
+***Powered By Mesh API (OpenAI/ChatGPT endpoints)***
+
+## 🧠 AI-Assisted Development (Codex & GPT-5.6)
+
+Wachsen was designed and engineered in close collaboration with state-of-the-art AI systems:
+* **UI & Experience Design (GPT-5.6)**: The premium responsive UI layouts, fluid micro-interactions, dark/light theme systems, and custom layouts were co-designed using GPT-5.6. The AI helped refine color palettes, design clean layout scales, and handle viewport styling constraints.
+* **Backend Architecture & Code Generation (Codex)**: Many of the core frontend components, database helpers, and custom backend scripts were built with the assistance of GitHub Codex, facilitating strict TypeScript integration, complex API payload handling, and high-performance React patterns.
+
+## 🚀 Live AI Features (ChatGPT & Mesh API)
+
+The live, interactive features inside the application run on **OpenAI/ChatGPT models** routed via the **Mesh API** (a high-performance alternative to OpenRouter):
+* **AI Tutor & Evaluation**: Subjective assessment grading and interactive chat explanations utilize ChatGPT models.
+* **Smart Study Planner**: Generates daily and monthly roadmaps on-demand using ChatGPT.
+* **Concept Card Generation**: Creates custom theory flashcards to reinforce knowledge.
 
 ## Core Features
 
 - **Exam Planner & Dashboard**: Features robust calendar schedules (daily, weekly, monthly, and mentor timelines) for tracking upcoming tasks.
 - **Dynamic Font & Theme Engine**: Supports responsive clamp-based typography scaling and a dark/light visual toggle.
 - **Physical Document Scanner**: Decodes and scans question sheets using integrated PDF.js rendering.
-- **AI Tutoring & Evaluations**: Leverages Mesh LLM Chat Completions to evaluate subjective answers and resolve conceptual doubts.
+- **AI Tutoring & Evaluations**: Gets subjective answers graded and conceptual doubts solved using ChatGPT via Mesh API.
 - **Interactive Concept Cards**: Dynamically generates and formats study flashcards for topic revision.
 - **Premium Subscription & Payments**: Multi-tier billing flows (Lite, Rise, Peak) configured with Razorpay API endpoints.
 
@@ -61,7 +74,7 @@ The project uses concurrent client and server tasks. You can run them locally:
 | `SUPABASE_PROJECT_ID` | Project reference ID for Supabase services. | Supabase Dashboard |
 | `MESH_API_KEY` | Secret access token for AI Chat Completion model endpoints. | Mesh API Console |
 | `MESH_API_URL` | Chat completions endpoint URL. | Mesh API Console |
-| `MESH_MODEL` | The default text completion model (e.g. Gemini 2.5 flash). | Mesh API Console |
+| `MESH_MODEL` | The default text completion model (e.g. GPT-5.4). | Mesh API Console |
 | `VITE_RAZORPAY_KEY_ID` | Client-side publishable key for loading the checkout script. | Razorpay Dashboard |
 | `RAZORPAY_KEY_ID` | Server-side Razorpay merchant key identifier. | Razorpay Dashboard |
 | `RAZORPAY_KEY_SECRET` | Secret api credential token for backend signature verification. | Razorpay Dashboard |

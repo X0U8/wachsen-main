@@ -2,16 +2,11 @@
 
 Wachsen is a comprehensive, exam preparation and revision platform. Designed to help students plan schedules, execute exam-taking sessions, scan physical questions, generate conceptual flashcards via AI, and track revision logs all in one place.
 
-
-## AI-Assisted Development
-
-Wachsen was designed and engineered in close collaboration with state of the art AI systems. The application was built utilizing Codex for core code generation and TypeScript integration, alongside ChatGPT for UI/UX layouts, responsive component design, and backend database architecture help.
-
 ## Live AI Features (ChatGPT & Mesh API)
 
-The live, interactive features inside the application run on **OpenAI/ChatGPT models** routed via the **Mesh API** (a high-performance and budget friendly alternative to OpenRouter):
+The live, interactive features inside the application run on **OpenAI/ChatGPT models** routed via the **Mesh API** 
 * **AI Tutor & Evaluation**: Subjective assessment grading and interactive chat explanations utilize ChatGPT models.
-* **Smart Study Planner**: Generates daily and monthly roadmaps on-demand using ChatGPT.
+* **Smart Study Planner**: Generates daily and monthly roadmaps on demand using ChatGPT.
 * **Concept Card Generation**: Creates custom theory flashcards to reinforce knowledge.
 
 ## Core Features
@@ -28,6 +23,9 @@ The live, interactive features inside the application run on **OpenAI/ChatGPT mo
 - **Frontend**: React, Vite, Tailwind CSS, TypeScript, TanStack Query, Recharts, Lucide Icons, MathJax (math typesetting).
 - **Backend API**: Express (Node.js) server.
 - **Database & Auth**: Supabase (Postgres tables, schema validation, avatar storage bucket).
+
+Wachsen was designed and engineered in close collaboration with state of the art AI systems. The application was built utilizing Codex for UI/UX layouts, responsive component design, and backend database architecture help.
+
 
 ## Getting Started
 

@@ -118,6 +118,7 @@ export default function RevisionLog() {
   const [logData, setLogData] = useState<RevisionLogData | null>(null);
   const [showConceptCards, setShowConceptCards] = useState(false);
   const [conceptCards, setConceptCards] = useState<any[]>([]);
+  const [isConceptSaved, setIsConceptSaved] = useState(false);
   const [activeTopics, setActiveTopics] = useState('');
   const [conceptSubject, setConceptSubject] = useState('');
   const [conceptDifficulty, setConceptDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
@@ -210,11 +211,13 @@ export default function RevisionLog() {
   const generateConceptCards = async ({
     subject,
     topics,
-    difficulty
+    difficulty,
+    name
   }: {
     subject?: string;
     topics: string;
     difficulty?: 'easy' | 'medium' | 'hard' | 'advance';
+    name?: string;
   }) => {
     if (generatingCards) return;
     setGeneratingCards(true);
@@ -260,8 +263,23 @@ Return ONLY a valid JSON array matching this format:
       const cleanedReply = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
       const cards = safeParseJSON(cleanedReply);
 
+      const { error: insertError } = await supabase
+        .from('saved_concept_cards')
+        .insert({
+          user_id: userProfile?.id,
+          category_id: examCategoryId || null,
+          academic_level: level,
+          subject_name: subject || 'General',
+          difficulty: diffLabel,
+          name: name || `${topics} Concept Cards`,
+          topics: topics,
+          questions: cards,
+        });
+      if (insertError) throw insertError;
+
       setConceptCards(cards);
       setCardGenProgress(10);
+      setIsConceptSaved(true);
       setShowConceptCards(true);
       refreshProfile();
     } catch (err: any) {
@@ -589,6 +607,7 @@ Return ONLY a valid JSON array matching this format:
           userId={userProfile?.id}
           categoryId={examCategoryId || ''}
           academicLevel={academicLevel}
+          isAlreadySaved={isConceptSaved}
         />
       )}
       {generatingCards && (

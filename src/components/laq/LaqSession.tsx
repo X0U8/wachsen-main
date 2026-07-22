@@ -17,6 +17,8 @@ export interface LaqExam {
   time_limit_minutes: number | null;
   questions: LaqQuestion[];
   status: string;
+  updated_at?: string | null;
+  created_at?: string | null;
 }
 
 interface LaqSessionProps {
@@ -57,17 +59,24 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Resume if the exam was already started but not submitted
+
   useEffect(() => {
     if (laq.status !== 'ongoing') return;
-    const savedStart = localStorage.getItem(`laq_start_${laq.id}`);
-    if (savedStart) {
-      const elapsed = Math.floor((Date.now() - Number(savedStart)) / 1000);
-      setTimeLeft(Math.max(0, totalTimeSeconds - elapsed));
+
+    const startTime = new Date(laq.updated_at || laq.created_at || '').getTime();
+    const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+    const limitSeconds = (laq.time_limit_minutes || 15) * 60;
+    const remaining = limitSeconds - elapsedSeconds;
+
+    if (remaining <= 0) {
+      setTimeLeft(0);
+      setIsExamStarted(true);
+      setShowStartModal(false);
+      handleSubmitAll();
+    } else {
+      setTimeLeft(remaining);
     }
-    setIsExamStarted(true);
-    setShowStartModal(false);
-  }, [laq.status, laq.id, totalTimeSeconds]);
+  }, [laq.status, laq.updated_at, laq.created_at, laq.id, laq.time_limit_minutes]);
 
   const totalQuestions = laq.questions.length;
   const currentQuestion = laq.questions[currentIndex];
@@ -75,14 +84,22 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
   const isLastQuestion = currentIndex === totalQuestions - 1;
 
-  // Handle countdown logic
+
   useEffect(() => {
     if (countdown === null) return;
     if (countdown === 0) {
       const t = setTimeout(async () => {
-        const now = Date.now();
-        localStorage.setItem(`laq_start_${laq.id}`, now.toString());
-        await supabase.from('laq_exam').update({ status: 'ongoing' }).eq('id', laq.id);
+        if (laq.status !== 'ongoing') {
+          const now = new Date().toISOString();
+          await supabase
+            .from('laq_exam')
+            .update({
+              status: 'ongoing',
+              updated_at: now
+            })
+            .eq('id', laq.id);
+        }
+
         setIsExamStarted(true);
         setShowStartModal(false);
         setCountdown(null);
@@ -91,22 +108,18 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
     }
     const t = setTimeout(() => setCountdown(countdown - 1), 1000);
     return () => clearTimeout(t);
-  }, [countdown, laq.id]);
+  }, [countdown, laq.id, laq.status]);
 
-  // Sync remaining time with localStorage start timestamp
+
   useEffect(() => {
-    if (!isExamStarted || finished) return;
+    if (!isExamStarted || finished || timeLeft === null) return;
 
-    let startTimeStr = localStorage.getItem(`laq_start_${laq.id}`);
-    if (!startTimeStr) {
-      startTimeStr = Date.now().toString();
-      localStorage.setItem(`laq_start_${laq.id}`, startTimeStr);
-    }
-    const startTime = Number(startTimeStr);
+    const startTime = new Date(laq.updated_at || laq.created_at || '').getTime();
 
     const updateTimer = () => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const remaining = Math.max(0, totalTimeSeconds - elapsed);
+      const limitSeconds = (laq.time_limit_minutes || 15) * 60;
+      const remaining = Math.max(0, limitSeconds - elapsed);
       setTimeLeft(remaining);
 
       if (remaining <= 0) {
@@ -121,16 +134,16 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isExamStarted, finished, totalTimeSeconds, laq.id]);
+  }, [isExamStarted, finished, laq.updated_at, laq.created_at, laq.time_limit_minutes]);
 
-  // Navigation lock (beforeunload/popstate) - active only when exam has started
+
   useEffect(() => {
     if (!isExamStarted || finished) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = 'Are you sure you want to leave? Your exam progress will be lost.';
-      return e.returnValue;
+      e.returnValue = '';
+      return '';
     };
 
     const handlePopState = (e: PopStateEvent) => {
@@ -186,7 +199,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
       const finalAnswers = [...answers];
 
-      // Build records directly from user text — no intermediate per-question AI calls
+
       const records: LaqAnswerRecord[] = finalAnswers.map((a, idx) => ({
         questionIndex: idx,
         question: laq.questions[idx].question,
@@ -195,13 +208,12 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
         feedback: '',
       }));
 
-      // Single batch AI grading
+
       const analysis = await analyzeLaqSession(records, userProfile.id, authToken);
 
-      // Save answers separately, ai_analysis only has per-question breakdown
+
       const answersPayload = records.map((r) => ({
         questionIndex: r.questionIndex,
-        question: r.question,
         userAnswer: r.userAnswer,
       }));
 
@@ -216,6 +228,9 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
           clarity: analysis.clarity,
           ai_analysis: {
             overall_rating: analysis.overall_rating,
+            accuracy_reason: analysis.accuracy_reason,
+            depth_reason: analysis.depth_reason,
+            clarity_reason: analysis.clarity_reason,
             perQuestion: analysis.perQuestion,
           },
         })
@@ -223,7 +238,6 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
 
       if (updateError) throw updateError;
 
-      localStorage.removeItem(`laq_start_${laq.id}`);
       onComplete();
     } catch (err: any) {
       console.error('Submit error:', err);
@@ -259,9 +273,11 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                   </motion.div>
                 ) : (
                   <div className="space-y-4">
-                    <h3 className="text-zinc-900 dark:text-white text-2xl font-semibold">Ready to Start?</h3>
+                    <h3 className="text-zinc-900 dark:text-white text-2xl font-semibold">
+                      {laq.status === 'ongoing' ? 'Resume Exam?' : 'Ready to Start?'}
+                    </h3>
                     <p className="text-zinc-500 dark:text-gray-400 leading-relaxed text-sm">
-                      You are about to start <span className="text-zinc-900 dark:text-white font-medium">{laq.name}</span>.
+                      You are about to {laq.status === 'ongoing' ? 'resume' : 'start'} <span className="text-zinc-900 dark:text-white font-medium">{laq.name}</span>.
                     </p>
                   </div>
                 )}
@@ -279,7 +295,7 @@ export default function LaqSession({ laq, onComplete }: LaqSessionProps) {
                     onClick={() => setCountdown(3)}
                     className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all shadow-lg shadow-blue-500/20 font-medium text-xs cursor-pointer"
                   >
-                    Start Now
+                    {laq.status === 'ongoing' ? 'Resume Now' : 'Start Now'}
                   </button>
                 </div>
               )}

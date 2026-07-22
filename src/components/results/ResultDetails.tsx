@@ -281,11 +281,11 @@ export default function ResultDetails() {
 
       setHasRevisionLog(true);
       showNotification('success', 'Revision log created successfully!');
-      // Drop all localStorage revision caches so next visit re-fetches fresh data
+
       Object.keys(localStorage)
         .filter(k => k.startsWith('cached_revision_logs_'))
         .forEach(k => localStorage.removeItem(k));
-      // Invalidate React Query cache so RevisionLog re-fetches immediately
+
       queryClient.invalidateQueries({ queryKey: ['revisionLogs'] });
     } catch (err: any) {
       console.error(err);
@@ -716,7 +716,7 @@ export default function ResultDetails() {
           ].map((card, i) => (
             <div key={i} className="bg-white dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 p-3 md:p-6 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center text-center space-y-1 md:space-y-2">
               <p
-                className="text-[9px] text-zinc-500 dark:text-gray-400 font-medium text-xs">{card.label}</p>
+                className="text-xs text-zinc-500 dark:text-gray-400 font-medium">{card.label}</p>
               <p className={`md:text-3xl truncate w-full ${card.color} text-base`}>{card.value}</p>
             </div>
           )) : [
@@ -727,7 +727,7 @@ export default function ResultDetails() {
           ].map((card, i) => (
             <div key={i} className="bg-white dark:bg-gray-900/50 border border-zinc-200 dark:border-gray-800 p-3 md:p-6 rounded-2xl md:rounded-3xl flex flex-col items-center justify-center text-center space-y-1 md:space-y-2">
               <p
-                className="text-[10px] text-zinc-500 dark:text-gray-400 font-medium text-xs">{card.label}</p>
+                className="text-xs text-zinc-500 dark:text-gray-400 font-medium">{card.label}</p>
               <p className={`md:text-3xl truncate w-full ${card.color} text-base`}>{card.value}</p>
             </div>
           ))}
@@ -843,7 +843,7 @@ export default function ResultDetails() {
                       }}
                       labelStyle={{ color: theme === 'dark' ? '#ffffff' : '#09090b' }}
                     />
-                    <Legend verticalAlign="bottom" height={36} />
+                    <Legend verticalAlign="bottom" height={28} wrapperStyle={{ fontSize: '10px' }} iconSize={8} />
                   </RePieChart>
                 </ResponsiveContainer>
               </div>
@@ -937,28 +937,28 @@ export default function ResultDetails() {
                             <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 8 }} tickLine={false} axisLine={false} interval={0} angle={0} textAnchor="middle" height={40} />
                             <YAxis hide />
                             <Tooltip
-                               cursor={{ fill: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
-                               contentStyle={{
-                                 backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
-                                 border: theme === 'dark' ? '1px solid #374151' : '1px solid #e4e4e7',
-                                 borderRadius: '12px'
-                               }}
-                               content={({ active, payload }: any) => {
-                                 if (active && payload && payload.length) {
-                                   const d = payload[0].payload;
-                                   return (
-                                     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 space-y-1 shadow-lg">
-                                       <div className="text-[10px] text-zinc-900 dark:text-white font-bold">{d.fullName}</div>
-                                       {d.chapter ? <div className="text-[9px] text-zinc-500 dark:text-gray-400">{d.chapter}</div> : null}
-                                       <div className="text-[9px] text-green-600 dark:text-green-400 font-semibold">Correct: {d.correct}</div>
-                                       <div className="text-[9px] text-red-600 dark:text-red-400 font-semibold">Wrong: {d.wrong}</div>
-                                       <div className="text-[9px] text-zinc-600 dark:text-gray-400 font-semibold">Skipped: {d.skipped}</div>
-                                     </div>
-                                   );
-                                 }
-                                 return null;
-                               }}
-                             />
+                              cursor={{ fill: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+                              contentStyle={{
+                                backgroundColor: theme === 'dark' ? '#111827' : '#ffffff',
+                                border: theme === 'dark' ? '1px solid #374151' : '1px solid #e4e4e7',
+                                borderRadius: '12px'
+                              }}
+                              content={({ active, payload }: any) => {
+                                if (active && payload && payload.length) {
+                                  const d = payload[0].payload;
+                                  return (
+                                    <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 space-y-1 shadow-lg">
+                                      <div className="text-[10px] text-zinc-900 dark:text-white font-bold">{d.fullName}</div>
+                                      {d.chapter ? <div className="text-[9px] text-zinc-500 dark:text-gray-400">{d.chapter}</div> : null}
+                                      <div className="text-[9px] text-green-600 dark:text-green-400 font-semibold">Correct: {d.correct}</div>
+                                      <div className="text-[9px] text-red-600 dark:text-red-400 font-semibold">Wrong: {d.wrong}</div>
+                                      <div className="text-[9px] text-zinc-600 dark:text-gray-400 font-semibold">Skipped: {d.skipped}</div>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              }}
+                            />
                             <Bar dataKey="correct" stackId="a" fill="#22c55e" radius={[0, 0, 0, 0]} />
                             <Bar dataKey="wrong" stackId="a" fill="#ef4444" radius={[0, 0, 0, 0]} />
                             <Bar dataKey="skipped" stackId="a" fill="#4b5563" radius={[6, 6, 0, 0]} />
@@ -1094,7 +1094,7 @@ export default function ResultDetails() {
                       </div>
 
                       <div
-                        className="font-medium leading-relaxed text-zinc-900 dark:text-white text-base">
+                        className="font-medium leading-relaxed text-zinc-900 dark:text-white text-sm">
                         <MathText text={q.text} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
                           <div

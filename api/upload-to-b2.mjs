@@ -23,7 +23,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Backblaze B2 configuration is missing in environment variables.' });
     }
 
-    // 1. Authorize B2 Account (needed for all actions)
+
     const authCredentials = Buffer.from(`${b2KeyId}:${b2AppKey}`).toString('base64');
     const authResponse = await fetch('https://api.backblazeb2.com/b2api/v3/b2_authorize_account', {
       headers: { 'Authorization': `Basic ${authCredentials}` }
@@ -38,13 +38,13 @@ export default async function handler(req, res) {
     const { apiInfo, authorizationToken: accountToken } = authData;
     const { apiUrl, downloadUrl } = apiInfo.storageApi;
 
-    // --- Action: GET FILE (CDN PROXY WITH CACHING) ---
+
     if (action === 'get-file') {
       if (!fileName) {
         return res.status(400).json({ error: 'Missing path parameter.' });
       }
 
-      // Generate a temporary download token active for 1 hour (3600s)
+
       const downloadAuthResponse = await fetch(`${apiUrl}/b2api/v3/b2_get_download_authorization`, {
         method: 'POST',
         headers: {
@@ -66,7 +66,7 @@ export default async function handler(req, res) {
       const downloadAuthData = await downloadAuthResponse.json();
       const downloadToken = downloadAuthData.authorizationToken;
 
-      // Fetch the binary file from Backblaze B2 private bucket
+
       const b2FileResponse = await fetch(`${downloadUrl}/file/${b2BucketName}/${fileName}?Authorization=${downloadToken}`);
       if (!b2FileResponse.ok) {
         throw new Error(`Failed to fetch file from B2 storage: ${b2FileResponse.statusText}`);
@@ -75,19 +75,19 @@ export default async function handler(req, res) {
       const arrayBuffer = await b2FileResponse.arrayBuffer();
       const fileBuffer = Buffer.from(arrayBuffer);
 
-      // Return the file content with standard image headers and CDN/browser cache headers
+
       res.setHeader('Content-Type', b2FileResponse.headers.get('content-type') || 'image/jpeg');
       res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
       return res.send(fileBuffer);
     }
 
-    // --- Action: UPLOAD ---
+
     if (action === 'upload') {
       if (!fileName || !fileBase64) {
         return res.status(400).json({ error: 'Missing fileName or fileBase64 data.' });
       }
 
-      // 2. Get Upload URL
+
       const uploadUrlResponse = await fetch(`${apiUrl}/b2api/v3/b2_get_upload_url`, {
         method: 'POST',
         headers: {
@@ -105,7 +105,7 @@ export default async function handler(req, res) {
       const uploadUrlData = await uploadUrlResponse.json();
       const { uploadUrl, authorizationToken: uploadToken } = uploadUrlData;
 
-      // 3. Upload raw file buffer
+
       const fileBuffer = Buffer.from(fileBase64.split(',')[1] || fileBase64, 'base64');
       const encodedFileName = encodeURIComponent(fileName);
 
@@ -127,7 +127,7 @@ export default async function handler(req, res) {
 
       const uploadResult = await uploadResponse.json();
 
-      // Return the permanent, static proxy URL (does not expire)
+
       const proxyUrl = `/api/upload-to-b2?path=${fileName}`;
 
       return res.status(200).json({
@@ -138,7 +138,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // --- Action: GET DOWNLOAD URL (FALLBACK) ---
+
     if (action === 'get-url') {
       if (!fileName) {
         return res.status(400).json({ error: 'Missing fileName.' });
@@ -173,7 +173,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // --- Action: LIST FILES (NEW) ---
+
     if (action === 'list') {
       if (!fileName) {
         return res.status(400).json({ error: 'Missing prefix (fileName).' });

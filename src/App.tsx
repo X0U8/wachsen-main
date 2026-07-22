@@ -36,7 +36,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Restore dehydrated cache state on startup
+
 try {
   const savedState = localStorage.getItem('wachsen_react_query_cache');
   if (savedState) {
@@ -47,7 +47,7 @@ try {
   console.warn('Failed to restore query client cache:', e);
 }
 
-// Persist query cache updates on query successes
+
 queryClient.getQueryCache().subscribe((event) => {
   if (event.type === 'updated' && event.query.state.status === 'success') {
     try {

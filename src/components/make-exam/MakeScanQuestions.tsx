@@ -3,7 +3,7 @@ import { X, ChevronLeft, Clock, GraduationCap, CheckCircle2, AlertCircle, Lock a
 import ScanPage, { ScannedFile } from './ScanPage';
 import { motion, AnimatePresence } from 'framer-motion';
 import Notification from '../../ui/Notification';
-import FinalizeExam from './FinalizeExam';
+import FinalizeScanExam from './FinalizeScanExam';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
 import { supabase } from '../../services/supabase';
@@ -26,16 +26,15 @@ interface SubjectConfig {
   questionTypes: QuestionType[];
 }
 
-interface ManuallyWithAIProps {
+interface MakeScanQuestionsProps {
   show: boolean;
   onClose: () => void;
-  mode: 'auto' | 'manual';
   userProfile: any;
   categoryId: string;
   availableSubjects: any[];
 }
 
-export default function ManuallyWithAI({ show, onClose, userProfile, categoryId, availableSubjects }: ManuallyWithAIProps) {
+export default function MakeScanQuestions({ show, onClose, userProfile, categoryId, availableSubjects }: MakeScanQuestionsProps) {
   const { refreshCredits, refreshProfile } = useUserProfile();
   const [showFinalizeExam, setShowFinalizeExam] = useState(false);
   const [step, setStep] = useState<'details' | 'subjects'>('details');
@@ -49,7 +48,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
   const [applyingTemplate, setApplyingTemplate] = useState(false);
   const [generating, setGenerating] = useState(false);
 
-
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -59,7 +57,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     document.head.appendChild(style);
     return () => style.remove();
   }, []);
-
 
   useEffect(() => {
     if (!showTemplateList) return;
@@ -73,13 +70,12 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     return () => document.removeEventListener('mousedown', handler);
   }, [showTemplateList]);
 
-
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [disabledItemName, setDisabledItemName] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [selectedTypes, setSelectedTypes] = useState<('mcq' | 'integer' | 'true_false')[]>(['mcq']);
   const [defaultCounts, setDefaultCounts] = useState<Record<string, number>>({});
-  const [showScan, setShowScan] = useState(false);
+  const [showScan, setShowScan] = useState(true);
   const [scannedFiles, setScannedFiles] = useState<ScannedFile[]>([]);
 
   const [examName, setExamName] = useState('');
@@ -89,7 +85,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
   const [startDateTime, setStartDateTime] = useState('anytime');
   const [endDateTime, setEndDateTime] = useState('anytime');
   const [accessType, setAccessType] = useState<'anytime' | 'specific'>('anytime');
-
 
   const [startDate, setStartDate] = useState('');
   const [startHour, setStartHour] = useState(12);
@@ -136,7 +131,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     setStartDate(sd); setStartHour(h); setStartMinute(min); setStartAmPm(ap);
     const startIso = toISO(sd, h, min, ap);
 
-
     const addMins = Math.max(30, totalTime);
     const end = new Date(new Date(startIso).getTime() + addMins * 60000);
     const ed = end.toISOString().slice(0, 10);
@@ -162,7 +156,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     selectedTypes.includes('integer') && NON_INT_SUBJECTS.has(sub.name.toLowerCase().trim())
   );
 
-
   const getMaxTemplates = () => {
     const premiumType = userProfile?.PremiumType || '';
     if (premiumType.toLowerCase().includes('peak')) return 30;
@@ -179,7 +172,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     return 25;
   };
 
-
   const getMaxSubjects = () => {
     const premiumType = (userProfile as any)?.PremiumType || '';
     if (premiumType.toLowerCase().includes('peak')) return 10;
@@ -188,8 +180,17 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
     return 3;
   };
 
+  const getMaxPages = () => {
+    const premiumType = (userProfile as any)?.PremiumType || '';
+    if (premiumType.toLowerCase().includes('peak')) return 15;
+    if (premiumType.toLowerCase().includes('rise')) return 10;
+    if (premiumType.toLowerCase().includes('lite')) return 6;
+    return 3;
+  };
+
   const maxQuestions = getMaxQuestions();
   const maxSubjects = getMaxSubjects();
+  const maxPages = getMaxPages();
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
@@ -376,7 +377,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
       }
 
       setSubjects([...subjects, {
-        id: sub.id, name: sub.name, academicLevel: sub.academicLevel || 'Grade 10', chapters: '', questionTypes: selectedTypes.map(type => ({
+        id: sub.id, name: sub.name, academicLevel: sub.academicLevel || 'Grade 10', chapters: 'Full Syllabus', questionTypes: selectedTypes.map(type => ({
           type, count: defaultCounts[type] || 5, correctMarks: defaultCorrectMarks, negativeMarks: defaultNegativeMarks,
           mcqOptions: type === 'mcq' ? 4 : undefined, mcqMultiple: type === 'mcq' ? false : undefined
         }))
@@ -410,7 +411,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             <button onClick={onClose} className="p-2 hover:bg-zinc-200 dark:hover:bg-gray-900 rounded-full transition-colors">
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h2 className="text-base">Make Exam</h2>
+            <h3 className="text-base">Convert Question Paper</h3>
           </div>
           <div className="flex items-center gap-2">
             <button data-template-btn onClick={() => { fetchTemplates(); setShowTemplateList(!showTemplateList); }}
@@ -419,7 +420,6 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
               <GraduationCap className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
               <span className="text-zinc-600 dark:text-zinc-400 font-medium text-xs">Templates</span>
             </button>
-
 
             <div className="flex items-center bg-zinc-200/80 dark:bg-gray-800/80 backdrop-blur-sm border border-zinc-300 dark:border-gray-700 rounded-lg px-2 py-1">
               <span className="font-semibold text-zinc-900 dark:text-white text-xs">
@@ -485,7 +485,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
-                        <label className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Correct Marks</label>
+                        <label className="text-zinc-550 dark:text-gray-450 font-medium text-xs font-semibold">Correct Marks</label>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => setDefaultCorrectMarks(Math.max(1, defaultCorrectMarks - 1))}
@@ -498,18 +498,18 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-zinc-500 dark:text-gray-400 font-medium text-xs">Negative Marks</label>
+                        <label className="text-zinc-550 dark:text-gray-450 font-medium text-xs font-semibold">Negative Marks</label>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => setDefaultNegativeMarks(Math.max(0, defaultNegativeMarks - 1))}
-                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium text-sm">-</button>
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-550 dark:text-gray-450 hover:text-zinc-900 dark:hover:text-white transition-all font-medium text-sm">-</button>
                           <div className="flex-1 flex items-center bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-700 rounded-lg py-2.5">
                             <span className="text-red-500 font-semibold pl-3 text-sm">-</span>
                             <span className="flex-1 text-center font-semibold text-red-500 text-sm">{defaultNegativeMarks}</span>
                           </div>
                           <button
                             onClick={() => setDefaultNegativeMarks(Math.min(5, defaultNegativeMarks + 1))}
-                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-medium text-sm">+</button>
+                            className="w-9 h-9 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-550 dark:text-gray-455 hover:text-zinc-900 dark:hover:text-white transition-all font-medium text-sm">+</button>
                         </div>
                       </div>
                     </div>
@@ -524,12 +524,12 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                         <button
                           type="button"
                           onClick={() => setIsPublic(true)}
-                          className={`flex-1 py-2 font-medium rounded-lg transition-all ${isPublic ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'} text-xs`}>Public</button>
+                          className={`flex-1 py-2 font-medium rounded-lg transition-all ${isPublic ? 'bg-blue-600 text-white' : 'text-zinc-505 dark:text-gray-500'} text-xs`}>Public</button>
                         <button
                           type="button"
                           disabled={!userProfile?.isPremium}
                           onClick={() => setIsPublic(false)}
-                          className={`flex-1 py-2 font-medium rounded-lg transition-all ${!isPublic ? 'bg-red-600 text-white' : 'text-zinc-500 dark:text-gray-500'} ${!userProfile?.isPremium ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:bg-zinc-300 dark:hover:bg-gray-800'} text-xs`}>Private</button>
+                          className={`flex-1 py-2 font-medium rounded-lg transition-all ${!isPublic ? 'bg-red-600 text-white' : 'text-zinc-505 dark:text-gray-500'} ${!userProfile?.isPremium ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:bg-zinc-300 dark:hover:bg-gray-800'} text-xs`}>Private</button>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -539,7 +539,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                           <button
                             key={level}
                             onClick={() => setDifficulty(level)}
-                            className={`flex-1 py-2 font-medium rounded-lg transition-all ${difficulty === level ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'} text-xs`}>{level.charAt(0).toUpperCase() + level.slice(1)}</button>
+                            className={`flex-1 py-2 font-medium rounded-lg transition-all ${difficulty === level ? 'bg-blue-600 text-white' : 'text-zinc-505 dark:text-gray-505'} text-xs`}>{level.charAt(0).toUpperCase() + level.slice(1)}</button>
                         ))}
                       </div>
                     </div>
@@ -548,35 +548,35 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2"><Clock className="w-4 h-4" /><label
                         htmlFor="totalTime"
-                        className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Total Time Limit</label></div>
+                        className="text-zinc-505 dark:text-gray-505 font-medium text-xs">Total Time Limit</label></div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setTotalTime(Math.max(5, totalTime - 5))}
-                          className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all text-sm">-</button>
+                          className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-550 dark:text-gray-450 hover:text-zinc-900 dark:hover:text-white transition-all text-sm">-</button>
                         <input id="totalTime" name="totalTime" type="range" min="5" max="600" step="5" value={totalTime} onChange={(e) => setTotalTime(parseInt(e.target.value))} className="flex-1 accent-blue-600" />
                         <button
                           onClick={() => setTotalTime(Math.min(600, totalTime + 5))}
-                          className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all text-sm">+</button>
+                          className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-555 dark:text-gray-455 hover:text-zinc-900 dark:hover:text-white transition-all text-sm">+</button>
                       </div>
                       <div className="flex justify-between text-xs"><span>5 min</span><span className="text-blue-500 text-sm">{totalTime} minutes</span><span>600 min</span></div>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Access Schedule</label>
+                    <label className="text-zinc-500 dark:text-gray-550 font-medium text-xs">Access Schedule</label>
                     <div className="flex bg-zinc-100 dark:bg-gray-900 rounded-xl p-1 border border-zinc-300 dark:border-gray-800">
                       <button
                         onClick={() => { setAccessType('anytime'); setStartDateTime('anytime'); setEndDateTime('anytime'); }}
-                        className={`flex-1 py-2 font-medium rounded-lg transition-all ${accessType === 'anytime' ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'} text-xs`}>Anytime</button>
+                        className={`flex-1 py-2 font-medium rounded-lg transition-all ${accessType === 'anytime' ? 'bg-blue-600 text-white' : 'text-zinc-505 dark:text-gray-500'} text-xs`}>Anytime</button>
                       <button
                         onClick={() => { setAccessType('specific'); syncScheduleInputs(); }}
-                        className={`flex-1 py-2 font-medium rounded-lg transition-all ${accessType === 'specific' ? 'bg-blue-600 text-white' : 'text-zinc-500 dark:text-gray-500'} text-xs`}>Specific Window</button>
+                        className={`flex-1 py-2 font-medium rounded-lg transition-all ${accessType === 'specific' ? 'bg-blue-600 text-white' : 'text-zinc-505 dark:text-gray-500'} text-xs`}>Specific Window</button>
                     </div>
                     {accessType === 'specific' && (
                       <div className="space-y-4">
                         <div>
-                          <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Starting Date & Time</label>
+                          <label className="text-zinc-505 dark:text-gray-505 font-medium text-xs">Starting Date & Time</label>
                           <div className="flex gap-2 mt-1.5">
                             <input
                               type="date"
@@ -622,7 +622,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                           </div>
                         </div>
                         <div>
-                          <label className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Ending Date & Time</label>
+                          <label className="text-zinc-505 dark:text-gray-505 font-medium text-xs">Ending Date & Time</label>
                           <div className="flex gap-2 mt-1.5">
                             <input
                               type="date"
@@ -673,84 +673,28 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                 </div>
               </section>
 
-              <section className="space-y-4">
-                <div className="flex items-center gap-2 text-blue-500">
-                  <h3 className="font-medium tracking-wider text-xs">Question Types</h3>
-                </div>
-                <div className="space-y-4">
-                  {(['mcq', 'integer', 'true_false'] as const).map((type) => {
-                    const isActive = selectedTypes.includes(type);
-                    const count = defaultCounts[type] ?? 5;
-                    return (
-                      <div key={type} onClick={() => {
-                        if (isActive && selectedTypes.length <= 1) return;
-                        if (isActive) {
-                          setSelectedTypes(prev => prev.filter(t => t !== type));
-                          setSubjects(prev => prev.map(sub => ({
-                            ...sub, questionTypes: sub.questionTypes.filter(qt => qt.type !== type)
-                          })));
-                        } else {
-                          setSelectedTypes(prev => [...prev, type]);
-                          if (!defaultCounts[type]) {
-                            setDefaultCounts(prev => ({ ...prev, [type]: 5 }));
-                          }
-                          setSubjects(prev => prev.map(sub => {
-                            const qTypes = [...sub.questionTypes];
-                            const idx = qTypes.findIndex(t => t.type === type);
-                            if (idx >= 0) {
-                              qTypes[idx] = { ...qTypes[idx], count: 5 };
-                            } else {
-                              qTypes.push({
-                                type, count: 5, correctMarks: defaultCorrectMarks, negativeMarks: defaultNegativeMarks,
-                                mcqOptions: type === 'mcq' ? 4 : undefined, mcqMultiple: type === 'mcq' ? false : undefined
-                              });
-                            }
-                            return { ...sub, questionTypes: qTypes };
-                          }));
-                        }
-                      }} className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${isActive ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800' : 'bg-zinc-100/50 dark:bg-gray-900/50 border-zinc-200 dark:border-gray-800 opacity-60 hover:opacity-80'}`}>
-                        <span
-                          className={`font-medium ${isActive ? 'text-zinc-800 dark:text-gray-100' : 'text-zinc-500 dark:text-gray-400'} text-sm`}>
-                          {type === 'mcq' ? 'Multiple Choice' : type === 'integer' ? 'Integer' : 'True / False'}
-                        </span>
-                        {isActive && (
-                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              onMouseDown={() => startAdjusting(type, 'down', count)}
-                              onMouseUp={stopAdjusting}
-                              onMouseLeave={stopAdjusting}
-                              onTouchStart={() => startAdjusting(type, 'down', count)}
-                              onTouchEnd={stopAdjusting}
-                              className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-550 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-semibold select-none"
-                            >
-                              -
-                            </button>
-                            <span className="w-8 text-center font-bold text-[#007AFF] text-sm">{count}</span>
-                            <button
-                              type="button"
-                              onMouseDown={() => startAdjusting(type, 'up', count)}
-                              onMouseUp={stopAdjusting}
-                              onMouseLeave={stopAdjusting}
-                              onTouchStart={() => startAdjusting(type, 'up', count)}
-                              onTouchEnd={stopAdjusting}
-                              className="w-8 h-8 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 border border-zinc-300 dark:border-gray-700 rounded-lg flex items-center justify-center text-zinc-550 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all font-semibold select-none"
-                            >
-                              +
-                            </button>
-                            <span className="text-zinc-400 dark:text-gray-500 font-medium ml-1 text-xs">Qs</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
             </>
           )}
 
           {step === 'subjects' && (
             <section className="space-y-6">
+              {localStorage.getItem('use_own_key') === 'true' ? (
+                <div className="p-5 bg-red-500/5 dark:bg-red-500/10 border border-red-500/20 text-red-500 rounded-3xl flex items-start gap-3.5 shadow-sm animate-fadeIn">
+                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div>
+                    <h5 className="font-semibold text-xs">Credit System Required</h5>
+                    <p className="text-zinc-500 dark:text-gray-400 mt-1 leading-relaxed text-xs">
+                      Scanned reference file uploads are only supported via our default credit system. Please disable "Use Own Key" in Settings to unlock the scanner.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <ScanPage
+                  onFilesChange={(files) => setScannedFiles(files)}
+                  selectedSubjects={subjects.map(s => ({ id: s.id, name: s.name }))}
+                />
+              )}
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-blue-500">
                   <h3 className="font-medium text-xs">Subject Selection</h3>
@@ -758,43 +702,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                     ({subjects.length}/{maxSubjects})
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setShowScan(!showScan)}
-                  className="p-1.5 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded-lg text-zinc-500 dark:text-gray-400 transition-all flex items-center justify-center cursor-pointer"
-                >
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showScan ? 'rotate-180' : ''}`} />
-                </button>
               </div>
-
-              <AnimatePresence>
-                {showScan && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden mb-4"
-                  >
-                    {localStorage.getItem('use_own_key') === 'true' ? (
-                      <div className="p-5 bg-red-500/5 dark:bg-red-500/10 border border-red-500/20 text-red-500 rounded-3xl flex items-start gap-3.5 shadow-sm animate-fadeIn">
-                        <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                        <div>
-                          <h5 className="font-semibold text-xs">Credit System Required</h5>
-                          <p className="text-zinc-500 dark:text-gray-400 mt-1 leading-relaxed text-xs">
-                            Scanned reference file uploads are only supported via our default credit system. Please disable "Use Own Key" in Settings to unlock the scanner.
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <ScanPage
-                        onFilesChange={(files) => setScannedFiles(files)}
-                        selectedSubjects={subjects.map(s => ({ id: s.id, name: s.name }))}
-                      />
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
               <div className="flex flex-wrap gap-1.5">
                 {availableSubjects?.map((sub, index) => {
                   const isSelected = subjects.find(s => s.id === sub.id);
@@ -804,7 +712,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                       key={sub.id}
                       onClick={() => isDisabled ? (setDisabledItemName(sub.name), setShowUpgradeModal(true)) : isSelected ? setSubjects(subjects.filter(s => s.id !== sub.id)) : addSubject(sub)}
                       disabled={isDisabled}
-                      className={`px-2.5 py-1 rounded-lg font-semibold border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isSelected ? 'bg-blue-600/10 border-blue-600 text-blue-500' : isDisabled ? 'bg-zinc-100 dark:bg-gray-900 border-zinc-300 dark:border-gray-800 text-zinc-500 dark:text-gray-500 opacity-50 cursor-not-allowed' : 'bg-zinc-100 dark:bg-gray-900 border-zinc-300 dark:border-gray-800 text-zinc-505 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-gray-700'} text-xs`}>
+                      className={`px-2.5 py-1 rounded-lg font-semibold border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isSelected ? 'bg-blue-600/10 border-blue-600 text-blue-500' : isDisabled ? 'bg-zinc-100 dark:bg-gray-900 border-zinc-300 dark:border-gray-800 text-zinc-505 dark:text-gray-505 opacity-50 cursor-not-allowed' : 'bg-zinc-100 dark:bg-gray-900 border-zinc-300 dark:border-gray-800 text-zinc-505 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-gray-700'} text-xs`}>
                       {sub.name}
                     </button>
                   );
@@ -818,33 +726,32 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
                       <div
                         className="flex items-center gap-1.5 px-2 py-0.5 bg-zinc-100 dark:bg-gray-800 rounded-md text-xs"><span className="font-medium text-zinc-650 dark:text-gray-400">{sub.academicLevel.charAt(0).toUpperCase() + sub.academicLevel.slice(1)}</span></div>
                     </div>
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor={`chapters-${sub.id}`}
-                        className="text-zinc-450 dark:text-gray-500 font-medium text-xs">Chapters / Topics <span className="text-red-400">*</span></label>
-                      <input
-                        id={`chapters-${sub.id}`}
-                        name={`chapters-${sub.id}`}
-                        type="text"
-                        value={sub.chapters}
-                        onChange={(e) => {
-                          if (e.target.value.length <= 200) updateSubject(sIdx, { chapters: e.target.value });
-                        }}
-                        className="w-full bg-zinc-100 dark:bg-gray-950 border border-black/10 dark:border-white/10 rounded-xl p-2.5 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 text-xs"
-                        placeholder="Chapter's or Topics's Name  or  FUll syllabus. e.g.  AMC MAths Full Syllabus" />
-                      <div className="flex justify-between">
-                        {!sub.chapters && <p className="text-[9px] text-red-400">Required</p>}
-                        <p className="text-[9px] text-zinc-405 dark:text-gray-500">{sub.chapters.length}/200</p>
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-zinc-500 dark:text-gray-400 text-xs">Number of Questions</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentCount = sub.questionTypes[0]?.count || 5;
+                            const newCount = Math.max(5, currentCount - 5);
+                            updateSubject(sIdx, {
+                              questionTypes: [{ ...sub.questionTypes[0], count: newCount }]
+                            });
+                          }}
+                          className="w-7 h-7 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all text-xs font-semibold select-none">-</button>
+                        <span className="w-8 text-center font-bold text-blue-500 text-xs">{sub.questionTypes[0]?.count || 5}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentCount = sub.questionTypes[0]?.count || 5;
+                            const newCount = currentCount + 5;
+                            updateSubject(sIdx, {
+                              questionTypes: [{ ...sub.questionTypes[0], count: newCount }]
+                            });
+                          }}
+                          className="w-7 h-7 bg-zinc-200 dark:bg-gray-800 hover:bg-zinc-300 dark:hover:bg-gray-700 rounded-lg flex items-center justify-center text-zinc-500 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-white transition-all text-xs font-semibold select-none">+</button>
                       </div>
                     </div>
-                    {selectedTypes.includes('integer') && NON_INT_SUBJECTS.has(sub.name.toLowerCase().trim()) && (
-                      <div className="mt-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl flex items-start gap-2 text-red-650 dark:text-red-400">
-                        <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
-                        <p className="text-xs font-medium leading-relaxed">
-                          Integer type questions in the subject <strong>{sub.name}</strong> are not possible. Either select a different subject or remove the integer type.
-                        </p>
-                      </div>
-                    )}
                   </motion.div>
                 ))}
               </div>
@@ -872,33 +779,29 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
               </div>
             ) : (
               <div className="space-y-3">
-                {scannedFiles.length > 0 && scannedFiles.some(f => !f.subjectId) && (
-                  <p
-                    className="text-red-500 font-medium text-center flex items-center justify-center gap-1 text-[11px] text-xs">
+                {scannedFiles.length > maxPages && (
+                  <p className="text-red-500 font-medium text-center flex items-center justify-center gap-1 text-[11px] text-xs">
                     <AlertCircle className="w-3.5 h-3.5" />
-                    Please map all uploaded files to a subject before generating.
+                    Upload limit exceeded. Your plan limit is {maxPages} pages. (You uploaded {scannedFiles.length} pages).
                   </p>
                 )}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex gap-4">
-                    <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Questions</span><span
-                      className={`font-mono font-medium ${totalQuestions > maxQuestions ? 'text-red-500' : 'text-blue-500'} text-base`}>{totalQuestions}<span className={`text-sm ${totalQuestions > maxQuestions ? 'text-red-400' : 'text-zinc-400 dark:text-gray-600'}`}>/{maxQuestions}</span></span></div>
-                    <div className="flex flex-col"><span className="text-zinc-500 dark:text-gray-500 font-medium text-xs">Marks</span><span className="font-mono font-medium text-blue-500 text-base">{totalMarks}</span></div>
+                    <div className="flex flex-col"><span className="text-zinc-505 dark:text-gray-550 font-medium text-xs">Uploaded Files</span><span className="font-mono font-medium text-blue-500 text-base">{scannedFiles.length}</span></div>
                   </div>
                   <button
                     onClick={handleGenerate}
-                    disabled={generating || subjects.length === 0 || !examName || totalQuestions < 5 || totalQuestions > maxQuestions || subjects.some(s => !s.chapters) || subjects.some(s => s.questionTypes.length === 0) || !isScheduleValid || hasConflict || (scannedFiles.length > 0 && scannedFiles.some(f => !f.subjectId))}
+                    disabled={generating || subjects.length === 0 || !examName || scannedFiles.length === 0 || scannedFiles.length > maxPages || !isScheduleValid}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 text-sm">
                     {(() => {
                       const useOwn = localStorage.getItem('use_own_key') === 'true';
                       const prov = localStorage.getItem('provider') || 'mesh';
                       const key = localStorage.getItem(prov === 'mistral' ? 'mistral_api_key' : 'mesh_api_key');
-                      const hasFiles = scannedFiles.length > 0;
-                      if (useOwn && key && !hasFiles) {
+                      if (useOwn && key) {
                         return 'Generate (Your Key)';
                       } else {
                         const extraCreditsCost = Math.ceil(scannedFiles.reduce((sum, f) => sum + f.pagesCount, 0) / 2);
-                        return `Generate (${2 + totalQuestions + extraCreditsCost} credits)`;
+                        return `Generate (${2 + extraCreditsCost} credits)`;
                       }
                     })()}
                   </button>
@@ -927,7 +830,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
               <div className="flex gap-3 pt-1">
                 <button
                   onClick={() => { setShowTemplateModal(false); setTemplateName(''); }}
-                  className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors text-sm">Cancel</button>
+                  className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-707 dark:text-gray-307 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors text-sm">Cancel</button>
                 <button
                   onClick={handleSaveTemplate}
                   disabled={!templateName.trim() || isSavingTemplate}
@@ -939,7 +842,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
           </div>
         )}
       </motion.div>
-      <FinalizeExam
+      <FinalizeScanExam
         show={showFinalizeExam}
         onClose={onFinalizeClose}
         examData={{
@@ -963,12 +866,12 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-sm space-y-4">
             <div className="text-center">
-              <LockIcon className="w-12 h-12 text-zinc-500 dark:text-gray-500 mx-auto mb-3" />
+              <LockIcon className="w-12 h-12 text-zinc-550 dark:text-gray-550 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-white mb-1">Upgrade Required</h3>
-              <p className="text-sm text-zinc-500 dark:text-gray-400">"{disabledItemName}" is locked. Upgrade your plan to access more subjects.</p>
+              <p className="text-sm text-zinc-505 dark:text-gray-400">"{disabledItemName}" is locked. Upgrade your plan to access more subjects.</p>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowUpgradeModal(false)} className="flex-1 py-2.5 bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl text-sm hover:bg-gray-700 transition-colors">Close</button>
+              <button onClick={() => setShowUpgradeModal(false)} className="flex-1 py-2.5 bg-gray-800 text-zinc-707 dark:text-gray-300 rounded-xl text-sm hover:bg-gray-700 transition-colors">Close</button>
               <button onClick={() => { setShowUpgradeModal(false); window.location.href = '/dashboard'; }} className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm hover:bg-blue-700 transition-colors">Upgrade Plan</button>
             </div>
           </div>
@@ -991,7 +894,7 @@ export default function ManuallyWithAI({ show, onClose, userProfile, categoryId,
             <div className="flex gap-3">
               <button
                 onClick={() => setTemplateToApply(null)}
-                className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-700 dark:text-gray-300 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors text-sm">Cancel</button>
+                className="flex-1 py-2.5 bg-zinc-100 dark:bg-gray-800 text-zinc-707 dark:text-gray-303 rounded-xl font-medium hover:bg-zinc-200 dark:hover:bg-gray-700 transition-colors text-sm">Cancel</button>
               <button
                 onClick={confirmApplyTemplate}
                 disabled={applyingTemplate}

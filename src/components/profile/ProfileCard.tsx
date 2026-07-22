@@ -1,11 +1,193 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import PlanIcon from '../../ui/PlanIcon';
 import { useTheme } from '../../lib/ThemeContext.tsx';
+import { useCachedImage } from '../../hooks/useCachedImage';
 
 const MAX_ROT = 28;
 
 function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)); }
+
+function ordinal(n: number) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function formatNiceDate(input: string | number | Date | undefined | null): string {
+  if (!input) return '';
+  const d = new Date(input);
+  if (isNaN(d.getTime())) return '';
+  return `${ordinal(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function capitalize(s?: string) {
+  if (!s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function hashSeed(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 233280;
+  return h || 42;
+}
+
+function DotPanel({
+  src, seed, width, height, dotColor, bgColor, topInset = 0, margin = 2, fallbackLetter,
+}: {
+  src?: string; seed: number; width: number; height: number; dotColor: string; bgColor: string; topInset?: number; margin?: number; fallbackLetter?: string;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width, h = canvas.height;
+    const cell = Math.max(6, Math.round(w / 13));
+    const top = margin + topInset;
+    const m = margin;
+    const rm = 0;
+
+    const drawGenerative = () => {
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, w, h);
+      let s = seed;
+      const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+      const cx = w / 2, cy = (h + top) / 2, maxDist = Math.sqrt(cx * cx + cy * cy);
+      for (let y = top; y < h - m; y += cell) {
+        for (let x = m; x < w - rm; x += cell) {
+          const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) / maxDist;
+          const noise = rand();
+          const intensity = Math.max(0, 1 - dist * 1.15) * 0.7 + noise * 0.3;
+          if (intensity > 0.15) {
+            ctx.fillStyle = dotColor;
+            const size = (cell - 2) * (0.5 + intensity * 0.5);
+            const off = (cell - 2 - size) / 2;
+            ctx.beginPath();
+            ctx.roundRect(x + off, y + off, size, size, 2);
+            ctx.fill();
+          }
+        }
+      }
+    };
+
+    const drawLetter = (letter: string) => {
+      const off = document.createElement('canvas');
+      off.width = w; off.height = h;
+      const octx = off.getContext('2d');
+      if (!octx) { drawGenerative(); return; }
+
+      octx.fillStyle = '#000000';
+      octx.fillRect(0, 0, w, h);
+      octx.fillStyle = '#ffffff';
+      octx.textAlign = 'center';
+      octx.textBaseline = 'middle';
+
+
+      const maxTextWidth = w - m * 2 - cell;
+      let fontSize = Math.round(h * 0.65);
+      octx.font = `bold ${fontSize}px 'DM Sans', system-ui, sans-serif`;
+      const measured = octx.measureText(letter).width;
+      if (measured > maxTextWidth) {
+        fontSize = Math.max(10, Math.floor(fontSize * (maxTextWidth / measured)));
+        octx.font = `bold ${fontSize}px 'DM Sans', system-ui, sans-serif`;
+      }
+      octx.fillText(letter, w / 2, h / 2);
+
+      const data = octx.getImageData(0, 0, w, h).data;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, w, h);
+
+
+
+      const textThreshold = 0.35;
+      for (let y = top; y < h - m; y += cell) {
+        for (let x = m; x < w - rm; x += cell) {
+          const i = (Math.floor(y) * w + Math.floor(x)) * 4;
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+          const intensity = 1 - lum;
+          if (intensity > textThreshold) {
+            ctx.fillStyle = dotColor;
+            const size = (cell - 2) * 0.85;
+            const offp = (cell - 2 - size) / 2;
+            ctx.beginPath();
+            ctx.roundRect(x + offp, y + offp, size, size, 2);
+            ctx.fill();
+          }
+        }
+      }
+    };
+
+    if (!src || !src.trim()) {
+      if (fallbackLetter) {
+        drawLetter(fallbackLetter);
+      } else {
+        drawGenerative();
+      }
+      return;
+    }
+
+    let cancelled = false;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      if (cancelled) return;
+      try {
+        const off = document.createElement('canvas');
+        off.width = w; off.height = h;
+        const octx = off.getContext('2d');
+        if (!octx) throw new Error('no offscreen ctx');
+
+        const ir = img.width / img.height;
+        const cr = w / h;
+        let dw: number, dh: number, dx: number, dy: number;
+        if (ir > cr) { dh = h; dw = h * ir; dx = (w - dw) / 2; dy = 0; }
+        else { dw = w; dh = w / ir; dx = 0; dy = (h - dh) / 2; }
+        octx.drawImage(img, dx, dy, dw, dh);
+
+        const data = octx.getImageData(0, 0, w, h).data;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let y = top; y < h - m; y += cell) {
+          for (let x = m; x < w - rm; x += cell) {
+            const i = (Math.floor(y) * w + Math.floor(x)) * 4;
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            const intensity = 1 - lum;
+            if (intensity > 0.08) {
+              ctx.fillStyle = dotColor;
+              ctx.globalAlpha = Math.min(1, intensity * 1.2);
+              const size = (cell - 2) * Math.min(1, intensity * 1.3 + 0.25);
+              const offp = (cell - 2 - size) / 2;
+              ctx.beginPath();
+              ctx.roundRect(x + offp, y + offp, size, size, 2);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+            }
+          }
+        }
+      } catch {
+        drawGenerative();
+      }
+    };
+    img.onerror = () => { if (!cancelled) drawGenerative(); };
+    img.src = src;
+
+    return () => { cancelled = true; };
+  }, [src, seed, width, height, dotColor, bgColor, topInset, fallbackLetter]);
+
+  return <canvas ref={canvasRef} width={width} height={height} style={{ display: 'block', flexShrink: 0, opacity: 0.8, filter: 'saturate(0.95)' }} />;
+}
 
 export default function ProfileCard({ userProfile, variant }: { userProfile: any; variant: 'preview' | 'public' }) {
   const { theme, fontSizeLevel } = useTheme();
@@ -15,6 +197,8 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
     large: 1.35,
     larger: 1.6
   }[fontSizeLevel] || 1.0;
+
+  const cachedProfilePicture = useCachedImage(userProfile.profile_picture);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const faceRef = useRef<HTMLDivElement>(null);
@@ -28,10 +212,6 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
   const rafId = useRef(0);
 
   const firstLetter = userProfile.name ? userProfile.name[0].toUpperCase() : 'U';
-  const maskEmail = (email: string) => {
-    const [local, domain] = (email || '').split('@');
-    return domain ? `${local[0]}***@${domain}` : email;
-  };
 
   const getShortPlanName = (planName: string) => {
     if (!planName) return '';
@@ -40,6 +220,25 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
     if (planName.toLowerCase().includes('peak')) return 'Peak';
     return planName;
   };
+
+  const seed = useMemo(
+    () => hashSeed(String(userProfile.username || userProfile.id || userProfile.name || 'wachsen')),
+    [userProfile.username, userProfile.id, userProfile.name]
+  );
+
+  const CARD_BG = 'linear-gradient(135deg, #20213d 0%, #1a1a30 55%, #151525 100%)';
+  const pal = {
+    bg: CARD_BG,
+    text: '#ffffff',
+    muted: 'rgba(255,255,255,0.52)',
+    faint: 'rgba(255,255,255,0.28)',
+    border: 'rgba(255,255,255,0.07)',
+    dotBg: '#181242',
+    dotColor: '#7aadff',
+  };
+  const baseShadow = variant === 'preview'
+    ? '0 18px 54px rgba(0,0,0,0.55), 0 4px 18px rgba(0,0,0,0.35)'
+    : '0 14px 42px rgba(0,0,0,0.45), 0 4px 14px rgba(0,0,0,0.28)';
 
   const applyTransform = (rx: number, ry: number) => {
     const card = cardRef.current;
@@ -52,8 +251,8 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
     const sx = -ry * 0.55;
     const sy = rx * 0.55 + 16;
     const blur = 24 + mag * 0.8;
-    const alpha = Math.min(0.55, 0.22 + mag * 0.006);
-    card.style.boxShadow = `${sx}px ${sy}px ${blur}px rgba(0,0,0,${alpha.toFixed(3)}), 0 4px 16px rgba(0,0,0,0.3)`;
+    const alpha = Math.min(0.56, 0.22 + mag * 0.006);
+    card.style.boxShadow = `${sx}px ${sy}px ${blur}px rgba(0,0,0,${alpha.toFixed(3)}), 0 4px 16px rgba(0,0,0,0.34)`;
 
     const gx = clamp(50 - ry * 1.1, 10, 90);
     const gy = clamp(30 + rx * 1.1, 5, 85);
@@ -169,244 +368,171 @@ export default function ProfileCard({ userProfile, variant }: { userProfile: any
     };
   }, [variant]);
 
-  if (variant === 'preview') {
-    return (
-      <div style={{ perspective: `${700 * scale}px`, perspectiveOrigin: '50% 50%' }}>
-        <div
-          ref={cardRef}
-          style={{
-            width: `${380 * scale}px`,
-            height: `${240 * scale}px`,
-            borderRadius: `${16 * scale}px`,
-            position: 'relative',
-            transformStyle: 'preserve-3d',
-            willChange: 'transform',
-            cursor: 'grab',
-            boxShadow: '0 16px 48px rgba(0,0,0,0.45), 0 4px 16px rgba(0,0,0,0.3)',
-          }}
-        >
-          <div
-            ref={faceRef}
-            style={{
-              position: 'absolute', inset: 0,
-              borderRadius: `${16 * scale}px`,
-              background: theme === 'dark' ? '#1a1a2e' : '#ffffff',
-              border: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)',
-              overflow: 'hidden',
-              padding: `${20 * scale}px ${20 * scale}px ${16 * scale}px`,
-              display: 'flex', flexDirection: 'row', gap: `${16 * scale}px`,
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-            } as React.CSSProperties}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: `${12 * scale}px`,
-                left: `${12 * scale}px`,
-                fontSize: `${10 * scale}px`,
-                fontWeight: 700,
-                letterSpacing: '0.15em',
-                color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-                textTransform: 'uppercase',
-                zIndex: 10,
-              }}
-            >
-              Wachsen
-            </div>
+  const fields = [
+    userProfile.DOB && { l: 'DOB', v: formatNiceDate(userProfile.DOB) },
+    userProfile.gender && { l: 'Gender', v: capitalize(userProfile.gender) },
+    userProfile.country && { l: 'Nation', v: capitalize(userProfile.country) },
+  ].filter(Boolean) as { l: string; v: string }[];
 
-            <div
-              style={{
-                position: 'absolute', inset: 0, borderRadius: `${16 * scale}px`,
-                background: 'radial-gradient(ellipse at var(--gx,50%) var(--gy,30%), rgba(0,0,0,0.06) 0%, transparent 75%)',
-                pointerEvents: 'none', zIndex: 20,
-              } as React.CSSProperties}
-            />
+  const memberSince = formatNiceDate(userProfile.created_at);
 
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: `${8 * scale}px`, flexShrink: 0, justifyContent: 'center' }}>
-              <div style={{
-                width: `${72 * scale}px`, height: `${72 * scale}px`, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: `${26 * scale}px`, fontWeight: 500, color: '#fff', overflow: 'hidden',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)', flexShrink: 0,
-              } as any}>
-                {userProfile.profile_picture?.trim()
-                  ? <img src={userProfile.profile_picture} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : firstLetter}
-              </div>
-              {userProfile.PremiumType && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: `${4 * scale}px` }}>
-                  <div style={{
-                    width: `${60 * scale}px`, height: `${24 * scale}px`, borderRadius: `${6 * scale}px`,
-                    background: theme === 'dark' ? '#0f0f23' : '#1e293b',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${4 * scale}px`,
-                  }}>
-                    <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
-                    <span style={{
-                      fontSize: `${9 * scale}px`, fontWeight: 600, letterSpacing: '0.05em',
-                      color: '#ffffff', textTransform: '',
-                    }}>
-                      {getShortPlanName(userProfile.PremiumType)}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div style={{ width: '0.5px', background: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', alignSelf: 'stretch', flexShrink: 0 }} />
-
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: `${10 * scale}px`, marginTop: `${30 * scale}px`, flex: 1 }}>
-                {([
-                  { l: 'NAME', v: userProfile.name?.toUpperCase() },
-                  { l: 'USER ID', v: `@${userProfile.username || ''}` },
-                  userProfile.DOB && { l: 'DOB', v: userProfile.DOB },
-                  userProfile.gender && { l: 'GENDER', v: userProfile.gender?.toUpperCase() },
-                  userProfile.country && { l: 'NATION', v: userProfile.country?.toUpperCase() },
-                ] as any[]).filter(Boolean).map((f: any) => (
-                  <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: `${10 * scale}px` }}>
-                    <span style={{ fontSize: `${10 * scale}px`, textTransform: '', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${65 * scale}px`, fontWeight: 500 }}>{f.l}</span>
-                    <span style={{
-                      fontSize: f.l === 'Name' ? `${12 * scale}px` : `${11 * scale}px`,
-                      fontWeight: f.l === 'Name' ? 700 : 400,
-                      color: theme === 'dark' ? '#ffffff' : '#000000',
-                      fontFamily: f.l === 'Name' ? "'DM Sans', system-ui, sans-serif" : "'DM Mono',monospace",
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1
-                    }}>{f.v}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: `${8 * scale}px`, borderTop: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)' }}>
-                <span style={{ fontSize: `${9 * scale}px`, fontWeight: 500, color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', letterSpacing: '0.05em' }}>
-                  Member since {new Date(userProfile.created_at || userProfile.id).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </span>
-                <div style={{ display: 'flex', gap: `${3 * scale}px` }}>
-                  {[0.32, 0.18, 0.09].map((o, i) => <div key={i} style={{ width: `${5 * scale}px`, height: `${5 * scale}px`, borderRadius: '50%', background: theme === 'dark' ? `rgba(255,255,255,${o})` : `rgba(0,0,0,${o})` }} />)}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const cardWidth = (variant === 'preview' ? 380 : 350) * scale;
+  const cardHeight = (variant === 'preview' ? 240 : 220) * scale;
+  const panelWidth = Math.round((variant === 'preview' ? 118 : 108) * scale);
+  const radius = 16 * scale;
 
   return (
     <div style={{ perspective: `${700 * scale}px`, perspectiveOrigin: '50% 50%' }}>
       <div
         ref={cardRef}
         style={{
-          width: `${350 * scale}px`,
-          height: `${220 * scale}px`,
-          borderRadius: `${16 * scale}px`,
+          width: `${cardWidth}px`,
+          height: `${cardHeight}px`,
+          borderRadius: `${radius}px`,
           position: 'relative',
           transformStyle: 'preserve-3d',
           willChange: 'transform',
           cursor: 'grab',
-          boxShadow: '0 12px 36px rgba(0,0,0,0.35), 0 4px 12px rgba(0,0,0,0.2)',
+          boxShadow: baseShadow,
         }}
       >
         <div
           ref={faceRef}
           style={{
             position: 'absolute', inset: 0,
-            borderRadius: `${16 * scale}px`,
-            background: theme === 'dark' ? '#1a1a2e' : '#ffffff',
-            border: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)',
+            borderRadius: `${radius}px`,
+            background: pal.bg,
             overflow: 'hidden',
-            padding: `${16 * scale}px ${16 * scale}px ${12 * scale}px`,
-            display: 'flex', flexDirection: 'row', gap: `${14 * scale}px`,
+            display: 'flex', flexDirection: 'row',
             fontFamily: "'DM Sans', system-ui, sans-serif",
           } as React.CSSProperties}
         >
           <div
             style={{
-              position: 'absolute',
-              top: `${10 * scale}px`,
-              left: `${10 * scale}px`,
-              fontSize: `${9 * scale}px`,
-              fontWeight: 750,
-              letterSpacing: '0.15em',
-              color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
-              textTransform: '',
-              zIndex: 10,
-            }}
-          >
-            Wachsen
-          </div>
-
-          <div
-            style={{
-              position: 'absolute', inset: 0, borderRadius: `${16 * scale}px`,
-              background: 'radial-gradient(ellipse at var(--gx,50%) var(--gy,30%), rgba(0,0,0,0.06) 0%, transparent 75%)',
+              position: 'absolute', inset: 0, borderRadius: `${radius}px`,
+              background: 'radial-gradient(ellipse at var(--gx,50%) var(--gy,30%), rgba(107,157,255,0.10) 0%, transparent 60%)',
               pointerEvents: 'none', zIndex: 20,
             } as React.CSSProperties}
           />
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: `${6 * scale}px`, flexShrink: 0, justifyContent: 'center' }}>
-            <div style={{
-              width: `${64 * scale}px`, height: `${64 * scale}px`, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: `${24 * scale}px`, fontWeight: 500, color: '#fff', overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)', flexShrink: 0,
-            }}>
-              {userProfile.profile_picture?.trim()
-                ? <img src={userProfile.profile_picture} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                : firstLetter}
-            </div>
-            {userProfile.PremiumType && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: `${4 * scale}px` }}>
+          <div
+            style={{
+              flex: 1, minWidth: 0,
+              padding: `${(variant === 'preview' ? 20 : 18) * scale}px ${(variant === 'preview' ? 20 : 18) * scale}px ${(variant === 'preview' ? 16 : 14) * scale}px`,
+              display: 'flex', flexDirection: 'column',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: `${10 * scale}px` }}>
+              <div style={{
+                width: `${42 * scale}px`, height: `${42 * scale}px`, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: `${17 * scale}px`, fontWeight: 600, color: '#fff', overflow: 'hidden',
+                border: '2px solid rgba(255,255,255,0.15)',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.28)',
+                flexShrink: 0,
+              }}>
+                {cachedProfilePicture?.trim()
+                  ? <img src={cachedProfilePicture} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  : firstLetter}
+              </div>
+              <div style={{ minWidth: 0 }}>
                 <div style={{
-                  width: `${54 * scale}px`, height: `${22 * scale}px`, borderRadius: `${5 * scale}px`,
-                  background: theme === 'dark' ? '#0f0f23' : '#1e293b',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: `${3 * scale}px`,
+                  fontSize: `${16 * scale}px`, fontWeight: 700, color: pal.text,
+                  maxWidth: `${190 * scale}px`, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  lineHeight: 1.2, textTransform: 'uppercase', letterSpacing: '0.02em',
                 }}>
-                  <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
-                  <span style={{
-                    fontSize: `${8 * scale}px`, fontWeight: 600, letterSpacing: '0.05em',
-                    color: '#ffffff', textTransform: '',
-                  }}>
-                    {getShortPlanName(userProfile.PremiumType)}
-                  </span>
+                  {userProfile.name}
+                </div>
+                <div style={{
+                  fontSize: `${11 * scale}px`, fontFamily: "'DM Mono', monospace", letterSpacing: '0.04em',
+                  color: pal.muted, marginTop: `${4 * scale}px`,
+                }}>
+                  @{userProfile.username || ''}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          <div style={{ width: '0.5px', background: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', alignSelf: 'stretch', flexShrink: 0 }} />
+            <div style={{ flex: 1 }} />
 
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: `${4 * scale}px`, marginTop: `${24 * scale}px`, flex: 1 }}>
-              {([
-                { l: 'Name', v: userProfile.name?.toUpperCase() },
-                { l: 'User ID', v: `@${userProfile.username || ''}` },
-                { l: 'Email', v: maskEmail(userProfile.email || '') },
-                userProfile.DOB && { l: 'DOB', v: userProfile.DOB },
-                userProfile.gender && { l: 'Gender', v: userProfile.gender },
-                userProfile.country && { l: 'Nation', v: userProfile.country },
-              ] as any[]).filter(Boolean).map((f: any) => (
-                <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: `${8 * scale}px` }}>
-                  <span style={{ fontSize: `${9 * scale}px`, textTransform: '', letterSpacing: '0.09em', color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', flexShrink: 0, width: `${55 * scale}px`, fontWeight: 500 }}>{f.l}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: `${12 * scale}px`, marginLeft: `${10 * scale}px` }}>
+              {fields.map(f => (
+                <div key={f.l} style={{ display: 'flex', alignItems: 'baseline', gap: `${6 * scale}px` }}>
                   <span style={{
-                    fontSize: f.l === 'Name' ? `${11 * scale}px` : `${10 * scale}px`,
-                    fontWeight: f.l === 'Name' ? 700 : 400,
-                    color: theme === 'dark' ? '#ffffff' : '#000000',
-                    fontFamily: f.l === 'Name' ? "'DM Sans', system-ui, sans-serif" : "'DM Mono',monospace",
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1
-                  }}>{f.v}</span>
+                    fontSize: `${10 * scale}px`, fontWeight: 600,
+                    color: pal.muted, letterSpacing: '0.06em', width: `${68 * scale}px`, flexShrink: 0,
+                    textTransform: 'uppercase',
+                  }}>
+                    {f.l}
+                  </span>
+                  <span style={{
+                    fontSize: `${10 * scale}px`,
+                    fontFamily: "'DM Mono', monospace", letterSpacing: '0.02em',
+                    color: pal.text, textTransform: 'uppercase',
+                  }}>
+                    {f.v}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: `${6 * scale}px`, borderTop: theme === 'dark' ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)' }}>
-              <span style={{ fontSize: `${8 * scale}px`, fontWeight: 500, color: theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)', letterSpacing: '0.05em' }}>
-                Member since {new Date(userProfile.created_at || userProfile.id).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-              </span>
-              <div style={{ display: 'flex', gap: `${3 * scale}px` }}>
-                {[0.32, 0.18, 0.09].map((o, i) => <div key={i} style={{ width: `${4 * scale}px`, height: `${4 * scale}px`, borderRadius: '50%', background: theme === 'dark' ? `rgba(255,255,255,${o})` : `rgba(0,0,0,${o})` }} />)}
+            <div style={{ flex: 1 }} />
+
+            <div>
+              <div style={{ height: '0.5px', background: 'rgba(255,255,255,0.07)', marginBottom: `${10 * scale}px` }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: `${8 * scale}px`, fontWeight: 500, color: pal.muted, letterSpacing: '0.03em' }}>
+                  {memberSince ? `Member Since  ${memberSince}` : ''}
+                </span>
+                {userProfile.PremiumType && (
+                  <div style={{
+                    padding: `${3 * scale}px ${8 * scale}px`, borderRadius: `${4 * scale}px`,
+                    background: 'rgba(255,255,255,0.07)',
+                    display: 'flex', alignItems: 'center', gap: `${4 * scale}px`,
+                  }}>
+                    <PlanIcon planName={userProfile.PremiumType} variant="profileCard" />
+                    <span style={{ fontSize: `${8 * scale}px`, fontWeight: 600, letterSpacing: '0.06em', color: '#ffffff', textTransform: 'uppercase' }}>
+                      {getShortPlanName(userProfile.PremiumType)}
+                    </span>
+                  </div>
+                )}
               </div>
+            </div>
+          </div>
+
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', height: '100%', width: `${panelWidth}px`, position: 'relative' }}>
+            <div style={{
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              borderLeft: '0.5px solid rgba(255,255,255,0.045)',
+              background: '#181242',
+              boxShadow: 'inset 8px 0 24px rgba(80,40,180,0.15)',
+              WebkitMaskImage: 'linear-gradient(to left, transparent 0%, black 18%)',
+              maskImage: 'linear-gradient(to left, transparent 0%, black 18%)',
+            }}>
+              <div style={{
+                height: `${12 * scale}px`, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderBottom: '0.5px solid rgba(255,255,255,0.06)',
+              }}>
+                <span style={{
+                  fontSize: `${9 * scale}px`, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase',
+                  color: 'rgba(255,255,255,0.60)',
+                }}>
+                  Wachsen
+                </span>
+              </div>
+              <DotPanel
+                src={cachedProfilePicture}
+                seed={seed}
+                width={panelWidth}
+                height={Math.round(cardHeight - 12 * scale)}
+                dotColor={pal.dotColor}
+                bgColor={pal.dotBg}
+                fallbackLetter={firstLetter}
+              />
             </div>
           </div>
         </div>

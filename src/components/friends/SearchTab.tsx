@@ -85,10 +85,10 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           )}
         </button>
       </div>
-      
+
       {/* Incoming Friend Requests section — scrollable, no container inside container */}
       <div className="space-y-3 pt-2">
-        <h3 className="text-xs font-bold text-zinc-850 dark:text-zinc-100 px-1">
+        <h3 className="text-xs text-zinc-850 dark:text-zinc-100 px-1">
           Incoming Requests
         </h3>
         {loadingRequests ? (
@@ -113,19 +113,19 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                     <h4 className="text-xs font-bold text-zinc-800 dark:text-white">
                       {req.sender.name}
                     </h4>
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">@{req.sender.username}</p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">@{req.sender.username}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => onAcceptRequest(req.id)}
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] font-bold cursor-pointer transition-all shadow-xs"
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs"
                   >
                     Accept
                   </button>
                   <button
                     onClick={() => onDeclineRequest(req.id)}
-                    className="px-3.5 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-xl text-[10px] font-bold text-zinc-700 dark:text-zinc-350 cursor-pointer transition-all border border-zinc-200 dark:border-zinc-850"
+                    className="px-3.5 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-350 cursor-pointer transition-all border border-zinc-200 dark:border-zinc-850"
                   >
                     Decline
                   </button>
@@ -135,7 +135,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
           </div>
         ) : (
           <div className="text-center py-6 bg-zinc-50 dark:bg-zinc-900/20 border border-dashed border-black/10 dark:border-white/10 rounded-2xl">
-            <p className="text-[10px] text-zinc-405 dark:text-zinc-500 font-medium">No incoming requests</p>
+            <p className="text-xs text-zinc-405 dark:text-zinc-500 font-medium">No incoming requests</p>
           </div>
         )}
       </div>
@@ -155,19 +155,19 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                   <h4 className="text-xs font-bold text-zinc-800 dark:text-white">
                     {searchResult.name}
                   </h4>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400">@{searchResult.username}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">@{searchResult.username}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => onOpenDetails(searchResult)}
-                  className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-[10px] font-bold transition-all cursor-pointer border border-zinc-200 dark:border-zinc-850"
+                  className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all cursor-pointer border border-zinc-200 dark:border-zinc-850"
                 >
                   Details
                 </button>
                 {sentRequests.includes(searchResult.id) ? (
-                  <span className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/30 rounded-xl text-[10px] font-bold text-zinc-400 flex items-center gap-1">
+                  <span className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/30 rounded-xl text-xs font-bold text-zinc-400 flex items-center gap-1">
                     <Check className="w-3.5 h-3.5 text-zinc-400" />
                     Sent
                   </span>
@@ -175,7 +175,7 @@ export const SearchTab: React.FC<SearchTabProps> = ({
                   <button
                     onClick={() => onRequestFriend(searchResult.id)}
                     disabled={sendingRequest}
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shadow-sm"
                   >
                     {sendingRequest ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />

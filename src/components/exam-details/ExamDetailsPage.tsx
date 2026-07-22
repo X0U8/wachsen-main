@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench, ClipboardX, Mic, Binary, GraduationCap, X, SquarePen } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2, RefreshCw, Wrench, ClipboardX, Mic, Binary, GraduationCap, X, SquarePen, FileText, FileVideoCamera } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../../services/supabase';
 import { getAiRequestMode } from '../../lib/aiRequest';
 import { useUserProfile } from '../../lib/UserContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MakeAIForm from '../make-exam/MakeQuestions';
+import MakeScanQuestions from '../make-exam/MakeScanQuestions';
 import Notification from '../../ui/Notification';
 import localStorageCache from '../../lib/localStorage';
 import EditCategoryModal from './EditCategoryModal';
@@ -29,13 +30,16 @@ export default function ExamDetails() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   const [showMakeAI, setShowMakeAI] = useState(false);
+  const [showMakeScan, setShowMakeScan] = useState(false);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showSubjectiveSelector, setShowSubjectiveSelector] = useState(false);
 
   const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
     setNotification({ type, message });
   };
 
   const [showTopicInputModal, setShowTopicInputModal] = useState(false);
+  const [conceptName, setConceptName] = useState('');
   const [topicText, setTopicText] = useState('');
   const [activeTopicText, setActiveTopicText] = useState('');
   const [conceptSubject, setConceptSubject] = useState('');
@@ -46,6 +50,7 @@ export default function ExamDetails() {
   const [conceptCards, setConceptCards] = useState<any[]>([]);
 
   const [showCheatCardModal, setShowCheatCardModal] = useState(false);
+  const [cheatName, setCheatName] = useState('');
   const [cheatTopicText, setCheatTopicText] = useState('');
   const [cheatSubject, setCheatSubject] = useState('');
   const [cheatDifficulty, setCheatDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
@@ -55,12 +60,19 @@ export default function ExamDetails() {
   const [cheatCards, setCheatCards] = useState<any[]>([]);
   const [isConceptSaved, setIsConceptSaved] = useState(false);
   const [isCheatSaved, setIsCheatSaved] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [showMakeLaq, setShowMakeLaq] = useState(false);
+  const [defaultIsVivaForMakeLaq, setDefaultIsVivaForMakeLaq] = useState(false);
 
   const handleGenerateConceptCards = async () => {
     const trimmedTopic = topicText.trim();
     const trimmedSubject = conceptSubject.trim();
+    const trimmedName = conceptName.trim();
+    if (!trimmedName || trimmedName.length < 3 || trimmedName.length > 15) {
+      showNotification('error', 'Name must be between 3 and 15 characters.');
+      return;
+    }
     if (!trimmedSubject) {
       showNotification('error', 'Please select or enter a subject.');
       return;
@@ -123,13 +135,29 @@ Return ONLY a valid JSON array matching this format:
       const cleanedReply = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
       const cards = safeParseJSON(cleanedReply);
 
+      const { error: insertError } = await supabase
+        .from('saved_concept_cards')
+        .insert({
+          user_id: userProfile?.id,
+          category_id: id || null,
+          academic_level: level,
+          subject_name: trimmedSubject,
+          difficulty: diffLabel,
+          name: trimmedName,
+          topics: trimmedTopic,
+          questions: cards,
+        });
+      if (insertError) throw insertError;
+
       setActiveTopicText(trimmedTopic);
       setCardGenProgress(10);
       setConceptCards(cards);
-      setIsConceptSaved(false);
+      setIsConceptSaved(true);
+      setRefreshTrigger(prev => prev + 1);
       setShowConceptCards(true);
       setShowTopicInputModal(false);
       setTopicText('');
+      setConceptName('');
       refreshCredits();
     } catch (err: any) {
       console.error('Error generating concept cards:', err);
@@ -147,6 +175,11 @@ Return ONLY a valid JSON array matching this format:
   const handleGenerateCheatCards = async () => {
     const trimmedTopic = cheatTopicText.trim();
     const trimmedSubject = cheatSubject.trim();
+    const trimmedName = cheatName.trim();
+    if (!trimmedName || trimmedName.length < 3 || trimmedName.length > 15) {
+      showNotification('error', 'Name must be between 3 and 15 characters.');
+      return;
+    }
     if (!trimmedSubject) {
       showNotification('error', 'Please select or enter a subject.');
       return;
@@ -212,13 +245,30 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
         20
       );
 
-      const cleanedReply = replyText.replace(/```json\\s*/gi, '').replace(/```\\s*$/gm, '').trim();
+      const cleanedReply = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
       const cards = safeParseJSON(cleanedReply);
 
+      const { error: insertError } = await supabase
+        .from('saved_cheat_cards')
+        .insert({
+          user_id: userProfile?.id,
+          category_id: id || null,
+          academic_level: level,
+          subject_name: trimmedSubject,
+          difficulty: diffLabel,
+          name: trimmedName,
+          topics: trimmedTopic,
+          cards: cards,
+        });
+      if (insertError) throw insertError;
+
       setCheatCards(cards);
-      setIsCheatSaved(false);
+      setIsCheatSaved(true);
+      setRefreshTrigger(prev => prev + 1);
       setShowCheatCards(true);
       setShowCheatCardModal(false);
+      setCheatName('');
+      setCheatTopicText('');
       refreshCredits();
     } catch (err: any) {
       console.error('Error generating cheat cards:', err);
@@ -274,7 +324,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
     gcTime: Infinity,
   });
 
-  // Count pending exams for this ExamType to enforce 100-exam spam limit
+
   const { data: pendingExamCount = 0 } = useQuery({
     queryKey: ['pendingExamCount', id, userProfile?.id],
     queryFn: async () => {
@@ -293,7 +343,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
     gcTime: Infinity,
   });
 
-  // Count pending LAQ exams for this ExamType
+
   const { data: pendingLaqCount = 0 } = useQuery({
     queryKey: ['pendingLaqCount', id, userProfile?.id],
     queryFn: async () => {
@@ -419,10 +469,10 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
         <div className="flex shrink-0 pb-3">
           <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
             {([
-              { key: 'exams', label: 'Exams' },
-              { key: 'laq', label: 'LAQ Exams' },
-              { key: 'concept', label: 'Concept Cards' },
-              { key: 'cheat', label: 'Recall Cards' },
+              { key: 'exams', labelDesktop: 'Exams', labelMobile: 'Exams' },
+              { key: 'laq', labelDesktop: 'Subjective', labelMobile: 'Subj' },
+              { key: 'concept', labelDesktop: 'Concept Cards', labelMobile: 'Concept' },
+              { key: 'cheat', labelDesktop: 'Recall Cards', labelMobile: 'Recall' },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
@@ -432,7 +482,8 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                   : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
                   }`}
               >
-                {tab.label}
+                <span className="hidden sm:inline">{tab.labelDesktop}</span>
+                <span className="sm:hidden">{tab.labelMobile}</span>
               </button>
             ))}
           </div>
@@ -449,6 +500,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             <ConceptCardsListTab
               categoryId={id || ''}
               userProfile={userProfile}
+              refreshTrigger={refreshTrigger}
               onSelect={async (deck) => {
                 const { data } = await supabase
                   .from('saved_concept_cards')
@@ -468,6 +520,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
             <CheatCardsListTab
               categoryId={id || ''}
               userProfile={userProfile}
+              refreshTrigger={refreshTrigger}
               onSelect={async (deck) => {
                 const { data } = await supabase
                   .from('saved_cheat_cards')
@@ -511,6 +564,19 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           availableSubjects={availableSubjects}
         />
       )}
+      {showMakeScan && (
+        <MakeScanQuestions
+          show={showMakeScan}
+          onClose={() => {
+            setShowMakeScan(false);
+            queryClient.invalidateQueries({ queryKey: ['pendingExamCount', id, userProfile?.id] });
+            queryClient.invalidateQueries({ queryKey: ['examInstances', id] });
+          }}
+          userProfile={userProfile}
+          categoryId={id || ''}
+          availableSubjects={availableSubjects}
+        />
+      )}
       {showMakeLaq && (
         <MakeLaq
           show={showMakeLaq}
@@ -519,6 +585,7 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
           categoryId={id || ''}
           availableSubjects={availableSubjects}
           examType={examType}
+          defaultIsViva={defaultIsVivaForMakeLaq}
           onCreated={() => {
             setShowMakeLaq(false);
             queryClient.invalidateQueries({ queryKey: ['laqExams'] });
@@ -528,97 +595,164 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
       )}
       {showTypeSelector && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 dark:bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-5 w-full max-w-xl shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white max-h-[90vh] flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-5 w-full max-w-xl shadow-2xl relative overflow-hidden text-zinc-900 dark:text-white max-h-[90vh] flex flex-col justify-between animate-fadeIn">
+
+            {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900">
-              <div>
-                <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-sm sm:text-base">Select Learning Mode</h3>
+              <div className="flex items-center gap-2">
+                {showSubjectiveSelector && (
+                  <button
+                    onClick={() => setShowSubjectiveSelector(false)}
+                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all text-zinc-500 hover:text-zinc-700 dark:hover:text-white cursor-pointer mr-1"
+                    title="Go Back"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                )}
+                <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-sm sm:text-base">
+                  {showSubjectiveSelector ? 'Subjective Modes' : 'Select Learning Mode'}
+                </h3>
               </div>
               <button
-                onClick={() => setShowTypeSelector(false)}
+                onClick={() => {
+                  setShowTypeSelector(false);
+                  setShowSubjectiveSelector(false);
+                }}
                 className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-lg transition-all cursor-pointer text-zinc-400 hover:text-zinc-700 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 py-4 overflow-y-auto">
-              <button
-                onClick={() => {
-                  if ((pendingExamCount as number) >= 100) {
-                    setShowTypeSelector(false);
-                    showNotification('error', 'You already have 100+ pending exams in this ExamType that you haven\'t taken yet.');
-                    return;
-                  }
-                  setShowTypeSelector(false);
-                  setShowMakeAI(true);
-                }}
-                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
-              >
-                <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
-                  <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
-                </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Exam</h4>
-                <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                  Generate customized exams with questions parsed from topics or document attachments.
-                </p>
-              </button>
+            {/* Grid Options */}
+            <div className="grid grid-cols-2 gap-3 py-4 overflow-y-auto max-h-[310px] pr-1.5 scrollbar-thin">
+              {!showSubjectiveSelector ? (
+                <>
+                  {/* Exam */}
+                  <button
+                    onClick={() => {
+                      if ((pendingExamCount as number) >= 100) {
+                        setShowTypeSelector(false);
+                        showNotification('error', 'You already have 100+ pending exams in this ExamType that you haven\'t taken yet.');
+                        return;
+                      }
+                      setShowTypeSelector(false);
+                      setShowMakeAI(true);
+                    }}
+                    className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
+                  >
+                    <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                      <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
+                    </div>
+                    <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Exam</h4>
+                    <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-[10px] mt-1 leading-relaxed">
+                      Generate customized exams with questions parsed from topics or document attachments.
+                    </p>
+                  </button>
 
-              <button
-                onClick={() => {
-                  setShowTypeSelector(false);
-                  setShowTopicInputModal(true);
-                }}
-                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
-              >
-                <div className="relative flex flex-col items-center mb-2.5">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
-                    <ClipboardX className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
-                  </div>
-                </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Concept Cards</h4>
-                <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                  Generate flip card decks for active recall practice on subtopics and key definitions.
-                </p>
-              </button>
+                  {/* Concept Cards */}
+                  <button
+                    onClick={() => {
+                      setShowTypeSelector(false);
+                      setShowTopicInputModal(true);
+                    }}
+                    className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
+                  >
+                    <div className="relative flex flex-col items-center mb-2.5">
+                      <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                        <ClipboardX className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
+                      </div>
+                    </div>
+                    <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Concept Cards</h4>
+                    <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-[10px] mt-1 leading-relaxed">
+                      Generate flip card decks for active recall practice on subtopics and key definitions.
+                    </p>
+                  </button>
 
-              <button
-                onClick={() => {
-                  if ((pendingLaqCount as number) >= 100) {
-                    setShowTypeSelector(false);
-                    showNotification('error', 'You already have 100+ pending LAQ exams in this ExamType that you haven\'t taken yet.');
-                    return;
-                  }
-                  setShowTypeSelector(false);
-                  setShowMakeLaq(true);
-                }}
-                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
-              >
-                <div className="relative flex flex-col items-center mb-2.5">
-                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
-                    <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
-                  </div>
-                </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">LAQ Exam</h4>
-                <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                  Timed written-response questions with AI evaluation on accuracy, depth, and clarity.
-                </p>
-              </button>
+                  {/* Recall Cards */}
+                  <button
+                    onClick={() => {
+                      setShowTypeSelector(false);
+                      setShowCheatCardModal(true);
+                    }}
+                    className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
+                  >
+                    <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                      <Binary className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
+                    </div>
+                    <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Recall Cards</h4>
+                    <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-[10px] mt-1 leading-relaxed">
+                      Generate flip memorization cards for formulas, facts, and key points.
+                    </p>
+                  </button>
 
-              <button
-                onClick={() => {
-                  setShowTypeSelector(false);
-                  setShowCheatCardModal(true);
-                }}
-                className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
-              >
-                <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
-                  <Binary className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
-                </div>
-                <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Recall Cards</h4>
-                <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-xs mt-1 leading-relaxed">
-                  Generate flip memorization cards for formulas, facts, and key points.
-                </p>
-              </button>
+                  {/* Subjective Menu Button */}
+                  <button
+                    onClick={() => setShowSubjectiveSelector(true)}
+                    className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
+                  >
+                    <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                      <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
+                    </div>
+                    <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Subjective</h4>
+                    <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-[10px] mt-1 leading-relaxed">
+                      Timed written responses or spoken Viva voice exam modes with AI evaluation.
+                    </p>
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* LAQ Exam */}
+                  <button
+                    onClick={() => {
+                      if ((pendingLaqCount as number) >= 100) {
+                        setShowTypeSelector(false);
+                        showNotification('error', 'You already have 100+ pending LAQ exams in this ExamType that you haven\'t taken yet.');
+                        return;
+                      }
+                      setDefaultIsVivaForMakeLaq(false);
+                      setShowTypeSelector(false);
+                      setShowSubjectiveSelector(false);
+                      setShowMakeLaq(true);
+                    }}
+                    className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
+                  >
+                    <div className="relative flex flex-col items-center mb-2.5">
+                      <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl">
+                        <SquarePen className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
+                      </div>
+                    </div>
+                    <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">LAQ Exam</h4>
+                    <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-[10px] mt-1 leading-relaxed">
+                      Timed written response questions with AI evaluation on accuracy, depth, and clarity.
+                    </p>
+                  </button>
+
+                  {/* Viva Exam */}
+                  <button
+                    onClick={() => {
+                      if ((pendingLaqCount as number) >= 100) {
+                        setShowTypeSelector(false);
+                        showNotification('error', 'You already have 100+ pending Viva exams in this ExamType that you haven\'t taken yet.');
+                        return;
+                      }
+                      setDefaultIsVivaForMakeLaq(true);
+                      setShowTypeSelector(false);
+                      setShowSubjectiveSelector(false);
+                      setShowMakeLaq(true);
+                    }}
+                    className="group flex flex-col items-center justify-center p-3 sm:p-4 bg-zinc-50 dark:bg-zinc-900/30 border border-zinc-300 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-500 rounded-2xl transition-all cursor-pointer text-center "
+                  >
+                    <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl mb-2.5">
+                      <Mic className="w-4 h-4 sm:w-5 sm:h-5 fill-current/20" />
+                    </div>
+                    <h4 className="font-semibold text-zinc-850 dark:text-zinc-200 text-xs sm:text-sm group-hover:text-blue-500 transition-colors">Viva Exam</h4>
+                    <p className="hidden sm:block text-zinc-500 dark:text-zinc-400 text-[10px] mt-1 leading-relaxed">
+                      Voice-guided oral exams with high-quality AI speech synthesis and transcribing.
+                    </p>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -673,6 +807,18 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                     className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                   />
                 )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Name</label>
+                <input
+                  type="text"
+                  maxLength={15}
+                  placeholder="e.g. Bio Basics"
+                  value={conceptName}
+                  onChange={(e) => setConceptName(e.target.value)}
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                />
               </div>
 
               <div className="space-y-1">
@@ -809,6 +955,18 @@ VERY IMPORTANT: For all LaTeX math commands, symbols, and formatting inside the 
                     className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                   />
                 )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Name</label>
+                <input
+                  type="text"
+                  maxLength={15}
+                  placeholder="e.g. Recall Set 1"
+                  value={cheatName}
+                  onChange={(e) => setCheatName(e.target.value)}
+                  className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
+                />
               </div>
 
               <div className="space-y-1">

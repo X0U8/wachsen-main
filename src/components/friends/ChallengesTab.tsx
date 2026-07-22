@@ -78,7 +78,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                       }, 'w-8 h-8')}
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs font-semibold text-zinc-800 dark:text-white truncate">{challenge.friendName}</h4>
-                        <p className="text-[10px] text-zinc-550 dark:text-zinc-400">@{challenge.friendUsername}</p>
+                        <p className="text-xs text-zinc-550 dark:text-zinc-400">@{challenge.friendUsername}</p>
                       </div>
                       <span
                         className={`px-2 py-0.5 rounded-full font-semibold  ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
@@ -106,13 +106,13 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                     <div className="flex items-center gap-2 mt-1">
                       <button
                         onClick={() => onAcceptTrigger(challenge)}
-                        className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl text-[10px] font-semibold transition-all cursor-pointer text-center flex items-center justify-center gap-1.5 shadow-sm hover:shadow"
+                        className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer text-center flex items-center justify-center gap-1.5 shadow-sm hover:shadow"
                       >
                         Accept & Take
                       </button>
                       <button
                         onClick={() => onDeclineTrigger(challenge.id)}
-                        className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-[10px] font-semibold transition-all cursor-pointer text-center"
+                        className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-semibold transition-all cursor-pointer text-center"
                       >
                         Decline
                       </button>
@@ -125,21 +125,21 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         {!challenge.receiverResultId ? (
                           <button
                             disabled
-                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
+                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-xs font-medium text-center border border-zinc-200/20 cursor-not-allowed"
                           >
                             Give Exam First
                           </button>
                         ) : challenge.senderResultId ? (
                           <button
                             onClick={() => navigate(`/results/${challenge.sender_id}/${challenge.exam_id}`)}
-                            className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-blue-200/30"
+                            className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border border-blue-200/30"
                           >
                             See Sender's Performance
                           </button>
                         ) : (
                           <button
                             disabled
-                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
+                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-xs font-medium text-center border border-zinc-200/20 cursor-not-allowed"
                           >
                             Sender didn't give this exam yet
                           </button>
@@ -148,14 +148,14 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         {challenge.receiverResultId ? (
                           <button
                             onClick={() => navigate(`/results/${challenge.receiver_id}/${challenge.receiver_exam_id}`)}
-                            className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-emerald-200/30"
+                            className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border border-emerald-200/30"
                           >
                             See My Performance
                           </button>
                         ) : (
                           <button
                             onClick={() => navigate(`/exam-details/${challengesExamTypeId}`)}
-                            className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl text-[10px] font-semibold transition-all cursor-pointer text-center"
+                            className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer text-center"
                           >
                             Take Challenge Exam
                           </button>
@@ -212,7 +212,7 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                       }, 'w-8 h-8')}
                       <div className="flex-1 min-w-0">
                         <h4 className="text-xs font-semibold text-zinc-800 dark:text-white truncate">{challenge.friendName}</h4>
-                        <p className="text-[10px] text-zinc-550 dark:text-zinc-400 truncate">@{challenge.friendUsername}</p>
+                        <p className="text-xs text-zinc-550 dark:text-zinc-400 truncate">@{challenge.friendUsername}</p>
                       </div>
                       <span
                         className={`px-2 py-0.5 rounded-full font-semibold  ${challenge.status === 'pending' ? 'bg-amber-500/10 text-amber-500 dark:bg-amber-500/20' :
@@ -242,14 +242,14 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         {challenge.senderResultId ? (
                           <button
                             onClick={() => navigate(`/results/${challenge.sender_id}/${challenge.exam_id}`)}
-                            className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-blue-200/30"
+                            className="flex-1 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border border-blue-200/30"
                           >
                             My Performance
                           </button>
                         ) : (
                           <button
                             disabled
-                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
+                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-650 rounded-xl text-xs font-medium text-center border border-zinc-200/20 cursor-not-allowed"
                           >
                             No Result Found
                           </button>
@@ -258,14 +258,14 @@ export const ChallengesTab: React.FC<ChallengesTabProps> = ({
                         {challenge.receiverResultId ? (
                           <button
                             onClick={() => navigate(`/results/${challenge.receiver_id}/${challenge.receiver_exam_id}`)}
-                            className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer text-center border border-emerald-200/30"
+                            className="flex-1 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border border-emerald-200/30"
                           >
                             Friend's Performance
                           </button>
                         ) : (
                           <button
                             disabled
-                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-655 rounded-xl text-[10px] font-medium text-center border border-zinc-200/20 cursor-not-allowed"
+                            className="flex-1 py-2 bg-zinc-50 dark:bg-zinc-900/30 text-zinc-400 dark:text-zinc-655 rounded-xl text-xs font-medium text-center border border-zinc-200/20 cursor-not-allowed"
                           >
                             Friend Has Not Taken Yet
                           </button>

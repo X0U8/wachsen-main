@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useRef } from 'react';
+import { Loader2, Trash2, CheckCircle2 } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 import PaginationControls from './PaginationControls';
 
@@ -18,6 +18,7 @@ interface CheatCardsListTabProps {
   categoryId: string;
   userProfile: any;
   onSelect: (deck: CheatCardDeck) => void;
+  refreshTrigger?: number;
 }
 
 const PAGE_SIZE = 10;
@@ -30,16 +31,47 @@ function formatSimpleDate(dateStr: string) {
   return `${day} ${month} ${year}`;
 }
 
-export default function CheatCardsListTab({ categoryId, userProfile, onSelect }: CheatCardsListTabProps) {
+export default function CheatCardsListTab({ categoryId, userProfile, onSelect, refreshTrigger = 0 }: CheatCardsListTabProps) {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [searchInput, setSearchInput] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
   const [page, setPage] = useState(1);
 
+  const queryClient = useQueryClient();
   const userId = userProfile?.id;
 
+  const [deleteDeck, setDeleteDeck] = useState<CheatCardDeck | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdStartRef = useRef<{ x: number; y: number } | null>(null);
+  const HOLD_DURATION = 500;
+  const MOVE_THRESHOLD = 10;
+
+  const handleDelete = async () => {
+    if (!deleteDeck) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('saved_cheat_cards')
+        .delete()
+        .eq('id', deleteDeck.id);
+      if (error) throw error;
+      setDeleted(true);
+      queryClient.invalidateQueries({ queryKey: ['cheatCardDecks'] });
+      setTimeout(() => {
+        setDeleteDeck(null);
+        setDeleted(false);
+      }, 1500);
+    } catch (_) {
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const { data: resultsPage, isLoading: loading } = useQuery<{ items: CheatCardDeck[]; hasNext: boolean }>({
-    queryKey: ['cheatCardDecks', categoryId, userId, sortOrder, activeSearchQuery, page],
+    queryKey: ['cheatCardDecks', categoryId, userId, sortOrder, activeSearchQuery, page, refreshTrigger],
     queryFn: async () => {
       if (!userId) return { items: [], hasNext: false };
       const sessionData = await supabase.auth.getSession();
@@ -133,6 +165,44 @@ export default function CheatCardsListTab({ categoryId, userProfile, onSelect }:
                 <tr
                   key={deck.id}
                   onClick={() => onSelect(deck)}
+                  onPointerDown={(e) => {
+                    holdStartRef.current = { x: e.clientX, y: e.clientY };
+                    holdTimerRef.current = setTimeout(() => {
+                      setDeleteDeck(deck);
+                    }, HOLD_DURATION);
+                  }}
+                  onPointerUp={() => {
+                    if (holdTimerRef.current) {
+                      clearTimeout(holdTimerRef.current);
+                      holdTimerRef.current = null;
+                    }
+                    holdStartRef.current = null;
+                  }}
+                  onPointerMove={(e) => {
+                    if (holdStartRef.current && holdTimerRef.current) {
+                      const dx = Math.abs(e.clientX - holdStartRef.current.x);
+                      const dy = Math.abs(e.clientY - holdStartRef.current.y);
+                      if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
+                        clearTimeout(holdTimerRef.current);
+                        holdTimerRef.current = null;
+                        holdStartRef.current = null;
+                      }
+                    }
+                  }}
+                  onPointerLeave={() => {
+                    if (holdTimerRef.current) {
+                      clearTimeout(holdTimerRef.current);
+                      holdTimerRef.current = null;
+                    }
+                    holdStartRef.current = null;
+                  }}
+                  onPointerCancel={() => {
+                    if (holdTimerRef.current) {
+                      clearTimeout(holdTimerRef.current);
+                      holdTimerRef.current = null;
+                    }
+                    holdStartRef.current = null;
+                  }}
                   className="hover:bg-zinc-100 dark:hover:bg-gray-800/30 transition-colors cursor-pointer group"
                 >
                   <td className="px-4 py-4 font-normal text-zinc-800 dark:text-gray-100 group-hover:text-blue-400 transition-colors">
@@ -178,6 +248,48 @@ export default function CheatCardsListTab({ categoryId, userProfile, onSelect }:
           onPrev={() => setPage(p => Math.max(1, p - 1))}
           onNext={() => setPage(p => p + 1)}
         />
+      )}
+
+      {deleteDeck && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="bg-white dark:bg-zinc-900 border border-black/15 dark:border-white/20 rounded-3xl p-5 max-w-xs w-full shadow-2xl dark:shadow-[0_0_30px_rgba(255,255,255,0.06)] flex flex-col items-center text-center">
+            {deleted ? (
+              <>
+                <CheckCircle2 className="w-10 h-10 text-green-500 mb-3" />
+                <h3 className="font-semibold text-zinc-900 dark:text-white mb-1 text-sm">Deleted!</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs">The deck has been removed.</p>
+              </>
+            ) : (
+              <>
+                <Trash2 className="w-10 h-10 text-red-500 mb-3" />
+                <h3 className="font-semibold text-zinc-900 dark:text-white mb-2 text-sm">Delete this deck?</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 mb-5 leading-relaxed font-medium text-xs">
+                  Are you sure you want to delete <strong>{deleteDeck.name}</strong>? You cannot recover it once deleted.
+                </p>
+                <div className="flex gap-2.5 w-full">
+                  <button
+                    onClick={() => setDeleteDeck(null)}
+                    disabled={deleting}
+                    className="flex-1 py-2 border border-black/15 dark:border-white/20 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-xl font-semibold cursor-pointer transition-all disabled:opacity-50 text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold cursor-pointer transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm text-xs"
+                  >
+                    {deleting ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      'Delete'
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

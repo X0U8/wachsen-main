@@ -1,5 +1,5 @@
 import { useState, useRef, DragEvent, ChangeEvent, useEffect, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from 'react';
-import { Upload, X, FileText, Sparkles, Image as ImageIcon, Camera, RefreshCw } from 'lucide-react';
+import { Upload, X, FileText, Sparkles, Image as ImageIcon, Camera, RefreshCw, Sliders, ZoomIn, ZoomOut } from 'lucide-react';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
 
@@ -14,6 +14,9 @@ export interface ScannedFile {
   pagesCount: number;
   subjectId?: string;
   subjectName?: string;
+  brightness?: number;
+  contrast?: number;
+  saturate?: number;
 }
 
 interface CropQueueItem {
@@ -41,6 +44,14 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isPdfProcessing, setIsPdfProcessing] = useState(false);
 
+  const [adjustingFile, setAdjustingFile] = useState<ScannedFile | null>(null);
+  const [adjBrightness, setAdjBrightness] = useState<number>(100);
+  const [adjContrast, setAdjContrast] = useState<number>(100);
+  const [adjSaturate, setAdjSaturate] = useState<number>(100);
+  const [adjZoom, setAdjZoom] = useState<number>(1);
+  const [adjOffset, setAdjOffset] = useState({ x: 0, y: 0 });
+  const [adjIsDragging, setAdjIsDragging] = useState(false);
+  const [adjDragStart, setAdjDragStart] = useState({ x: 0, y: 0 });
 
   const [cropQueue, setCropQueue] = useState<CropQueueItem[]>([]);
   const [cropIndex, setCropIndex] = useState<number>(0);
@@ -462,6 +473,63 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
     }
   };
 
+  const openAdjustment = (file: ScannedFile) => {
+    setAdjustingFile(file);
+    setAdjBrightness(file.brightness ?? 100);
+    setAdjContrast(file.contrast ?? 100);
+    setAdjSaturate(file.saturate ?? 100);
+    setAdjZoom(1);
+    setAdjOffset({ x: 0, y: 0 });
+    setAdjIsDragging(false);
+  };
+
+  const applyAdjustments = () => {
+    if (!adjustingFile) return;
+    setFiles(prev => prev.map(f => {
+      return {
+        ...f,
+        brightness: adjBrightness,
+        contrast: adjContrast,
+        saturate: adjSaturate
+      };
+    }));
+    setAdjustingFile(null);
+  };
+
+  const handleAdjMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
+    if (adjZoom <= 1) return;
+    setAdjIsDragging(true);
+    setAdjDragStart({ x: e.clientX - adjOffset.x, y: e.clientY - adjOffset.y });
+  };
+
+  const handleAdjMouseMove = (e: ReactMouseEvent<HTMLDivElement>) => {
+    if (!adjIsDragging) return;
+    setAdjOffset({
+      x: e.clientX - adjDragStart.x,
+      y: e.clientY - adjDragStart.y
+    });
+  };
+
+  const handleAdjMouseUp = () => {
+    setAdjIsDragging(false);
+  };
+
+  const handleAdjTouchStart = (e: ReactTouchEvent<HTMLDivElement>) => {
+    if (adjZoom <= 1) return;
+    setAdjIsDragging(true);
+    const touch = e.touches[0];
+    setAdjDragStart({ x: touch.clientX - adjOffset.x, y: touch.clientY - adjOffset.y });
+  };
+
+  const handleAdjTouchMove = (e: ReactTouchEvent<HTMLDivElement>) => {
+    if (!adjIsDragging) return;
+    const touch = e.touches[0];
+    setAdjOffset({
+      x: touch.clientX - adjDragStart.x,
+      y: touch.clientY - adjDragStart.y
+    });
+  };
+
   const removeFile = (id: string) => {
     const fileToRemove = files.find(f => f.id === id);
     if (fileToRemove?.previewUrl) {
@@ -714,6 +782,9 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                       src={file.previewUrl}
                       alt="preview"
                       className="w-10 h-10 rounded-lg object-cover border border-zinc-200 dark:border-gray-800 shrink-0"
+                      style={{
+                        filter: `brightness(${file.brightness ?? 100}%) contrast(${file.contrast ?? 100}%) saturate(${file.saturate ?? 100}%)`
+                      }}
                     />
                   ) : (
                     <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-lg flex items-center justify-center border border-red-500/20 shrink-0">
@@ -730,22 +801,6 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
                   </div>
                 </div>
 
-                <select
-                  value={file.subjectId || ''}
-                  onChange={(e) => {
-                    const subId = e.target.value;
-                    const subName = selectedSubjects.find(s => s.id === subId)?.name || '';
-                    updateFileSubject(file.id, subId, subName);
-                  }}
-                  className="bg-zinc-100 dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-lg px-2 py-1 text-zinc-700 dark:text-gray-300 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500 shrink-0"
-                  style={{ maxWidth: '120px' }}
-                >
-                  <option value="">Select Subject...</option>
-                  {selectedSubjects.map(sub => (
-                    <option key={sub.id} value={sub.id}>{sub.name}</option>
-                  ))}
-                </select>
-
                 {file.type === 'application/pdf' && (
                   <div className="flex items-center gap-1.5 bg-zinc-200/50 dark:bg-gray-900/60 rounded-lg px-2 py-1 shrink-0">
                     <span className="text-zinc-500 dark:text-gray-400 font-medium" style={{ fontSize: '0.65rem' }}>Pages:</span>
@@ -761,6 +816,15 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
 
                 <button
                   type="button"
+                  onClick={() => openAdjustment(file)}
+                  className="p-1 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded-lg text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-300 transition-all shrink-0"
+                  title="Adjust brightness & contrast"
+                >
+                  <Sliders className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => removeFile(file.id)}
                   className="p-1 hover:bg-zinc-200 dark:hover:bg-gray-800 rounded-lg text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-300 transition-all shrink-0"
                 >
@@ -770,33 +834,175 @@ export default function ScanPage({ onFilesChange, maxPages, selectedSubjects }: 
             ))}
           </div>
 
-          {selectedSubjects.length > 0 && files.length > 1 && (
-            <div className="flex items-center justify-between gap-3 p-3 bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/10 dark:border-violet-500/20 rounded-xl">
-              <span className="text-zinc-600 dark:text-gray-300 font-medium" style={{ fontSize: '0.75rem' }}>
-                Set subject for all pages together:
-              </span>
-              <select
-                onChange={(e) => {
-                  const subId = e.target.value;
-                  if (!subId) return;
-                  const subName = selectedSubjects.find(s => s.id === subId)?.name || '';
-                  applySubjectToAll(subId, subName);
-                  e.target.value = '';
-                }}
-                className="bg-zinc-100 dark:bg-gray-900 border border-zinc-200 dark:border-gray-800 rounded-lg px-2 py-1 text-zinc-700 dark:text-gray-300 text-[10px] focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                style={{ maxWidth: '140px' }}
-              >
-                <option value="">Select subject...</option>
-                {selectedSubjects.map(sub => (
-                  <option key={sub.id} value={sub.id}>{sub.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
+
 
           <div
             className="text-center text-zinc-400 dark:text-zinc-500 font-medium py-1 text-xs">
             every 2 pages will increase 1 credit , +{extraCreditsCost} credits will increase {useOwnKey && '(ignore if using own key)'}
+          </div>
+        </div>
+      )}
+      {/* Scanned File Image Adjustment Modal */}
+      {adjustingFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            
+            {/* Header & Controls (Above the image) */}
+            <div className="p-5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/20 shrink-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="min-w-[150px]">
+                  <h3 className="text-zinc-850 dark:text-zinc-100 font-semibold text-sm">
+                    Adjust Page Image
+                  </h3>
+                  <p className="text-zinc-400 dark:text-zinc-500 text-[10px] leading-tight">
+                    Settings automatically apply to all pages.
+                  </p>
+                </div>
+                
+                {/* Sliders Grid */}
+                <div className="flex flex-wrap gap-4 flex-1 sm:justify-end">
+                  {/* Brightness */}
+                  <div className="flex-1 min-w-[110px] space-y-1">
+                    <div className="flex items-center justify-between text-[11px] font-medium text-zinc-650 dark:text-zinc-400">
+                      <span>Brightness</span>
+                      <span className="text-blue-500 font-mono font-semibold">{adjBrightness}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="50"
+                      max="180"
+                      value={adjBrightness}
+                      onChange={(e) => setAdjBrightness(parseInt(e.target.value))}
+                      className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                  {/* Contrast */}
+                  <div className="flex-1 min-w-[110px] space-y-1">
+                    <div className="flex items-center justify-between text-[11px] font-medium text-zinc-655 dark:text-zinc-400">
+                      <span>Contrast</span>
+                      <span className="text-blue-500 font-mono font-semibold">{adjContrast}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="50"
+                      max="180"
+                      value={adjContrast}
+                      onChange={(e) => setAdjContrast(parseInt(e.target.value))}
+                      className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                  {/* Saturation */}
+                  <div className="flex-1 min-w-[110px] space-y-1">
+                    <div className="flex items-center justify-between text-[11px] font-medium text-zinc-660 dark:text-zinc-400">
+                      <span>Saturation</span>
+                      <span className="text-blue-500 font-mono font-semibold">{adjSaturate}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="200"
+                      value={adjSaturate}
+                      onChange={(e) => setAdjSaturate(parseInt(e.target.value))}
+                      className="w-full h-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Image Preview Area (Below the controls) */}
+            <div 
+              className="flex-1 bg-zinc-100 dark:bg-zinc-950 p-6 flex items-center justify-center relative overflow-hidden min-h-[280px]"
+              onMouseDown={handleAdjMouseDown}
+              onMouseMove={handleAdjMouseMove}
+              onMouseUp={handleAdjMouseUp}
+              onMouseLeave={handleAdjMouseUp}
+              onTouchStart={handleAdjTouchStart}
+              onTouchMove={handleAdjTouchMove}
+              onTouchEnd={handleAdjMouseUp}
+            >
+              <img
+                src={adjustingFile.previewUrl}
+                alt="adjustment preview"
+                className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-md transition-all duration-75 select-none"
+                style={{
+                  filter: `brightness(${adjBrightness}%) contrast(${adjContrast}%) saturate(${adjSaturate}%)`,
+                  transform: `translate(${adjOffset.x}px, ${adjOffset.y}px) scale(${adjZoom})`,
+                  cursor: adjZoom > 1 ? (adjIsDragging ? 'grabbing' : 'grab') : 'default',
+                  transformOrigin: 'center center'
+                }}
+                draggable={false}
+              />
+
+              {/* Interactive Zoom Controls */}
+              <div className="absolute bottom-4 right-4 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm p-1.5 rounded-xl border border-white/10 shadow-lg z-10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newZoom = Math.max(1, adjZoom - 0.25);
+                    setAdjZoom(newZoom);
+                    if (newZoom === 1) setAdjOffset({ x: 0, y: 0 });
+                  }}
+                  className="p-1.5 hover:bg-white/10 text-white rounded-lg transition-all"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <span className="text-white text-[11px] font-mono font-semibold px-1 min-w-[32px] text-center">
+                  {Math.round(adjZoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAdjZoom(Math.min(4, adjZoom + 0.25))}
+                  className="p-1.5 hover:bg-white/10 text-white rounded-lg transition-all"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                {adjZoom > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdjZoom(1);
+                      setAdjOffset({ x: 0, y: 0 });
+                    }}
+                    className="p-1.5 hover:bg-white/10 text-white rounded-lg transition-all text-xs font-semibold px-2 border-l border-white/10"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex justify-end gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setAdjBrightness(100);
+                  setAdjContrast(100);
+                  setAdjSaturate(100);
+                }}
+                className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-semibold transition-all"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={() => setAdjustingFile(null)}
+                className="px-4 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-850 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400 rounded-xl text-xs font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={applyAdjustments}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-500/10"
+              >
+                Apply to All Pages
+              </button>
+            </div>
+
           </div>
         </div>
       )}

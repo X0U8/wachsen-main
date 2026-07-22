@@ -152,8 +152,8 @@ export default function Results() {
         <div className="flex shrink-0 pb-1.5">
           <div className="flex w-full bg-zinc-100 dark:bg-gray-900/80 rounded-xl p-1 gap-1">
             {([
-              { key: 'exams', label: 'Exams' },
-              { key: 'laq', label: 'LAQ Exams' },
+              { key: 'exams', labelDesktop: 'Exams', labelMobile: 'Exams' },
+              { key: 'laq', labelDesktop: 'Subjective', labelMobile: 'Subj' },
             ] as const).map((tab) => (
               <button
                 key={tab.key}
@@ -166,7 +166,8 @@ export default function Results() {
                   : 'text-zinc-400 dark:text-gray-500 hover:text-zinc-600 dark:hover:text-gray-300'
                   }`}
               >
-                {tab.label}
+                <span className="hidden sm:inline">{tab.labelDesktop}</span>
+                <span className="sm:hidden">{tab.labelMobile}</span>
               </button>
             ))}
           </div>
@@ -241,7 +242,7 @@ export default function Results() {
                         <h3 className="font-semibold text-zinc-850 dark:text-gray-100 truncate text-sm">
                           {res.examName || 'Untitled Exam'}
                         </h3>
-                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-505 font-semibold tracking-wide  text-xs">
+                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-505 font-medium tracking-wide  text-xs">
                           <span>{date}</span><span>•</span><span>{time}</span><span>•</span><span>{timeSpent} mins</span>
                         </div>
                       </div>
@@ -269,7 +270,7 @@ export default function Results() {
                         <h3 className="font-semibold text-zinc-850 dark:text-gray-100 truncate text-sm">
                           {res.name || 'Untitled LAQ Exam'}
                         </h3>
-                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-505 font-semibold tracking-wide  text-xs">
+                        <div className="flex items-center gap-2 text-zinc-400 dark:text-zinc-505 font-medium tracking-wide  text-xs">
                           <span>{date}</span><span>•</span><span>{time}</span><span>•</span><span>{res.subject_name || 'General'}</span>
                         </div>
                       </div>

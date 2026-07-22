@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUserProfile } from '../lib/UserContext.tsx';
 import { useTheme } from '../lib/ThemeContext.tsx';
+import { useCachedImage } from '../hooks/useCachedImage';
 import { FilePenLineIcon } from '../icons/FilePenLineIcon';
 import { FileCheckIcon } from '../icons/FileCheckIcon';
 import { UsersIcon } from '../icons/UsersIcon';
@@ -13,6 +14,7 @@ export default function Footer() {
   const location = useLocation();
   const { userProfile } = useUserProfile();
   const { fontSizeLevel } = useTheme();
+  const cachedProfilePicture = useCachedImage(userProfile?.profile_picture);
   const [showProfile, setShowProfile] = useState(false);
 
   const examRef = useRef<any>(null);
@@ -86,9 +88,9 @@ export default function Footer() {
                   : 'ring-1 ring-zinc-200 dark:ring-gray-800'
                 }`}
               >
-                {userProfile.profile_picture && userProfile.profile_picture.trim() !== '' ? (
+                {cachedProfilePicture && cachedProfilePicture.trim() !== '' ? (
                   <img
-                    src={userProfile.profile_picture}
+                    src={cachedProfilePicture}
                     alt={userProfile.name || 'Profile'}
                     className="w-full h-full object-cover"
                     onError={(e) => {

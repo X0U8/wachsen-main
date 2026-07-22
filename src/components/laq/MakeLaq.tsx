@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Loader2, Edit3 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useUserProfile } from '../../lib/UserContext';
 import { streamConceptCards } from '../../lib/streamConceptCards';
 import { safeParseJSON } from '../RevisionLog';
+import { getAiRequestMode } from '../../lib/aiRequest';
+
+import Notification from '../../ui/Notification';
 
 export interface LaqQuestion {
   question: string;
@@ -17,6 +20,7 @@ interface MakeLaqProps {
   availableSubjects: any[];
   examType: any;
   onCreated: (laqId: string) => void;
+  defaultIsViva?: boolean;
 }
 
 const DIFFICULTIES: Array<'easy' | 'medium' | 'hard' | 'advance'> = ['easy', 'medium', 'hard', 'advance'];
@@ -29,6 +33,7 @@ export default function MakeLaq({
   availableSubjects,
   examType,
   onCreated,
+  defaultIsViva,
 }: MakeLaqProps) {
   const { refreshCredits } = useUserProfile();
   const [subject, setSubject] = useState('');
@@ -36,10 +41,21 @@ export default function MakeLaq({
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'advance'>('medium');
   const [questionCount, setQuestionCount] = useState(5);
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(15);
+  const [isViva] = useState(defaultIsViva ?? false);
+
+  useEffect(() => {
+    if (isViva) {
+      setTimeLimitMinutes(questionCount * 5);
+    }
+  }, [isViva, questionCount]);
   const [topics, setTopics] = useState('');
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState('');
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message });
+  };
 
   if (!show) return null;
 
@@ -48,42 +64,59 @@ export default function MakeLaq({
     const trimmedTopics = topics.trim();
     const trimmedName = examName.trim();
     if (!trimmedSubject) {
-      setError('Please select or enter a subject.');
+      showNotification('error', 'Please select or enter a subject.');
       return;
     }
-    if (!trimmedName) {
-      setError('Please enter an exam name.');
+    if (!trimmedName || trimmedName.length < 3 || trimmedName.length > 15) {
+      showNotification('error', 'Exam name must be between 3 and 15 characters.');
       return;
     }
     if (!trimmedTopics || trimmedTopics.length < 5) {
-      setError('Topic must be at least 5 characters.');
+      showNotification('error', 'Topic must be at least 5 characters.');
       return;
     }
     if (questionCount < 1 || questionCount > 10) {
-      setError('Question count must be between 1 and 10.');
+      showNotification('error', 'Question count must be between 1 and 10.');
       return;
     }
 
-    const creditsNeeded = questionCount * 2;
-    if (!userProfile?.id) {
-      setError('You must be signed in.');
+    const aiRequestMode = getAiRequestMode();
+    if (isViva && aiRequestMode.useOwnKey) {
+      showNotification('error', "Viva sessions do not support using your own API key. Please turn off 'Use Own Key' in Settings to use the credit system.");
       return;
     }
-    if ((userProfile?.credits || 0) < creditsNeeded) {
-      setError(`Insufficient credits. You need ${creditsNeeded} credits.`);
+
+    const creditsNeeded = isViva ? questionCount * 4 : questionCount * 2;
+    const isUsingOwnKey = !isViva && aiRequestMode.useOwnKey;
+
+    if (!userProfile?.id) {
+      showNotification('error', 'You must be signed in.');
+      return;
+    }
+
+    if (!isUsingOwnKey && (userProfile?.credits || 0) < creditsNeeded) {
+      showNotification('error', `Insufficient credits. You need ${creditsNeeded} credits.`);
       return;
     }
 
     setGenerating(true);
     setProgress(0);
-    setError('');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const authToken = session?.access_token || '';
       const level = examType?.academicLevel || 'Grade 10';
 
-      const prompt = `Subject: ${trimmedSubject}. Topic: ${trimmedTopics}.
+      const prompt = isViva
+        ? `Subject: ${trimmedSubject}. Topic: ${trimmedTopics}.
+Generate exactly ${questionCount} oral Viva (spoken voice exam) questions for a student at academic level ${level}. The requested difficulty is: ${difficulty}.
+CRITICAL RULES:
+1. These questions will be read out loud to the student and they must speak their answers. SO make sure its possible for the questions.
+2. Ask questions that are brief, speakable, conversational, and directly answerable in a short spoken response (no complex math, essay prompts, or writing requirements). Keep the questions small and clear.
+3. No LaTeX, no mathematical symbols.
+4. Return ONLY a valid JSON array of question strings in this exact format:
+["Question 1 text here.", "Question 2 text here."]`
+        : `Subject: ${trimmedSubject}. Topic: ${trimmedTopics}.
 Generate exactly ${questionCount} long-answer / written-response questions for a student at academic level ${level}. The requested difficulty is: ${difficulty}.
 For "easy", ask simple, direct theory/recall questions that can be answered in 2-3 sentences.
 For "medium", ask standard conceptual explanation questions requiring clear understanding.
@@ -101,8 +134,9 @@ Return ONLY a valid JSON array of question strings in this exact format:
           userAnswer: '',
           userId: userProfile.id,
           authToken,
-          useOwnKey: false,
-          deductAmount: creditsNeeded,
+          ...(isViva
+            ? { useOwnKey: false, deductAmount: creditsNeeded }
+            : { ...aiRequestMode, deductAmount: isUsingOwnKey ? 0 : creditsNeeded }),
         },
         (count) => setProgress(count),
         questionCount
@@ -111,7 +145,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
       const cleaned = replyText.replace(/```json\s*/gi, '').replace(/```\s*$/gm, '').trim();
       const rawParsed = safeParseJSON(cleaned);
 
-      // Accept both ["q1", "q2"] and [{question: "q1"}, ...] formats
+
       let questions: LaqQuestion[];
       if (Array.isArray(rawParsed) && rawParsed.length > 0) {
         if (typeof rawParsed[0] === 'string') {
@@ -138,6 +172,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
           time_limit_minutes: timeLimitMinutes,
           status: 'pending',
           questions,
+          is_viva: isViva,
         })
         .select('id')
         .single();
@@ -148,7 +183,7 @@ Return ONLY a valid JSON array of question strings in this exact format:
       onCreated(inserted.id);
     } catch (err: any) {
       console.error('Error creating long answer:', err);
-      setError(err.message || 'Failed to create. Please try again.');
+      showNotification('error', err.message || 'Failed to create. Please try again.');
     } finally {
       setGenerating(false);
       setProgress(0);
@@ -160,7 +195,15 @@ Return ONLY a valid JSON array of question strings in this exact format:
       <div className="bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-3xl p-6 w-full max-w-md h-[550px] shadow-2xl relative text-zinc-900 dark:text-white flex flex-col justify-between overflow-hidden">
         <div className="flex items-center justify-between pb-3 border-b border-zinc-150 dark:border-zinc-900 shrink-0">
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">Create LAQ Exam</h3>
+            <h3 className="font-semibold text-zinc-850 dark:text-white tracking-wider text-base">
+              {isViva ? 'Create Viva Session' : 'Create LAQ Exam'}
+            </h3>
+            <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded-md tracking-wider ${isViva
+                ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/60'
+                : 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60'
+              }`}>
+              {isViva ? 'Viva' : 'LAQ'}
+            </span>
           </div>
           {!generating && (
             <button
@@ -175,21 +218,12 @@ Return ONLY a valid JSON array of question strings in this exact format:
         {generating ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
             <div className="space-y-1">
-              <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">Generating LAQ Exam</h3>
+              <h3 className="font-semibold text-zinc-900 dark:text-white text-sm">
+                {isViva ? 'Generating Viva Session' : 'Generating LAQ Exam'}
+              </h3>
               <p className="text-zinc-500 dark:text-zinc-400 text-xs">Do not close or navigate away</p>
             </div>
             <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto" />
-            <div className="space-y-2 w-full max-w-[240px] mx-auto">
-              <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${Math.round((progress / questionCount) * 100)}%` }}
-                />
-              </div>
-              <p className="text-zinc-500 dark:text-zinc-400 text-[10px] font-semibold">
-                {progress < questionCount ? `${progress}/${questionCount} questions` : 'Finalizing...'}
-              </p>
-            </div>
           </div>
         ) : (
           <>
@@ -223,9 +257,9 @@ Return ONLY a valid JSON array of question strings in this exact format:
                 <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Name</label>
                 <input
                   type="text"
-                  maxLength={100}
-                  placeholder="e.g. Genetics LAQ Exam"
+                  placeholder={isViva ? "e.g. Genetics Viva Session" : "e.g. Genetics LAQ Exam"}
                   value={examName}
+                  maxLength={15}
                   onChange={(e) => setExamName(e.target.value)}
                   className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 focus:border-blue-500 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-zinc-800 dark:text-white text-xs leading-relaxed"
                 />
@@ -264,28 +298,59 @@ Return ONLY a valid JSON array of question strings in this exact format:
                   >
                     +
                   </button>
-                  <span className="text-zinc-400 dark:text-zinc-500 font-medium text-[11px]">({questionCount} Questions = {questionCount * 2} credits)</span>
+                  {(() => {
+                    const aiRequestMode = getAiRequestMode();
+                    if (isViva && aiRequestMode.useOwnKey) {
+                      return (
+                        <span className="text-red-500 font-semibold text-[11px]">
+                          (Viva requires credits. Please turn off BYOK in Settings)
+                        </span>
+                      );
+                    }
+                    if (!isViva && aiRequestMode.useOwnKey) {
+                      return (
+                        <span className="text-green-600 dark:text-green-400 font-medium text-[11px]">
+                          (Using own API key)
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="text-zinc-400 dark:text-zinc-500 font-medium text-[11px]">
+                        ({questionCount} Questions = {questionCount * (isViva ? 4 : 2)} credits)
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">
-                  Time Limit: {timeLimitMinutes} minutes
-                </label>
-                <input
-                  type="range"
-                  min={10}
-                  max={180}
-                  step={5}
-                  value={timeLimitMinutes}
-                  onChange={(e) => setTimeLimitMinutes(Number(e.target.value))}
-                  className="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full appearance-none cursor-pointer accent-blue-500"
-                />
-                <div className="flex justify-between text-[10px] text-zinc-400 font-medium px-0.5">
-                  <span>10 min</span>
-                  <span>180 min</span>
+              {!isViva ? (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-semibold tracking-wider text-zinc-400">
+                    Time Limit: {timeLimitMinutes} minutes
+                  </label>
+                  <input
+                    type="range"
+                    min={10}
+                    max={180}
+                    step={5}
+                    value={timeLimitMinutes}
+                    onChange={(e) => setTimeLimitMinutes(Number(e.target.value))}
+                    className="w-full h-2 bg-zinc-200 dark:bg-zinc-800 rounded-full appearance-none cursor-pointer accent-blue-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-zinc-400 font-medium px-0.5">
+                    <span>10 min</span>
+                    <span>180 min</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-blue-50/40 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/20 rounded-2xl p-4 text-center">
+                  <p className="text-zinc-600 dark:text-zinc-300 text-xs font-semibold">
+                    You have <span className="text-blue-600 dark:text-blue-400 font-bold">{timeLimitMinutes} mins</span> after you start the viva
+                  </p>
+                </div>
+              )}
+
+
 
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold  tracking-wider text-zinc-400">Topics</label>
@@ -302,10 +367,6 @@ Return ONLY a valid JSON array of question strings in this exact format:
                   <span>{topics.length} / 305</span>
                 </div>
               </div>
-
-              {error && (
-                <p className="text-red-500 text-xs">{error}</p>
-              )}
             </div>
 
             <div className="flex gap-3 justify-end pt-2 shrink-0 border-t border-zinc-150 dark:border-zinc-900 mt-2">
@@ -317,14 +378,33 @@ Return ONLY a valid JSON array of question strings in this exact format:
               </button>
               <button
                 onClick={handleCreate}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-all flex items-center gap-2 justify-center cursor-pointer shadow-md shadow-blue-500/10"
+                disabled={generating || (isViva && getAiRequestMode().useOwnKey)}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed font-semibold rounded-xl text-xs transition-all flex items-center gap-2 justify-center cursor-pointer shadow-md shadow-blue-500/10"
               >
-                Create ({questionCount * 2} credits)
+                {(() => {
+                  const aiRequestMode = getAiRequestMode();
+                  if (isViva) {
+                    return `Create (${questionCount * 4} credits)`;
+                  }
+                  if (aiRequestMode.useOwnKey) {
+                    return 'Create (Your Key)';
+                  }
+                  return `Create (${questionCount * 2} credits)`;
+                })()}
               </button>
             </div>
           </>
         )}
       </div>
+
+      {/* Toast Notification */}
+      {notification && (
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 }

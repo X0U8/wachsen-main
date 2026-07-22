@@ -79,19 +79,19 @@ export default function PlanViewDaily({
     day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
 
   const formatBlockDates = (raw: string) => {
-    // handles formats like "15-07-2026 to 14-08-2026" or "15th July – 14th August"
+
     if (!raw) return raw;
     const parts = raw.split(/\s+(?:to|–|-)\s+/);
     if (parts.length !== 2) return raw;
     const parse = (s: string) => {
-      // try dd-mm-yyyy
+
       const m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
       if (m) {
         const d = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
         const day = d.getDate();
         return `${day}${ordinalSuffix(day)} ${d.toLocaleString('en', { month: 'long' })}`;
       }
-      return s; // already formatted
+      return s;
     };
     return `${parse(parts[0])} – ${parse(parts[1])}`;
   };
@@ -129,7 +129,7 @@ export default function PlanViewDaily({
     fetchMonthDetails();
   }, [selectedMonthNum, currentActiveMonth]);
 
-  // Scroll today's block into view after details load
+
   useEffect(() => {
     if (selectedMonthNum === currentActiveMonth && loadedDetails[selectedMonthNum]) {
       setTimeout(() => {
@@ -279,7 +279,7 @@ export default function PlanViewDaily({
                   <h4 className="text-sm font-extrabold text-zinc-800 dark:text-white  tracking-wide">
                     {block.label || `Block ${idx + 1}`}
                   </h4>
-                  <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md">
+                  <span className="text-xs font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md">
                     {formatBlockDates(block.dates)}
                   </span>
                 </div>
@@ -290,10 +290,10 @@ export default function PlanViewDaily({
                       key={sIdx}
                       className="p-3.5 bg-white/40 dark:bg-gray-900/40 border border-zinc-200 dark:border-gray-800 rounded-2xl space-y-1 hover:border-zinc-300 dark:hover:border-gray-700 transition-colors shadow-sm"
                     >
-                      <span className="text-[10px] font-bold text-zinc-400 dark:text-gray-500  tracking-widest block">
+                      <span className="text-xs font-bold text-zinc-400 dark:text-gray-500 tracking-widest block">
                         <MathText text={sub.subjectName} />
                       </span>
-                      <p className="text-zinc-755 dark:text-gray-300 text-[11px] leading-relaxed font-medium">
+                      <p className="text-zinc-755 dark:text-gray-300 text-xs leading-relaxed font-medium">
                         <MathText text={sub.task || 'Revision / Mock practice'} />
                       </p>
                     </div>
@@ -311,7 +311,7 @@ export default function PlanViewDaily({
               <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
               <div className="space-y-1">
                 <p className="font-semibold text-zinc-705 dark:text-white text-xs">Generating detailed daily tasks...</p>
-                <p className="text-zinc-400 text-[10px]">Processing month date horizon: {getMonthDateRange(createdAt, selectedMonthNum)}</p>
+                <p className="text-zinc-400 text-xs">Processing month date horizon: {getMonthDateRange(createdAt, selectedMonthNum)}</p>
               </div>
             </div>
           ) : (

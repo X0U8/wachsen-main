@@ -170,7 +170,7 @@ export default async function handler(req, res) {
     } else if (type === 'laq') {
       let query = supabase
         .from('laq_exam')
-        .select('id, name, subject_name, topics, difficulty, question_count, status, created_at')
+        .select('id, name, subject_name, topics, difficulty, question_count, status, created_at, is_viva')
         .eq('user_id', userId);
 
       if (isValidUuid(categoryId)) {

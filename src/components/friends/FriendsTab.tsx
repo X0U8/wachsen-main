@@ -48,7 +48,7 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
                     <h4 className="text-xs font-bold text-zinc-800 dark:text-white">
                       {friend.name}
                     </h4>
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
                       @{friend.username}
                     </p>
                   </div>
@@ -56,13 +56,13 @@ export const FriendsTab: React.FC<FriendsTabProps> = ({
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => onOpenDetails(friend)}
-                    className="px-3.5 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-[10px] font-bold transition-all cursor-pointer border border-zinc-200 dark:border-zinc-850"
+                    className="px-3.5 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all cursor-pointer border border-zinc-200 dark:border-zinc-850"
                   >
                     Details
                   </button>
                   <button
                     onClick={() => onOpenChallenge(friend)}
-                    className="px-2.5 sm:px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 border border-blue-200/30"
+                    className="px-2.5 sm:px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border border-blue-200/30"
                   >
                     <Swords className="w-3.5 h-3.5" fill="currentColor" />
                     <span className="hidden sm:inline">Challenge</span>

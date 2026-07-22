@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUserProfile } from '../../lib/UserContext';
 import { fontSize } from '../../lib/utils';
+import { useCachedImage } from '../../hooks/useCachedImage';
 import { User, AlertCircle, X, Upload, Loader2 } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { COUNTRIES } from '../../data/countries';
@@ -66,6 +67,7 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
 
   const [editName, setEditName] = useState('');
   const [editPicUrl, setEditPicUrl] = useState('');
+  const cachedEditPicUrl = useCachedImage(editPicUrl);
   const [editGender, setEditGender] = useState('');
   const [editCountry, setEditCountry] = useState('');
   const [dobDay, setDobDay] = useState('');
@@ -115,8 +117,8 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
     setError('');
     try {
       const compressedBlob = await compressImage(file);
-      
-      // Convert blob to base64 for API transmission
+
+
       const blobToBase64 = (blob: Blob): Promise<string> => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -125,7 +127,7 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
           reader.onerror = reject;
         });
       };
-      
+
       const base64Data = await blobToBase64(compressedBlob);
       const fileName = `avatars/${userProfile.id}_${Date.now()}.jpg`;
 
@@ -233,8 +235,8 @@ export default function EditProfileModal({ show, onClose }: EditProfileModalProp
           <div className="flex items-center gap-4 bg-zinc-50 dark:bg-gray-950 p-3 rounded-2xl border border-zinc-200/80 dark:border-gray-800">
             <div
               className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold overflow-hidden shadow-sm shrink-0 text-lg">
-              {editPicUrl.trim() ? (
-                <img src={editPicUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              {cachedEditPicUrl?.trim() ? (
+                <img src={cachedEditPicUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
               ) : (
                 editName ? editName[0].toUpperCase() : 'U'
               )}

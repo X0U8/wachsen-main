@@ -12,6 +12,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUserProfile } from '../../lib/UserContext.tsx';
 import localStorageCache from '../../lib/localStorage';
 import { fontSize } from '../../lib/utils';
+import { useTheme } from '../../lib/ThemeContext.tsx';
 import InfoComponent from '../../ui/InfoComponent';
 import NewExamTypeForm from './NewExamTypeForm';
 import UpcomingTable from './UpcomingTable';
@@ -31,6 +32,8 @@ interface ExamType {
 export default function Exam() {
   const navigate = useNavigate();
   const { userProfile, refreshCredits, refreshProfile } = useUserProfile();
+  const { fontSizeLevel } = useTheme();
+  const scale = { small: 0.85, medium: 1.0, large: 1.35, larger: 1.6 }[fontSizeLevel] || 1.0;
   const [tab, setTab] = useState<Tab>('exams');
   const [examTypes, setExamTypes] = useState<ExamType[]>(() => {
     return localStorageCache.get<ExamType[]>(localStorageCache.keys.EXAM_CATEGORIES) || [];
@@ -330,7 +333,7 @@ export default function Exam() {
     () => localStorage.getItem('show_others_category') === 'true'
   );
 
-  // Re-sync when Settings writes to localStorage (same-tab navigation or cross-tab)
+
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'show_challenges_category') setShowChallenges(e.newValue === 'true');
@@ -356,8 +359,8 @@ export default function Exam() {
   });
 
   const displayedCategories = examTypes.filter(cat => {
-    // Check special categories by name FIRST — filterOutDefaultAny would incorrectly
-    // exclude 'others'/'challenges' since they use subjects:['any'] / academicLevel:'any'
+
+
     if (cat.name === 'challenges') return showChallenges;
     if (cat.name === 'others') return showOthers;
     if (filterOutDefaultAny(cat)) return false;
@@ -390,11 +393,11 @@ export default function Exam() {
             <span className="hidden sm:inline">credits</span>
             <button onClick={() => setShowClaim(true)} className="text-zinc-450 dark:text-gray-550 hover:text-blue-500 dark:hover:text-blue-400 font-semibold pl-1 sm:pl-1.5 transition-colors cursor-pointer" aria-label="Daily credits">+</button>
           </div>
-          <button onClick={() => setShowAnalytics(true)} className="p-1 sm:p-1.5 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Analytics">
-            <ChartNoAxesCombined className="w-[14px] h-[14px] sm:w-[17px] sm:h-[17px] fill-current" />
+          <button onClick={() => setShowAnalytics(true)} className="p-1 sm:p-1.5 flex items-center justify-center rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" style={{ width: `${32 * scale}px`, height: `${32 * scale}px` }} aria-label="Analytics">
+            <ChartNoAxesCombined className="fill-current" style={{ width: `${14 * scale}px`, height: `${14 * scale}px` }} />
           </button>
-          <button onClick={() => navigate('/settings')} className="p-1 sm:p-1.5 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" aria-label="Settings">
-            <SettingsIcon className="[&_svg]:w-[14px] [&_svg]:h-[14px] sm:[&_svg]:w-[17px] sm:[&_svg]:h-[17px]" />
+          <button onClick={() => navigate('/settings')} className="p-1 sm:p-1.5 flex items-center justify-center rounded-lg bg-zinc-105 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-650 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 transition-colors cursor-pointer" style={{ width: `${32 * scale}px`, height: `${32 * scale}px` }} aria-label="Settings">
+            <SettingsIcon size={14 * scale} style={{ width: `${14 * scale}px`, height: `${14 * scale}px` }} />
           </button>
         </div>
       </header>

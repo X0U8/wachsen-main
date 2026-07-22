@@ -33,21 +33,21 @@ export async function streamConceptCards(
   let buffer = '';
   let textBuffer = '';
 
-  // Regex that detects the end of a complete JSON object inside the array:
-  // a closing } followed optionally by whitespace then , or ]
+
+
   const objectEndPattern = /\}\s*[,\]]/g;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
-    // Decode the raw SSE chunk (may contain multiple lines)
+
     const chunk = decoder.decode(value, { stream: true });
     buffer += chunk;
 
-    // Parse SSE lines: each data line looks like  "data: {...}"
+
     const lines = buffer.split('\n');
-    // Keep the last incomplete line in the buffer
+
     buffer = lines.pop() ?? '';
 
     for (const line of lines) {
@@ -60,11 +60,11 @@ export async function streamConceptCards(
         const delta = parsed.choices?.[0]?.delta?.content ?? '';
         textBuffer += delta;
       } catch {
-        // Incomplete JSON fragment — skip
+
       }
     }
 
-    // Count how many question objects are fully present in the accumulated text
+
     const matches = textBuffer.match(objectEndPattern);
     const count = matches ? matches.length : 0;
     onProgress(Math.min(count, maxItems));

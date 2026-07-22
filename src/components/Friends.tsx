@@ -7,6 +7,7 @@ import Footer from './Footer';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import localStorageCache from '../lib/localStorage';
 import { fontSize } from '../lib/utils';
+import { useCachedImage } from '../hooks/useCachedImage';
 
 
 import { MissingCategoryModal } from './friends/MissingCategoryModal';
@@ -92,7 +93,7 @@ export default function Friends() {
 
   const userId = userProfile?.id;
 
-  // ── React Query hooks ────────────────────────────────────────────
+
   const getFriendLimitValue = () => {
     const tier = userProfile?.PremiumType?.toLowerCase() || 'free';
     if (tier.includes('peak')) return 50;
@@ -256,16 +257,16 @@ export default function Friends() {
     refetchOnMount: 'always',
   });
 
-  // Derived display lists: useQuery first page + any "load more" pages appended
+
   const friendsList = friendsData;
   const incomingRequests = requestsData;
   const dailyChallengeCount = dailyChallengeCountData;
   const receivedChallenges = [...receivedChallengesPage, ...moreReceivedChallenges];
   const sentChallenges = [...sentChallengesPage, ...moreSentChallenges];
-  // Show "Load More" if first page was full OR a manual page came back full
+
   const canLoadMoreReceived = receivedChallengesPage.length === 10 || hasMoreReceived;
   const canLoadMoreSent = sentChallengesPage.length === 10 || hasMoreSent;
-  // ────────────────────────────────────────────────────────────────
+
 
   const checkChallengesCategory = async () => {
     if (!userProfile?.id) return;
@@ -794,11 +795,13 @@ export default function Friends() {
     setShowPublicProfileModal(true);
   };
 
-  const renderProfilePic = (user: ProfileData, size = 'w-12 h-12') => {
-    if (user.profile_picture && user.profile_picture.trim() !== '') {
+  const CachedProfilePic = ({ user, size = 'w-12 h-12' }: { user: ProfileData; size?: string }) => {
+    const cachedUrl = useCachedImage(user.profile_picture);
+
+    if (cachedUrl && cachedUrl.trim() !== '') {
       return (
         <img
-          src={user.profile_picture}
+          src={cachedUrl}
           alt={user.name}
           className={`${size} rounded-full object-cover border border-black/15 dark:border-white/20`}
           onError={(e) => {
@@ -815,6 +818,10 @@ export default function Friends() {
         {firstLetter}
       </div>
     );
+  };
+
+  const renderProfilePic = (user: ProfileData, size = 'w-12 h-12') => {
+    return <CachedProfilePic user={user} size={size} />;
   };
 
   return (

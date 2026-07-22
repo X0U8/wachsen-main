@@ -14,6 +14,7 @@ interface LaqExam {
   question_count: number;
   status: string;
   created_at: string;
+  is_viva?: boolean;
 }
 
 interface LaqListTabProps {
@@ -104,7 +105,7 @@ export default function LaqListTab({ categoryId, userProfile }: LaqListTabProps)
         <div className="flex items-center gap-1.5 max-w-xs w-full">
           <input
             type="text"
-            placeholder="Search LAQ exams..."
+            placeholder="Search Subjective..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
@@ -151,7 +152,18 @@ export default function LaqListTab({ categoryId, userProfile }: LaqListTabProps)
                   className="hover:bg-zinc-100 dark:hover:bg-gray-800/30 transition-colors cursor-pointer group"
                 >
                   <td className="px-4 py-4 font-normal text-zinc-800 dark:text-gray-100 group-hover:text-blue-400 transition-colors">
-                    {laq.name}
+                    <div className="flex items-center gap-1.5 sm:gap-2 max-w-full">
+                      <span className={`shrink-0 px-1.5 py-0.5 text-[8px] sm:text-[9px] md:text-[10px] font-bold uppercase rounded-md tracking-wider ${
+                        laq.is_viva 
+                          ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/60' 
+                          : 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60'
+                      }`}>
+                        {laq.is_viva ? 'Viva' : 'LAQ'}
+                      </span>
+                      <span className="text-sm font-normal truncate max-w-[150px] sm:max-w-xs md:max-w-md">
+                        {laq.name}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-4 text-zinc-500 dark:text-gray-400">
                     {laq.subject_name || '—'}
@@ -187,7 +199,7 @@ export default function LaqListTab({ categoryId, userProfile }: LaqListTabProps)
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <p className="text-zinc-500 dark:text-gray-400 text-sm">No LAQ exams found.</p>
+          <p className="text-zinc-500 dark:text-gray-400 text-sm">No Subjective or Viva exams found.</p>
           <p className="mt-1 text-zinc-400 dark:text-gray-500 text-xs">Click the plus icon to create one.</p>
         </div>
       )}

@@ -76,8 +76,8 @@ export default function ProfileAnalyticsView({ userId, isOwner }: ProfileAnalyti
       };
     },
     enabled: !!userId,
-    staleTime: 0,
-    gcTime: Infinity,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const categories = analyticsData?.categories || [];

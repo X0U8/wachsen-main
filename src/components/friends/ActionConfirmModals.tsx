@@ -50,7 +50,7 @@ export const ActionConfirmModals: React.FC<ActionConfirmModalsProps> = ({
             </p>
 
             {challengeError && (
-              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-405 text-[10px] font-medium flex gap-1.5 text-left w-full">
+              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-405 text-xs font-medium flex gap-1.5 text-left w-full">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
                 <span>{challengeError}</span>
               </div>
@@ -88,7 +88,7 @@ export const ActionConfirmModals: React.FC<ActionConfirmModalsProps> = ({
             </p>
 
             {challengeError && (
-              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-405 text-[10px] font-medium flex gap-1.5 text-left w-full">
+              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-405 text-xs font-medium flex gap-1.5 text-left w-full">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
                 <span>{challengeError}</span>
               </div>
@@ -128,7 +128,7 @@ export const ActionConfirmModals: React.FC<ActionConfirmModalsProps> = ({
             </p>
 
             {challengeError && (
-              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-405 text-[10px] font-medium flex gap-1.5 text-left w-full">
+              <div className="p-2 mb-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-xl text-red-600 dark:text-red-405 text-xs font-medium flex gap-1.5 text-left w-full">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
                 <span>{challengeError}</span>
               </div>

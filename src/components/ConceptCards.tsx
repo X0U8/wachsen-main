@@ -149,7 +149,7 @@ export default function ConceptCards({ onClose, cards = [], topics, deckName, su
                 <div className="text-zinc-450 dark:text-zinc-500 font-semibold tracking-wider text-[10px] ">
                   Card {currentIndex + 1} of {cards.length}
                 </div>
-                <h4 className="font-medium text-zinc-850 dark:text-zinc-150 leading-relaxed text-sm sm:text-base px-2">
+                <h4 className="font-medium text-zinc-850 dark:text-zinc-150 leading-relaxed text-xs sm:text-sm px-2">
                   <MathText text={cards[currentIndex].question} />
                 </h4>
 

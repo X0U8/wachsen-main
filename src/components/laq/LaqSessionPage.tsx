@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import LaqSession from './LaqSession';
+import VivaSession from './VivaSession';
 import LaqAnalysis from './LaqAnalysis';
 
 export default function LaqSessionPage() {
@@ -13,7 +14,7 @@ export default function LaqSessionPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('laq_exam')
-        .select('id, name, subject_name, topics, difficulty, question_count, time_limit_minutes, status, questions, answers, ai_analysis, ai_feedback, accuracy, depth, clarity, created_at')
+        .select('id, name, subject_name, topics, difficulty, question_count, time_limit_minutes, status, questions, answers, ai_analysis, ai_feedback, accuracy, depth, clarity, created_at, updated_at, is_viva')
         .eq('id', laqId!)
         .single();
       if (error) throw error;
@@ -43,6 +44,10 @@ export default function LaqSessionPage() {
 
   if (laq.status === 'completed') {
     return <LaqAnalysis laq={laq} />;
+  }
+
+  if (laq.is_viva) {
+    return <VivaSession laq={laq} onComplete={() => refetch()} />;
   }
 
   return <LaqSession laq={laq} onComplete={() => refetch()} />;

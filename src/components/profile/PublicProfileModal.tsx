@@ -98,7 +98,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, email, name, username, frequency, source, DOB, gender, country, is_ban, is_premium, premium_ends, credits, profile_picture, last_claimed, premium_type')
+          .select('id, email, name, username, frequency, source, DOB, gender, country, is_ban, is_premium, premium_ends, credits, profile_picture, last_claimed, premium_type, created_at')
           .eq('id', userId)
           .maybeSingle();
 
@@ -288,12 +288,12 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
 
       if (error) throw error;
 
-      // Update localStorage cache so ExamPage shows 'others' immediately
+
       const cached = localStorageCache.get<any[]>(localStorageCache.keys.EXAM_CATEGORIES) || [];
       const newCategory = { id: data.id, name: 'others', subjects: ['any'], academicLevel: 'any' };
       localStorageCache.set(localStorageCache.keys.EXAM_CATEGORIES, [...cached, newCategory]);
 
-      // Invalidate the TanStack Query so ExamPage re-renders
+
       queryClient.invalidateQueries({ queryKey: ['examCategories', loggedInProfile.id] });
 
       setShowCreateOthersCategoryModal(false);
@@ -314,7 +314,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       const othersId = await checkOthersCategory();
       if (!othersId) throw new Error("ExamType 'others' not found.");
 
-      // Fetch all source exam data — questions live inside generatedExam JSON
+
       const { data: sourceExam, error: srcErr } = await supabase
         .from('exams')
         .select('examName, examType, difficulty, totalTime, totalQuestions, totalMarks, subjects, generatedExam, correct_marks, negative_marks, language, ExamPlan')
@@ -327,7 +327,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
       const { error: examErr } = await supabase
         .from('exams')
         .insert({
-          // User-specific overrides
+
           createdBy: loggedInProfile.id,
           accessIds: [loggedInProfile.id],
           accessType: 'anytime',
@@ -338,7 +338,7 @@ export default function PublicProfileModal({ onClose, userId }: { onClose: () =>
           isPublic: true,
           likes: 0,
           likedBy: [],
-          // Everything else copied exactly from source
+
           examName: sourceExam.examName,
           examType: sourceExam.examType,
           difficulty: sourceExam.difficulty,
